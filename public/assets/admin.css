@@ -1,0 +1,58 @@
+:root{
+  --bg:#f7f7fb;--text:#111827;--muted:#6b7280;--card:#fff;--border:#e5e7eb;
+  --brand:#b21e27;--brand-hover:#9a1a22;--success:#16a34a;--danger:#b91c1c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+
+/* Layout */
+.container, .admin-container{max-width:1400px;margin:20px 12px;padding:0 8px}
+.header, .admin-header{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
+.card-body{padding:12px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Controls */
+.input,.select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+.input[type=number]{text-align:center;padding:6px 8px}
+.btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600}
+.btn.secondary{background:#4b5563}
+.btn.secondary:hover{background:#374151}
+
+/* Table */
+.table{width:100%;border-collapse:separate;border-spacing:0}
+.table th,.table td{padding:10px 12px;text-align:left;font-size:14px}
+.table thead th{background:#f3f4f6;color:#374151;border-bottom:1px solid var(--border);font-weight:700}
+.table tbody tr + tr td{border-top:1px solid var(--border)}
+
+/* Badges */
+.muted{color:var(--muted)}
+.status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.status.confirmed{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.status.draft{background:#f3f4f6;color:#374151;border:1px solid var(--border)}
+.status.pending_payment{background:#fff7ed;color:#92400e;border:1px solid #fed7aa}
+.status.canceled{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+
+/* Icon button with subtle effects */
+.icon-btn{appearance:none;border:1px solid var(--border);background:#fff;color:var(--brand);border-radius:10px;width:34px;height:34px;line-height:1;font-size:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;text-decoration:none}
+.icon-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(178,30,39,.15);border-color:#d1d5db;background:#fff}
+.icon-btn:active{transform:translateY(0) scale(.98);box-shadow:0 2px 6px rgba(178,30,39,.15)}
+.icon-btn.danger{background:#b21e27;color:#fff;border-color:#b21e27}
+.icon-btn.danger:hover{background:#9a1a22;border-color:#9a1a22}
+
+/* Invoice select tinting (if used) */
+.select.inv{border-width:1px}
+.select.inv.paid{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.select.inv.pending{background:#fef9c3;color:#854d0e;border-color:#fde68a}
+.select.inv.overdue{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
+.select.inv.cancelled{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+.select.inv.refunded{background:#f3f4f6;color:#6b7280;border-color:#e5e7eb}
+
+/* Client status tinting */
+.select.client-status{border-width:1px}
+.select.client-status.vip{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}        /* green */
+.select.client-status.regular{background:#fff7ed;color:#92400e;border-color:#fed7aa}    /* orange */
+.select.client-status.celebrity{background:#fefce8;color:#92400e;border-color:#fde68a}  /* yellow */
+.select.client-status.blacklist{background:#fef2f2;color:#991b1b;border-color:#fecaca}  /* red */
+.select.client-status.preferred{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}  /* blue */

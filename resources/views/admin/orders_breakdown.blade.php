@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin – Orders Breakdown</title>
+  <link rel="stylesheet" href="/assets/admin.css">
+  <style>
+    .table thead th{background:var(--card);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:11px;padding:6px 10px}
+    .table tbody td{font-weight:500;font-size:12px;padding:6px 10px}
+    .table tbody tr + tr td{border-top:1px solid var(--border)}
+    .table thead th.qty-col,
+    .table tbody td.qty,
+    .table thead th.unit-col,
+    .table tbody td.unit,
+    .table thead th.total-col,
+    .table tbody td.total{text-align:center}
+    .table tbody td.qty,
+    .table tbody td.unit,
+    .table tbody td.total{font-variant-numeric:tabular-nums}
+    .table tbody td .num-input{width:70px;max-width:100%;padding:4px 4px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;text-align:center;font-size:12px;font-weight:500;-moz-appearance:textfield}
+    .table tbody td .num-input::-webkit-outer-spin-button,
+    .table tbody td .num-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}
+    .table tbody td .num-input:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
+    .table tbody td .num-input[readonly]{background:#f9fafb;color:#4b5563;cursor:default;border-bottom-color:#d1d5db}
+    .table tbody td .text-input{width:40%;max-width:110px;padding:4px 4px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;font-size:12px;font-weight:500}
+    .table tbody td .text-input:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
+    .table tbody td .unit-select{width:80px;max-width:100%;padding:4px 4px;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;font-size:12px;font-weight:500;text-align:center;text-align-last:center;appearance:none;-moz-appearance:none;-webkit-appearance:none}
+    .table tbody td .unit-select:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
+    .search-card{margin:0 auto 12px;max-width:1080px}
+    .search-card label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase}
+    .search-results{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+    .selected-widgets{display:flex;flex-direction:column;gap:16px;margin-top:12px}
+    @media (min-width: 1100px){
+      .selected-widgets{flex-direction:row;align-items:flex-start;gap:24px;flex-wrap:nowrap}
+      .selected-items-area{flex:0 0 65%;max-width:65%}
+      .selected-summary-area{flex:0 0 35%;max-width:35%}
+    }
+    .search-result{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;justify-content:space-between;align-items:center;font-size:12px;cursor:pointer;transition:background .12s ease,border-color .12s ease}
+    .search-result .name{font-weight:600;font-size:13px;color:var(--text)}
+    .search-result .meta{color:var(--muted);font-size:12px;margin-left:12px;white-space:nowrap}
+    .search-result:hover{border-color:#cbd5f5;background:#f8fafc}
+    .search-result.is-selected{border-color:#b21e27;background:rgba(178,30,39,.08)}
+    .selected-area{margin-top:12px}
+    .selected-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+    .selected-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:6px 8px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
+    .selected-table tbody td{padding:6px 8px;border-top:1px solid var(--border)}
+    .selected-table tbody tr:first-child td{border-top:0}
+    .selected-table .muted{color:var(--muted);font-size:11px}
+    .selected-remove{background:none;border:0;color:#b21e27;font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
+    .selected-remove:hover{color:#9a1a22}
+    .selected-empty{color:var(--muted);text-align:center}
+    .selected-items-area{margin-top:0;padding-top:10px;border-top:1px solid var(--border)}
+    .selected-items-area h3{margin:0 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;color:#374151}
+    .selected-items-container{overflow-x:auto}
+    .selected-items-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+    .selected-items-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:4px 6px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
+    .selected-items-table tbody td{padding:4px 6px;border-top:1px solid var(--border)}
+    .selected-items-table tbody tr:first-of-type td{border-top:0}
+    .selected-items-table tbody tr.client-heading td{background:#e8f9f2;font-weight:700;color:#111;text-transform:uppercase;font-size:13px;position:relative;padding-right:32px}
+    .selected-items-table tbody tr.client-heading td span{color:#111;font-weight:700;margin-left:6px;font-size:11px;text-transform:none}
+    .client-remove-icon{position:absolute;top:50%;right:8px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #d1d5db;border-radius:999px;background:#fff;color:#b21e27;font-size:14px;line-height:1;font-weight:700;cursor:pointer}
+    .client-remove-icon:hover{background:#fdecec;border-color:#fca5a5;color:#991b1b}
+    .selected-items-table tbody tr.client-empty td{color:#6b7280;font-style:italic}
+    .selected-items-table tbody td.qty{text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+    .selected-summary-area{padding-top:10px;border-top:1px solid var(--border)}
+    .selected-summary-area h3{margin:0 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;color:#374151}
+    .selected-summary-container{overflow-x:auto}
+    .selected-summary-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+    .selected-summary-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:4px 6px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
+    .selected-summary-table tbody td{padding:4px 6px;border-top:1px solid var(--border)}
+    .selected-summary-table tbody tr:first-of-type td{border-top:0}
+    .selected-summary-table tbody td.qty{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+    .portion-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .portion-add-btn{appearance:none;border:1px solid var(--border);background:#fff;color:#374151;border-radius:8px;width:30px;height:28px;font-size:18px;line-height:1;font-weight:600;cursor:pointer;transition:background .12s ease,border-color .12s ease,color .12s ease}
+    .portion-add-btn:hover{background:#f3f4f6;border-color:#d1d5db;color:#111}
+    .totals-card{max-width:760px;margin:0 auto 12px}
+  </style>
+</head>
+@php
+  $items = [
+    'NY',
+    'FM',
+    'RIB EYE',
+    'NOODLES',
+    'SOUP',
+    'A5 WAGYU',
+    'TOMAHAWK',
+    'SHRIMP',
+    'CHICKEN',
+    'F RICE',
+    'W RICE',
+    'SALAD',
+    'EDAMAME',
+    'ASPARAGUS',
+    'GYOZA',
+    'SALMON',
+    'SCALLOPS',
+    'TUNA',
+    'HALIBU',
+    'LOBSTER',
+    'VEGETARIAN',
+  ];
+@endphp
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title" style="margin-right:auto">Orders Breakdown</h1>
+      <button type="button" class="btn" id="ordersSaveBtn">Save</button>
+      <a href="{{ route('admin.dashboard') }}" class="btn secondary">Dashboard</a>
+    </div>
+
+    <div class="card search-card">
+      <div class="card-body">
+        <label for="ordersSearch">Search</label>
+        <input type="text" class="input" id="ordersSearch" placeholder="Search confirmed clients" style="max-width:320px">
+        <div id="ordersSearchResults" class="search-results muted">Type at least 2 characters to search</div>
+        <div class="selected-widgets">
+          <div class="selected-items-area" aria-label="Selected menu items">
+            <h3>Menu Items</h3>
+            <div id="selectedItemsContainer" class="selected-items-container">
+              <div class="selected-empty">No menu items yet.</div>
+            </div>
+          </div>
+          <div class="selected-summary-area" aria-label="Items totals">
+            <h3>Totals by Item</h3>
+            <div id="selectedSummaryContainer" class="selected-summary-container">
+              <div class="selected-empty">No totals yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card totals-card">
+      <div class="card-body">
+        <div class="portion-header">
+          <h3 style="margin:0;font-size:14px;font-weight:600;text-transform:uppercase;color:#374151">Portions</h3>
+          <button type="button" class="portion-add-btn" id="portionAddRowBtn" title="Add portion row">+</button>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="qty-col" style="width:12%">Qty</th>
+              <th class="unit-col" style="width:12%">oz/pc</th>
+              <th style="width:40%">Item</th>
+              <th class="total-col" style="width:20%">Total</th>
+              <th style="width:20%">lb / pcs</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($items as $item)
+              @php
+                $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $item));
+                $rowKey = trim($slug, '-') . '-' . $loop->index;
+              @endphp
+              <tr data-item="{{ $rowKey }}" data-label="{{ $item }}">
+                <td class="qty"><input type="number" class="num-input qty-input" value="0" min="0" data-field="qty"></td>
+                <td class="unit">
+                  <select class="unit-select unit-input" data-field="unit">
+                    <option value="oz">oz</option>
+                    <option value="pc">pc</option>
+                  </select>
+                </td>
+                <td><input type="text" class="text-input item-name-input" value="{{ $item }}" data-field="label"></td>
+                <td class="total"><input type="number" class="num-input total-input" value="0" min="0" step="0.01" data-field="total"></td>
+                <td><input type="text" class="text-input lbpcs-input" value="" data-field="lbpcs" placeholder="0"></td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const SEARCH_URL = "{{ route('admin.orders.breakdown.search') }}";
+      const resultsBox = document.getElementById('ordersSearchResults');
+      const searchInput = document.getElementById('ordersSearch');
+      const itemsContainer = document.getElementById('selectedItemsContainer');
+      const summaryContainer = document.getElementById('selectedSummaryContainer');
+      const portionTableBody = document.querySelector('.totals-card tbody');
+      const portionAddBtn = document.getElementById('portionAddRowBtn');
+      const saveBtn = document.getElementById('ordersSaveBtn');
+      const STORAGE_KEY = 'admin:ordersBreakdown:table';
+      const CATEGORY_ORDER = {
+        'specials': 1,
+        'combinations': 2,
+        'seafood': 3,
+        'starters': 4,
+        'kids meals': 5,
+        'packages': 6,
+        'extras': 7,
+        'custom': 8,
+        'otros': 9,
+      };
+      const CATEGORY_PATTERNS = [
+        { key: 'specials', patterns: [/special/i, /deluxe/i, /chef/i, /tomahawk/i] },
+        { key: 'combinations', patterns: [/combo/i, /combination/i, /&/i] },
+        { key: 'seafood', patterns: [/shrimp/i, /salmon/i, /scallop/i, /lobster/i, /tuna/i, /halib/i, /sea ?food/i, /fish/i] },
+        { key: 'starters', patterns: [/salad/i, /soup/i, /edamame/i, /gyoza/i, /starter/i, /app(etizer)?/i] },
+        { key: 'kids meals', patterns: [/kid/i, /child/i] },
+        { key: 'packages', patterns: [/package/i, /pkg/i] },
+        { key: 'extras', patterns: [/extra/i, /add/i, /upgrade/i, /heater/i, /chair/i, /rice/i, /noodle/i, /vegetarian/i, /vegetable/i] },
+        { key: 'custom', patterns: [/custom/i, /per quote/i] },
+      ];
+      let searchTimer = null;
+      let selectedClients = [];
+      let tableDirty = false;
+      let lastSummaryTotals = [];
+
+      const escapeAttr = (value) => {
+        if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+          return CSS.escape(value);
+        }
+        return (value || '').replace(/"/g, '\\"');
+      };
+
+      function getPortionRows() {
+        return Array.from((portionTableBody || document).querySelectorAll('tr[data-item]'));
+      }
+
+      function buildPortionMeta() {
+        return getPortionRows().map(row => {
+        return {
+          key: row.getAttribute('data-item') || '',
+          row,
+          qtyInput: row.querySelector('[data-field="qty"]'),
+          unitInput: row.querySelector('[data-field="unit"]'),
+          labelInput: row.querySelector('[data-field="label"]'),
+          totalInput: row.querySelector('[data-field="total"]'),
+          lbpcsInput: row.querySelector('[data-field="lbpcs"]'),
+          baseLabel: (row.getAttribute('data-label') || '').trim(),
+        };
+      });
+      }
+
+      function attachRowListeners(row) {
+        if (!row || row.dataset.listenersAttached === 'true') return;
+        row.querySelectorAll('[data-field]').forEach(ctrl => {
+          ctrl.addEventListener('input', () => {
+            if (ctrl.dataset.field === 'label') {
+              row.setAttribute('data-label', ctrl.value || '');
+            }
+            markDirty();
+          });
+          ctrl.addEventListener('change', () => {
+            if (ctrl.dataset.field === 'label') {
+              row.setAttribute('data-label', ctrl.value || '');
+            }
+            markDirty();
+          });
+        });
+        row.dataset.listenersAttached = 'true';
+      }
+
+      function createPortionRow({ key, qty = '', unit = 'oz', label = '', total = '', lbpcs = '', silent = false } = {}) {
+        if (!portionTableBody) return null;
+        const rowKey = key || `custom-${Date.now()}`;
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-item', rowKey);
+        tr.setAttribute('data-label', label);
+        tr.innerHTML = `
+          <td class="qty"><input type="number" class="num-input qty-input" value="" min="0" data-field="qty"></td>
+          <td class="unit">
+            <select class="unit-select unit-input" data-field="unit">
+              <option value="oz">oz</option>
+              <option value="pc">pc</option>
+            </select>
+          </td>
+          <td><input type="text" class="text-input item-name-input" value="" data-field="label" placeholder="Item name"></td>
+          <td class="total"><input type="number" class="num-input total-input" value="" min="0" step="0.01" data-field="total"></td>
+          <td><input type="text" class="text-input lbpcs-input" value="" data-field="lbpcs" placeholder="0"></td>
+        `;
+        portionTableBody.appendChild(tr);
+        const qtyInput = tr.querySelector('[data-field="qty"]');
+        const unitInput = tr.querySelector('[data-field="unit"]');
+        const labelInput = tr.querySelector('[data-field="label"]');
+        const totalInput = tr.querySelector('[data-field="total"]');
+        const lbpcsInput = tr.querySelector('[data-field="lbpcs"]');
+        if (qtyInput) qtyInput.value = qty;
+        if (unitInput) unitInput.value = unit || 'oz';
+        if (labelInput) labelInput.value = label;
+        if (totalInput) totalInput.value = total;
+        if (lbpcsInput) lbpcsInput.value = lbpcs;
+        attachRowListeners(tr);
+        if (!silent) markDirty();
+        return tr;
+      }
+
+      function ensurePortionRow(key) {
+        if (!portionTableBody) return null;
+        const selector = `tr[data-item="${escapeAttr(key)}"]`;
+        let row = portionTableBody.querySelector(selector);
+        if (!row) {
+          row = createPortionRow({ key, silent: true });
+        }
+        return row;
+      }
+
+      function markDirty() {
+        if (!saveBtn) return;
+        if (tableDirty) return;
+        tableDirty = true;
+        saveBtn.textContent = 'Save*';
+        saveBtn.classList.add('secondary');
+      }
+
+      function markSaved() {
+        if (!saveBtn) return;
+        tableDirty = false;
+        saveBtn.textContent = 'Save';
+        saveBtn.classList.remove('secondary');
+      }
+
+      function collectTableState() {
+        const snapshot = {};
+        buildPortionMeta().forEach(entry => {
+          if (!entry.key) return;
+          snapshot[entry.key] = {
+            qty: entry.qtyInput ? entry.qtyInput.value : '',
+            unit: entry.unitInput ? entry.unitInput.value : 'oz',
+            label: entry.labelInput ? entry.labelInput.value : '',
+            total: entry.totalInput ? entry.totalInput.value : '',
+            lbpcs: entry.lbpcsInput ? entry.lbpcsInput.value : '',
+          };
+        });
+        return snapshot;
+      }
+
+      function applyTableState(state) {
+        if (!state || typeof state !== 'object') return;
+        Object.entries(state).forEach(([key, data]) => {
+          const row = ensurePortionRow(key);
+          if (!row) return;
+          const qty = row.querySelector('[data-field="qty"]');
+          const unit = row.querySelector('[data-field="unit"]');
+          const label = row.querySelector('[data-field="label"]');
+          const total = row.querySelector('[data-field="total"]');
+          const lbpcs = row.querySelector('[data-field="lbpcs"]');
+          if (qty && typeof data.qty !== 'undefined') qty.value = data.qty;
+          if (unit && data.unit) unit.value = data.unit;
+          if (label && typeof data.label !== 'undefined') {
+            label.value = data.label;
+            row.setAttribute('data-label', data.label);
+          }
+          if (total && typeof data.total !== 'undefined') total.value = data.total;
+          if (lbpcs && typeof data.lbpcs !== 'undefined') lbpcs.value = data.lbpcs;
+          attachRowListeners(row);
+        });
+      }
+
+      function loadTableState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            markSaved();
+            return;
+          }
+          const parsed = JSON.parse(raw);
+          applyTableState(parsed);
+        } catch (err) {
+          console.warn('Unable to load saved orders breakdown totals', err);
+        }
+        markSaved();
+      }
+
+      function saveTableState() {
+        try {
+          const snapshot = collectTableState();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        } catch (err) {
+          console.error('Unable to save orders breakdown totals', err);
+        }
+      }
+
+      loadTableState();
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+      saveTableState();
+      markSaved();
+    });
+  }
+
+  getPortionRows().forEach(attachRowListeners);
+
+      if (portionAddBtn && portionTableBody) {
+        portionAddBtn.addEventListener('click', () => {
+          createPortionRow({});
+          if (lastSummaryTotals.length) {
+            updatePortionTotals(lastSummaryTotals);
+          }
+        });
+      }
+
+      function setResultsMessage(message) {
+        if (!resultsBox) return;
+        resultsBox.classList.add('muted');
+        resultsBox.innerHTML = `<div class="muted">${message}</div>`;
+      }
+
+      function sanitizeQty(value) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : 0;
+      }
+
+      function sanitizeClientItems(items) {
+        if (!Array.isArray(items)) return [];
+        return items.map(item => ({
+          id: item.id,
+          name: item.name || '—',
+          description: item.description || '',
+          qty: sanitizeQty(item.qty ?? 0),
+        }));
+      }
+
+      function buildClientPayload(raw) {
+        const id = Number(raw?.id);
+        if (!Number.isFinite(id) || id <= 0) return null;
+        return {
+          id,
+          name: raw.name || '—',
+          email: raw.email || '',
+          date: raw.date || '',
+          time: raw.time || '',
+          address: raw.address || '',
+          city: raw.city || '',
+          guests: raw.guests ?? '',
+          items: sanitizeClientItems(raw.items || []),
+        };
+      }
+
+      function updateResultHighlights() {
+        if (!resultsBox) return;
+        const selectedIds = new Set(selectedClients.map(client => Number(client.id)));
+        resultsBox.querySelectorAll('.search-result').forEach(node => {
+          const id = Number(node.dataset.id);
+          if (selectedIds.has(id)) {
+            node.classList.add('is-selected');
+          } else {
+            node.classList.remove('is-selected');
+          }
+        });
+      }
+
+      function removeClientById(id) {
+        const targetId = Number(id);
+        selectedClients = selectedClients.filter(client => Number(client.id) !== targetId);
+        renderSelectedItems();
+        updateResultHighlights();
+      }
+
+      function renderSelectedItems() {
+        if (!itemsContainer) return;
+        itemsContainer.innerHTML = '';
+        if (summaryContainer) summaryContainer.innerHTML = '';
+
+        if (!selectedClients.length) {
+          itemsContainer.innerHTML = '<div class="selected-empty">No menu items yet.</div>';
+          if (summaryContainer) summaryContainer.innerHTML = '<div class="selected-empty">No totals yet.</div>';
+          lastSummaryTotals = [];
+          updatePortionTotals([]);
+          return;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'selected-items-table';
+        table.innerHTML = '<thead><tr><th style="width:40%">Item</th><th style="width:40%">Description</th><th style="width:20%">Qty</th></tr></thead>';
+        const tbody = document.createElement('tbody');
+
+        selectedClients.forEach(client => {
+          const headingRow = document.createElement('tr');
+          headingRow.className = 'client-heading';
+          const headingCell = document.createElement('td');
+          headingCell.colSpan = 3;
+          headingCell.textContent = client.name || '—';
+
+          const metaParts = [
+            client.date,
+            client.time,
+            client.guests ? `${client.guests} guests` : null,
+            client.address,
+            client.city,
+          ].filter(Boolean);
+          if (metaParts.length) {
+            const metaSpan = document.createElement('span');
+            metaSpan.textContent = metaParts.join(' • ');
+            headingCell.appendChild(metaSpan);
+          }
+
+          const removeIcon = document.createElement('button');
+          removeIcon.type = 'button';
+          removeIcon.className = 'client-remove-icon';
+          removeIcon.textContent = '−';
+          removeIcon.setAttribute('aria-label', `Remove ${client.name || 'client'}`);
+          removeIcon.addEventListener('click', () => removeClientById(client.id));
+          headingCell.appendChild(removeIcon);
+
+          headingRow.appendChild(headingCell);
+          tbody.appendChild(headingRow);
+
+          const items = Array.isArray(client.items) ? client.items : [];
+          if (!items.length) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.className = 'client-empty';
+            const emptyCell = document.createElement('td');
+            emptyCell.colSpan = 3;
+            emptyCell.textContent = 'No items recorded.';
+            emptyRow.appendChild(emptyCell);
+            tbody.appendChild(emptyRow);
+          } else {
+            items.forEach(item => {
+              const row = document.createElement('tr');
+              const nameCell = document.createElement('td');
+              nameCell.textContent = item.name || '—';
+              const descCell = document.createElement('td');
+              descCell.textContent = item.description || '—';
+              const qtyCell = document.createElement('td');
+              qtyCell.className = 'qty';
+              qtyCell.textContent = item.qty;
+              row.appendChild(nameCell);
+              row.appendChild(descCell);
+              row.appendChild(qtyCell);
+              tbody.appendChild(row);
+            });
+          }
+        });
+
+        table.appendChild(tbody);
+        itemsContainer.appendChild(table);
+
+        renderSummaryTotals();
+      }
+
+      function renderSummaryTotals() {
+        if (!summaryContainer) return;
+        summaryContainer.innerHTML = '';
+        const totals = new Map();
+        selectedClients.forEach(client => {
+          if (!Array.isArray(client.items)) return;
+          client.items.forEach(item => {
+            const name = (item?.name || '—').trim() || '—';
+            const key = name.toLowerCase();
+            const qty = sanitizeQty(item?.qty ?? 0);
+            if (!qty) return;
+            if (!totals.has(key)) totals.set(key, { name, qty: 0 });
+            totals.get(key).qty += qty;
+          });
+        });
+
+        if (!totals.size) {
+          buildPortionMeta().forEach(entry => {
+            const name = (entry.labelInput?.value || entry.baseLabel || '').trim();
+            if (!name) return;
+            const qty = sanitizeQty(entry.qtyInput?.value || 0);
+            if (!qty) return;
+            const key = name.toLowerCase();
+            if (!totals.has(key)) totals.set(key, { name, qty: 0 });
+            totals.get(key).qty += qty;
+          });
+        }
+
+        if (!totals.size) {
+          summaryContainer.innerHTML = '<div class="selected-empty">No totals yet.</div>';
+          lastSummaryTotals = [];
+          updatePortionTotals([]);
+          return;
+        }
+
+        const ordered = Array.from(totals.values()).sort((a, b) => {
+          const catA = CATEGORY_ORDER[categorizeItem(a.name)] || 99;
+          const catB = CATEGORY_ORDER[categorizeItem(b.name)] || 99;
+          if (catA !== catB) return catA - catB;
+          return a.name.localeCompare(b.name);
+        });
+
+        const table = document.createElement('table');
+        table.className = 'selected-summary-table';
+        table.innerHTML = '<thead><tr><th style="width:70%">Item</th><th style="width:30%">Qty</th></tr></thead>';
+        const tbody = document.createElement('tbody');
+        ordered.forEach(({ name, qty }) => {
+          const row = document.createElement('tr');
+          const nameCell = document.createElement('td');
+          nameCell.textContent = name;
+          const qtyCell = document.createElement('td');
+          qtyCell.className = 'qty';
+          qtyCell.textContent = qty;
+          row.appendChild(nameCell);
+          row.appendChild(qtyCell);
+          tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        summaryContainer.appendChild(table);
+        lastSummaryTotals = ordered;
+        updatePortionTotals(ordered);
+      }
+
+      function categorizeItem(name) {
+        const label = (name || '').toLowerCase();
+        for (const entry of CATEGORY_PATTERNS) {
+          if (entry.patterns.some(regex => regex.test(label))) {
+            return entry.key;
+          }
+        }
+        return 'otros';
+      }
+
+      function normalizeLabel(value) {
+        return (value || '')
+          .toString()
+          .trim()
+          .toUpperCase()
+          .replace(/[^A-Z0-9]+/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function updatePortionTotals(summaryList) {
+        const portionMeta = buildPortionMeta();
+        const totalsMap = new Map();
+        portionMeta.forEach(entry => totalsMap.set(entry.key, 0));
+
+        summaryList.forEach(({ name, qty }) => {
+          const normalizedName = normalizeLabel(name);
+          if (!normalizedName) return;
+          const haystack = ` ${normalizedName} `;
+          portionMeta.forEach(entry => {
+            const label = normalizeLabel(entry.labelInput?.value || entry.baseLabel);
+            if (!label) return;
+            const needle = ` ${label} `;
+            if (haystack.includes(needle)) {
+              const prev = totalsMap.get(entry.key) || 0;
+              totalsMap.set(entry.key, prev + qty);
+            }
+          });
+        });
+
+        portionMeta.forEach(entry => {
+          const totalInput = entry.totalInput;
+          if (!totalInput) return;
+          const nextVal = totalsMap.get(entry.key) || 0;
+          const prevValNum = Number(totalInput.value || 0);
+          const nextString = nextVal ? String(nextVal) : '0';
+          if (nextVal !== prevValNum || totalInput.value !== nextString) {
+            totalInput.value = nextString;
+            markDirty();
+          } else {
+            totalInput.value = nextString;
+          }
+        });
+      }
+
+      function addClient(raw) {
+        const payload = buildClientPayload(raw);
+        if (!payload) return;
+        if (selectedClients.some(client => Number(client.id) === payload.id)) {
+          return;
+        }
+        selectedClients.push(payload);
+        renderSelectedItems();
+        updateResultHighlights();
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        setResultsMessage('Type at least 2 characters to search');
+      }
+
+      function renderResults(items) {
+        if (!resultsBox) return;
+        if (!Array.isArray(items) || !items.length) {
+          setResultsMessage('No matches found');
+          return;
+        }
+
+        resultsBox.classList.remove('muted');
+        resultsBox.innerHTML = '';
+
+        items.forEach(item => {
+          const wrap = document.createElement('div');
+          wrap.className = 'search-result';
+          wrap.dataset.id = item.id;
+
+          const name = document.createElement('div');
+          name.className = 'name';
+          name.textContent = item.name || '—';
+          wrap.appendChild(name);
+
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          const metaParts = [];
+          if (item.date) metaParts.push(item.date);
+          if (item.city) metaParts.push(item.city);
+          if (item.time) metaParts.push(item.time);
+          meta.textContent = metaParts.join(' • ');
+          wrap.appendChild(meta);
+
+          wrap.addEventListener('click', () => addClient(item));
+
+          resultsBox.appendChild(wrap);
+        });
+
+        updateResultHighlights();
+      }
+
+      async function performSearch(term) {
+        if (!term || term.length < 2) {
+          setResultsMessage('Type at least 2 characters to search');
+          return;
+        }
+
+        setResultsMessage('Searching…');
+
+        try {
+          const response = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(term)}`, {
+            headers: { 'Accept': 'application/json' },
+          });
+          if (!response.ok) {
+            throw new Error('Search request failed');
+          }
+          const data = await response.json();
+          renderResults(data);
+        } catch (error) {
+          console.error('Orders breakdown search failed', error);
+          setResultsMessage('Search failed. Try again.');
+        }
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          const term = searchInput.value.trim();
+          clearTimeout(searchTimer);
+          if (term.length < 2) {
+            setResultsMessage('Type at least 2 characters to search');
+            return;
+          }
+          searchTimer = setTimeout(() => performSearch(term), 250);
+        });
+      }
+
+      setResultsMessage('Type at least 2 characters to search');
+      renderSelectedItems();
+    });
+  </script>
+</body>
+</html>

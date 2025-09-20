@@ -1,0 +1,28 @@
+:root{--brand:#b21e27;--brand-hover:#9a1a22;--text:#111;--muted:#666;--bg:#fafafa;--accent:#000;}
+body{font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);margin:0}
+.container{max-width:980px;margin:40px auto;padding:0 16px}
+.card{background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.06);padding:24px}
+.progress{display:flex;justify-content:space-between;margin:0 0 24px 0;counter-reset:step}
+.progress .step{position:relative;flex:1;text-align:center}
+.progress .step:before{counter-increment:step;content:counter(step);width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;background:#eee;color:#555;font-weight:700;margin-bottom:6px}
+.progress .step:after{content:"";position:absolute;top:17px;left:50%;right:-50%;height:2px;background:#eee;z-index:-1}
+.progress .step:last-child:after{display:none}
+.progress .step.active:before{background:var(--brand);color:#fff}
+.progress .step.done:before{background:#16a34a;color:#fff}
+.progress small{display:block;color:var(--muted)}
+.btn{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;transition:background .15s ease, transform .05s ease, box-shadow .15s ease;box-shadow:0 1px 1px rgba(0,0,0,.04)}
+.btn:hover{background:var(--brand-hover)}
+.btn:active{transform:translateY(1px)}
+.btn-secondary{background:#555;color:#fff}
+.btn-secondary:hover{background:#444}
+.btn-dark{background:#111;color:#fff}
+.btn-dark:hover{background:var(--brand)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-weight:600;margin-bottom:6px}
+input,select{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px}
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:10px}
+.slot{padding:10px 12px;border-radius:999px;border:1px solid #ddd;text-align:center;cursor:pointer;background:#fff}
+.slot.disabled{opacity:.4;pointer-events:none}
+.slot.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.header h1{margin:0}
