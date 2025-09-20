@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Support\MenuLabel;
 
 class MenuAdminController extends Controller
 {
@@ -36,7 +37,7 @@ class MenuAdminController extends Controller
             $out[$catName] = [];
             foreach ((array) $rows as $row) {
                 $key = trim((string) ($row['key'] ?? ''));
-                $name = trim((string) ($row['name'] ?? ''));
+                $name = MenuLabel::standardizeText(trim((string) ($row['name'] ?? '')));
                 // Auto-generate key from name if key is empty but name provided
                 if ($key === '' && $name !== '') {
                     $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '-', $name), '-'));
@@ -46,9 +47,9 @@ class MenuAdminController extends Controller
                     $key = $slug;
                 }
                 if ($key === '' && $name === '') { continue; }
-                if ($name === '') { $name = $key; }
+                if ($name === '') { $name = MenuLabel::standardizeText($key); }
                 $priceRaw = $row['price'] ?? 0;
-                $desc = trim((string) ($row['desc'] ?? ''));
+                $desc = MenuLabel::standardizeText(trim((string) ($row['desc'] ?? '')));
                 if (!is_numeric($priceRaw) || (float)$priceRaw < 0) {
                     $errors[] = "Invalid price for {$catName}/{$key}";
                     $priceRaw = 0;
@@ -61,7 +62,7 @@ class MenuAdminController extends Controller
                 $seen[$catName][$key] = true;
                 $out[$catName][] = [
                     'key'   => $key,
-                    'name'  => $name !== '' ? $name : $key,
+                    'name'  => $name !== '' ? $name : MenuLabel::standardizeText($key),
                     'desc'  => $desc,
                     'price' => round($price, 2),
                 ];

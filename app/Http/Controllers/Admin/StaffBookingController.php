@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Support\MenuLabel;
 
 class StaffBookingController extends Controller
 {
@@ -204,7 +205,7 @@ class StaffBookingController extends Controller
 
         // Items
         foreach ($lines as $it) {
-            $name = $it['name'] ?? 'Item';
+            $name = MenuLabel::standardize($it['name'] ?? 'Item');
             $price= (float) ($it['price'] ?? 0);
             $qty  = (int) ($it['qty'] ?? 1);
             $r->items()->create([
@@ -262,8 +263,9 @@ class StaffBookingController extends Controller
         foreach ($cfg as $cat => $items) {
             foreach ((array)$items as $it) {
                 if (!isset($it['key'])) continue;
+                $name = $it['name'] ?? $it['key'];
                 $out[$it['key']] = [
-                    'name' => $it['name'] ?? $it['key'],
+                    'name' => MenuLabel::standardizeText($name),
                     'price'=> (float)($it['price'] ?? 0),
                     'cat'  => $cat,
                 ];
@@ -292,7 +294,7 @@ class StaffBookingController extends Controller
             foreach ((array)$items as $it) {
                 if (!isset($it['key'])) continue;
                 $cats[$cat][$it['key']] = [
-                    'name'  => $it['name'] ?? $it['key'],
+                    'name'  => MenuLabel::standardizeText($it['name'] ?? $it['key']),
                     'price' => (float)($it['price'] ?? 0),
                 ];
             }

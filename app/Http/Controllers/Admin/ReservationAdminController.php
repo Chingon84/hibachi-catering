@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use Illuminate\Support\Facades\Schema;
+use App\Support\MenuLabel;
 
 class ReservationAdminController extends Controller
 {
@@ -209,10 +210,16 @@ class ReservationAdminController extends Controller
             $price = (float) ($data['custom_price'] ?? 0);
         }
 
+        $name = MenuLabel::standardize($name);
+        $description = $data['description'] ?? null;
+        if ($description !== null && $description !== '') {
+            $description = MenuLabel::standardizeText($description);
+        }
+
         $r->items()->create([
             'menu_id'             => $menuId,
             'name_snapshot'       => $name,
-            'description'         => $data['description'] ?? null,
+            'description'         => $description,
             'unit_price_snapshot' => $price,
             'qty'                 => $qty,
             'line_total'          => round($price * $qty, 2),
@@ -348,12 +355,20 @@ class ReservationAdminController extends Controller
         foreach ($cfg as $cat => $items) {
             foreach ((array)$items as $it) {
                 if (!isset($it['key'])) continue;
-                $out[$it['key']] = ['name'=>$it['name'] ?? $it['key'], 'price'=>(float)($it['price'] ?? 0), 'cat'=>$cat];
+                $out[$it['key']] = [
+                    'name'  => MenuLabel::standardizeText($it['name'] ?? $it['key']),
+                    'price' => (float)($it['price'] ?? 0),
+                    'cat'   => $cat,
+                ];
             }
         }
         // Include Packages used in the public wizard as well
         foreach ($this->packagesMenu() as $code => $it) {
-            $out[$code] = ['name'=>$it['name'], 'price'=>(float)$it['price'], 'cat'=>'Packages'];
+            $out[$code] = [
+                'name'  => MenuLabel::standardizeText($it['name']),
+                'price' => (float)$it['price'],
+                'cat'   => 'Packages',
+            ];
         }
         return $out;
     }

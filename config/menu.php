@@ -47,21 +47,21 @@ return array (
     6 => 
     array (
       'key' => 'spicy-edamame',
-      'name' => 'Spicy edamame',
+      'name' => 'Spicy Edamame',
       'desc' => '',
       'price' => 7.0,
     ),
     7 => 
     array (
       'key' => 'chicken-fried',
-      'name' => 'Chicken fried rice',
+      'name' => 'Chicken Fried Rice',
       'desc' => '',
       'price' => 8.0,
     ),
     8 => 
     array (
       'key' => 'shrimp-fried',
-      'name' => 'Shrimp fried rice',
+      'name' => 'Shrimp Fried Rice',
       'desc' => '',
       'price' => 8.0,
     ),
@@ -85,7 +85,7 @@ return array (
     2 => 
     array (
       'key' => 'twin-lobster',
-      'name' => 'Twin Lobster tail',
+      'name' => 'Twin Lobster',
       'desc' => '',
       'price' => 96.0,
     ),
@@ -144,7 +144,7 @@ return array (
     3 => 
     array (
       'key' => 'hibachi-deluxe',
-      'name' => 'Hibachi Deluxe (Japanese A5 Wagyu & Lobster tail)',
+      'name' => 'Hibachi Deluxe (Japanese A5 Wagyu & Lobster)',
       'desc' => '',
       'price' => 290.0,
     ),
@@ -189,7 +189,7 @@ return array (
     4 => 
     array (
       'key' => 'ny-lobster',
-      'name' => 'NY & Lobster tail',
+      'name' => 'NY & Lobster',
       'desc' => '',
       'price' => 92.0,
     ),
@@ -245,7 +245,7 @@ return array (
     12 => 
     array (
       'key' => 'ribeye-10oz',
-      'name' => 'Rib Eye sumo / 10oz',
+      'name' => 'Rib Eye Sumo / 10oz',
       'desc' => '',
       'price' => 90.0,
     ),
@@ -273,7 +273,7 @@ return array (
     16 => 
     array (
       'key' => 'ribeye-lobster',
-      'name' => 'Rib Eye & Lobster tail',
+      'name' => 'Rib Eye & Lobster',
       'desc' => '',
       'price' => 99.0,
     ),

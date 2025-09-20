@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Models\Timeslot;
 use App\Models\ReservationItem;
+use App\Support\MenuLabel;
 
 class ReservationController extends Controller
 {
@@ -69,10 +70,15 @@ private function menuToCategories(array $menu): array
     $out = [];
     foreach ($menu as $code => $it) {
         $cat = $it['category'] ?? 'General';
+        $name = MenuLabel::standardize($it['name'] ?? 'Item');
+        $desc = $it['desc'] ?? null;
+        if ($desc !== null) {
+            $desc = MenuLabel::standardizeText($desc);
+        }
         $out[$cat][$code] = [
-            'name'  => $it['name']  ?? 'Item',
+            'name'  => $name,
             'price' => (float)($it['price'] ?? 0),
-            'desc'  => $it['desc'] ?? null,
+            'desc'  => $desc,
         ];
     }
     return $out;
@@ -278,7 +284,7 @@ private function menuToCategories(array $menu): array
                 if ($qty <= 0) continue;
                 if (!isset($menu[$code])) continue;
 
-                $name  = $menu[$code]['name'];
+                $name  = MenuLabel::standardize($menu[$code]['name']);
                 $price = (float) $menu[$code]['price'];
                 $line  = $price * $qty;
 
@@ -512,46 +518,53 @@ private function menuToCategories(array $menu): array
                 $catLabel = ucwords(strtolower($catName));
                 foreach ((array) $rows as $row) {
                     $code  = (string) ($row['key'] ?? '');
-                    $name  = (string) ($row['name'] ?? 'Item');
-                    $price = (float) ($row['price'] ?? 0);
                     if ($code === '') { continue; }
+
+                    $nameRaw = (string) ($row['name'] ?? '');
+                    $name    = MenuLabel::standardizeText($nameRaw !== '' ? $nameRaw : $code);
+                    $price   = (float) ($row['price'] ?? 0);
+                    $desc    = $row['desc'] ?? null;
+                    $desc    = $desc !== null ? MenuLabel::standardizeText($desc) : null;
+
                     $flat[$code] = [
-                        'name'     => $name !== '' ? $name : $code,
+                        'name'     => $name,
                         'price'    => $price,
                         'category' => $catLabel,
-                        'desc'     => $row['desc'] ?? null,
+                        'desc'     => $desc,
                     ];
                 }
             }
-            if (!empty($flat)) return $flat;
+            if (!empty($flat)) {
+                return $flat;
+            }
         }
 
         // Fallback: menú por defecto (si no hay config)
-        return [
+        $defaults = [
             // Packages (price per person)
             'PKG_CLASSIC' => [
                 'name'     => 'Classic Package (pp)',
                 'price'    => 85.00,
                 'category' => 'Packages',
-                'desc'     => 'Choose 2 proteins: NY Steak, Chicken, Shrimp, or Tofu. Includes steamed rice, hibachi vegetables, dipping sauces, and full setup.'
+                'desc'     => 'Choose 2 proteins: NY, Chicken, Shrimp, or Tofu. Includes White Rice, hibachi vegetables, dipping sauces, and full setup.'
             ],
             'PKG_PREMIUM' => [
                 'name'     => 'Premium Package (pp)',
                 'price'    => 95.00,
                 'category' => 'Packages',
-                'desc'     => 'Choose 2 proteins: NY Steak, Filet Mignon, Chicken, Shrimp, Salmon, or Tofu. Includes fried or steamed rice, house salad, 1 complimentary appetizer, hibachi vegetables & sauces, full setup.'
+                'desc'     => 'Choose 2 proteins: NY, Fillet Mignon, Chicken, Shrimp, Salmon, or Tofu. Includes Fried Rice or White Rice, House Salad, 1 complimentary appetizer, hibachi vegetables & sauces, full setup.'
             ],
             'PKG_DELUXE' => [
                 'name'     => 'Deluxe Package (pp)',
                 'price'    => 135.00,
                 'category' => 'Packages',
-                'desc'     => 'Choose 2–3 proteins: NY Steak, Filet Mignon, Rib Eye, Chicken, Shrimp, Scallops, Lobster Tail, Halibut, or Tofu. Includes fried rice, house salad + miso soup, 1 appetizer, hibachi vegetables & sauces, complimentary sake (per group), full setup.'
+                'desc'     => 'Choose 2–3 proteins: NY, Fillet Mignon, Rib Eye, Chicken, Shrimp, Scallops, Lobster, Halibu, or Tofu. Includes Fried Rice, House Salad + Miso Soup, 1 appetizer, hibachi vegetables & sauces, complimentary sake (per group), full setup.'
             ],
             'PKG_KIDS' => [
                 'name'     => 'Kids Package (pp)',
                 'price'    => 55.00,
                 'category' => 'Packages',
-                'desc'     => 'For kids 10 & under. Choose 1 protein: Chicken, Shrimp, NY Steak, or Tofu. Includes steamed rice (upgrade to fried rice +$5), hibachi vegetables & sauces, beverage.'
+                'desc'     => 'For kids 10 & under. Choose 1 protein: Chicken, Shrimp, NY, or Tofu. Includes White Rice (upgrade to Fried Rice +$5), hibachi vegetables & sauces, beverage.'
             ],
             'PKG_CUSTOM' => [
                 'name'     => 'Custom Package (per quote)',
@@ -574,6 +587,16 @@ private function menuToCategories(array $menu): array
             'ADD_HEATER'      => ['name'=>'Patio Heater & Propane',      'price'=>90.00,  'category'=>'Starters & Add-ons'],
             'ADD_GLASSWARE'   => ['name'=>'Glassware/Tableware Upgrade', 'price'=>3.00,   'category'=>'Starters & Add-ons'],
         ];
+
+        foreach ($defaults as $code => &$entry) {
+            $entry['name'] = MenuLabel::standardizeText($entry['name'] ?? $code);
+            if (!empty($entry['desc'])) {
+                $entry['desc'] = MenuLabel::standardizeText($entry['desc']);
+            }
+        }
+        unset($entry);
+
+        return $defaults;
     }
 
 
