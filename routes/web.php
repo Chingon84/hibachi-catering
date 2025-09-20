@@ -104,6 +104,12 @@ Route::middleware(['admin'])->group(function () {
     Route::get('/admin/orders-breakdown/details', [ReservationAdminController::class, 'ordersBreakdownDetails'])
         ->middleware('perm:orders.view')
         ->name('admin.orders.breakdown.details');
+    Route::get('/admin/orders-breakdown/portions', [ReservationAdminController::class, 'getOrderPortions'])
+        ->middleware('perm:orders.view')
+        ->name('admin.orders.breakdown.portions');
+    Route::post('/admin/orders-breakdown/portions', [ReservationAdminController::class, 'saveOrderPortions'])
+        ->middleware('perm:orders.manage')
+        ->name('admin.orders.breakdown.portions.save');
     // Event JSON (for popover)
     Route::get('/events/{id}', [CalendarController::class, 'eventJson'])->middleware('perm:calendar.view')->name('events.show.json');
 

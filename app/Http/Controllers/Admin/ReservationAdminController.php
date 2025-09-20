@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Support\MenuLabel;
+use App\Models\OrderPortionRow;
 
 class ReservationAdminController extends Controller
 {
@@ -518,6 +520,127 @@ class ReservationAdminController extends Controller
         })->values();
 
         return response()->json($payload);
+    }
+
+    public function getOrderPortions()
+    {
+        $rows = OrderPortionRow::all();
+        if ($rows->isEmpty()) {
+            $this->seedDefaultOrderPortions();
+            $rows = OrderPortionRow::all();
+        }
+
+        $orderMap = collect(MenuLabel::primaryItems())
+            ->mapWithKeys(fn ($label, $index) => [MenuLabel::standardize($label) => $index])
+            ->all();
+
+        $sorted = $rows->sortBy(function (OrderPortionRow $row) use ($orderMap) {
+            $normalized = MenuLabel::standardize($row->label ?? '');
+            return $orderMap[$normalized] ?? (1000 + ($row->position ?? 0));
+        })->values();
+
+        $sorted->each(function (OrderPortionRow $row, int $index) {
+            if ($row->position !== $index) {
+                $row->position = $index;
+                $row->save();
+            }
+        });
+
+        return response()->json($sorted->map(function (OrderPortionRow $row) {
+            return [
+                'key' => $row->row_key,
+                'label' => $row->label,
+                'qty' => (float) $row->qty,
+                'unit' => $row->unit,
+                'total' => (float) $row->total,
+                'ozs' => (float) $row->ozs,
+                'lbs' => (float) $row->lbs,
+                'position' => $row->position,
+            ];
+        }));
+    }
+
+    public function saveOrderPortions(Request $request)
+    {
+        $validated = $request->validate([
+            'rows' => ['required', 'array'],
+            'rows.*.key' => ['required', 'string', 'max:120'],
+            'rows.*.label' => ['nullable', 'string', 'max:255'],
+            'rows.*.qty' => ['nullable', 'numeric', 'min:0'],
+            'rows.*.unit' => ['required', 'string', 'max:10'],
+            'rows.*.total' => ['nullable', 'numeric', 'min:0'],
+            'rows.*.ozs' => ['nullable', 'numeric', 'min:0'],
+            'rows.*.lbs' => ['nullable', 'numeric', 'min:0'],
+            'rows.*.position' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $rows = collect($validated['rows'])
+            ->filter(fn ($row) => !empty($row['key']))
+            ->values();
+
+        $orderMap = collect(MenuLabel::primaryItems())
+            ->mapWithKeys(fn ($label, $index) => [MenuLabel::standardize($label) => $index])
+            ->all();
+
+        $rows = $rows->sortBy(function ($row, $index) use ($orderMap) {
+            $normalized = MenuLabel::standardize($row['label'] ?? '');
+            return $orderMap[$normalized] ?? (1000 + ($row['position'] ?? $index));
+        })->values();
+
+        DB::transaction(function () use ($rows) {
+            $keys = $rows->pluck('key')->all();
+            if (!empty($keys)) {
+                OrderPortionRow::whereNotIn('row_key', $keys)->delete();
+            } else {
+                OrderPortionRow::query()->delete();
+            }
+
+            $rows->each(function ($row, $index) {
+                $qty = isset($row['qty']) ? (float) $row['qty'] : 0.0;
+                $unit = $row['unit'] ?? 'oz';
+                $total = isset($row['total']) ? (float) $row['total'] : 0.0;
+                $ozs = isset($row['ozs']) ? (float) $row['ozs'] : ($qty * $total);
+                $lbs = isset($row['lbs']) ? (float) $row['lbs'] : ($ozs > 0 ? $ozs / 16 : 0);
+
+                OrderPortionRow::updateOrCreate(
+                    ['row_key' => $row['key']],
+                    [
+                        'label' => $row['label'] ?? null,
+                        'qty' => $qty,
+                        'unit' => $unit,
+                        'total' => $total,
+                        'ozs' => $ozs,
+                        'lbs' => $lbs,
+                        'position' => $row['position'] ?? $index,
+                    ]
+                );
+            });
+        });
+
+        return $this->getOrderPortions();
+    }
+
+    private function seedDefaultOrderPortions(): void
+    {
+        $items = MenuLabel::primaryItems();
+        DB::transaction(function () use ($items) {
+            foreach ($items as $index => $label) {
+                $slug = Str::slug($label ?: ('item-' . $index));
+                $key = 'default-' . $slug . '-' . $index;
+                OrderPortionRow::updateOrCreate(
+                    ['row_key' => $key],
+                    [
+                        'label' => $label,
+                        'qty' => 0,
+                        'unit' => 'oz',
+                        'total' => 0,
+                        'ozs' => 0,
+                        'lbs' => 0,
+                        'position' => $index,
+                    ]
+                );
+            }
+        });
     }
 
     public function invoice(int $id)

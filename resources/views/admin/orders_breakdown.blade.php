@@ -183,7 +183,9 @@
       const portionTableBody = document.querySelector('.totals-card tbody');
       const portionAddBtn = document.getElementById('portionAddRowBtn');
       const saveBtn = document.getElementById('ordersSaveBtn');
-      const STORAGE_KEY = 'admin:ordersBreakdown:table';
+      const PORTIONS_URL = "{{ route('admin.orders.breakdown.portions') }}";
+      const PORTIONS_SAVE_URL = "{{ route('admin.orders.breakdown.portions.save') }}";
+      const CSRF_TOKEN = "{{ csrf_token() }}";
       const CATEGORY_ORDER = {
         'specials': 1,
         'combinations': 2,
@@ -408,68 +410,102 @@
       }
 
       function collectTableState() {
-        const snapshot = {};
         removeEmptyRows();
-        buildPortionMeta().forEach(entry => {
-          if (!entry.key) return;
-          updateRowOzs(entry.row);
-          snapshot[entry.key] = {
-            qty: entry.qtyInput ? entry.qtyInput.value : '',
-            unit: entry.unitInput ? entry.unitInput.value : 'oz',
-            label: entry.labelInput ? entry.labelInput.value : '',
-            total: entry.totalInput ? entry.totalInput.value : '',
-            lbpcs: entry.lbpcsInput ? entry.lbpcsInput.value : '',
-            lbs: entry.lbsInput ? entry.lbsInput.value : '',
-          };
+        const rows = [];
+        buildPortionMeta().forEach((entry, index) => {
+          let key = entry.key;
+          if (!key || key === '') {
+            key = `row-${Date.now()}-${index}`;
+            if (entry.row) {
+              entry.row.setAttribute('data-item', key);
+            }
+          }
+          const qty = entry.qtyInput ? toNumber(entry.qtyInput.value) : 0;
+          const unit = entry.unitInput ? entry.unitInput.value : 'oz';
+          const label = entry.labelInput ? entry.labelInput.value.trim() : '';
+          const total = entry.totalInput ? toNumber(entry.totalInput.value) : 0;
+          const ozs = entry.lbpcsInput ? toNumber(entry.lbpcsInput.value) : 0;
+          const lbs = entry.lbsInput ? toNumber(entry.lbsInput.value) : 0;
+
+          if (entry.row) {
+            entry.row.setAttribute('data-label', label);
+          }
+
+          rows.push({
+            key,
+            qty,
+            unit,
+            label,
+            total,
+            ozs,
+            lbs,
+            position: index,
+          });
         });
-        return snapshot;
+        return rows;
       }
 
       function applyTableState(state) {
-        if (!state || typeof state !== 'object') return;
-        Object.entries(state).forEach(([key, data]) => {
-          const row = ensurePortionRow(key);
-          if (!row) return;
-          const qty = row.querySelector('[data-field="qty"]');
-          const unit = row.querySelector('[data-field="unit"]');
-          const label = row.querySelector('[data-field="label"]');
-          const total = row.querySelector('[data-field="total"]');
-          const lbpcs = row.querySelector('[data-field="lbpcs"]');
-          if (qty && typeof data.qty !== 'undefined') qty.value = data.qty;
-          if (unit && data.unit) unit.value = data.unit;
-          if (label && typeof data.label !== 'undefined') {
-            label.value = data.label;
-            row.setAttribute('data-label', data.label);
-          }
-          if (total && typeof data.total !== 'undefined') total.value = data.total;
-          if (lbpcs && typeof data.lbpcs !== 'undefined') lbpcs.value = data.lbpcs;
-          const lbs = row.querySelector('[data-field="lbs"]');
-          if (lbs && typeof data.lbs !== 'undefined') lbs.value = data.lbs;
-          attachRowListeners(row);
-          updateRowOzs(row);
-        });
-        removeEmptyRows();
-      }
+        if (!Array.isArray(state)) return;
+        if (!portionTableBody) return;
 
-      function loadTableState() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            markSaved();
-            return;
+        portionTableBody.innerHTML = '';
+        const ordered = state.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+        ordered.forEach((data, index) => {
+          const row = createPortionRow({
+            key: data.key,
+            qty: data.qty ?? '',
+            unit: data.unit ?? 'oz',
+            label: data.label ?? '',
+            total: data.total ?? '',
+            lbpcs: data.ozs ?? '',
+            lbs: data.lbs ?? '',
+            silent: true,
+          });
+          if (row) {
+            row.setAttribute('data-item', data.key);
+            row.setAttribute('data-label', data.label ?? '');
+            row.dataset.position = (data.position ?? index).toString();
           }
-          const parsed = JSON.parse(raw);
-          applyTableState(parsed);
-        } catch (err) {
-          console.warn('Unable to load saved orders breakdown totals', err);
-        }
+        });
+        getPortionRows().forEach(row => updateRowOzs(row));
+        removeEmptyRows();
+        tableDirty = false;
         markSaved();
       }
 
-      function saveTableState() {
+      async function loadTableState() {
         try {
-          const snapshot = collectTableState();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+          const response = await fetch(PORTIONS_URL, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            credentials: 'same-origin',
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          applyTableState(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.warn('Unable to load saved portions table', err);
+          markSaved();
+        }
+      }
+
+      async function saveTableState() {
+        try {
+          const rows = collectTableState();
+          const response = await fetch(PORTIONS_SAVE_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': CSRF_TOKEN,
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ rows }),
+          });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          applyTableState(Array.isArray(data) ? data : []);
         } catch (err) {
           console.error('Unable to save orders breakdown totals', err);
         }
@@ -478,9 +514,8 @@
       loadTableState();
 
       if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-      saveTableState();
-      markSaved();
+        saveBtn.addEventListener('click', async () => {
+      await saveTableState();
     });
   }
 
