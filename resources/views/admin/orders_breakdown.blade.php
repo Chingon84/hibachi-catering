@@ -148,7 +148,7 @@
               <th class="lbs-col">lbs</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody> 
             @foreach($items as $item)
               @php
                 $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $item));

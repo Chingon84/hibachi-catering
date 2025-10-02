@@ -8,9 +8,13 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class TeamController extends Controller
 {
+    public const PASSWORD_PLACEHOLDER = '********';
+
     public function index()
     {
         $users = User::orderBy('name')->get();
@@ -20,12 +24,15 @@ class TeamController extends Controller
     public function create()
     {
         $user = new User();
-        return view('admin.team.form', compact('user'));
+        return view('admin.team.form', [
+            'user' => $user,
+            'passwordPlaceholder' => self::PASSWORD_PLACEHOLDER,
+        ]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => ['required','string','max:255'],
             'email' => ['required','email','max:255','unique:users,email'],
             'username' => ['nullable','string','max:255','unique:users,username'],
@@ -35,6 +42,14 @@ class TeamController extends Controller
             'can_access_admin' => ['sometimes','boolean'],
             'is_active' => ['sometimes','boolean'],
         ]);
+
+        if ($validator->fails()) {
+            session()->flash('team_form_password', $request->input('password'));
+            throw new ValidationException($validator);
+        }
+
+        $data = $validator->validated();
+        session()->forget('team_form_password');
 
         // Only owner can create another owner
         if (($data['role'] ?? '') === 'owner' && !Auth::user()->isOwner()) {
@@ -53,14 +68,24 @@ class TeamController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        return view('admin.team.form', compact('user'));
+        return view('admin.team.form', [
+            'user' => $user,
+            'passwordPlaceholder' => self::PASSWORD_PLACEHOLDER,
+        ]);
     }
 
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
-        $data = $request->validate([
+        $input = $request->all();
+        $originalPasswordInput = $input['password'] ?? '';
+
+        if (($input['password'] ?? null) === self::PASSWORD_PLACEHOLDER) {
+            $input['password'] = null;
+        }
+
+        $validator = Validator::make($input, [
             'name' => ['required','string','max:255'],
             'email' => ['required','email','max:255', Rule::unique('users','email')->ignore($user->id)],
             'username' => ['nullable','string','max:255', Rule::unique('users','username')->ignore($user->id)],
@@ -70,6 +95,14 @@ class TeamController extends Controller
             'can_access_admin' => ['sometimes','boolean'],
             'is_active' => ['sometimes','boolean'],
         ]);
+
+        if ($validator->fails()) {
+            session()->flash('team_form_password', $originalPasswordInput);
+            throw new ValidationException($validator);
+        }
+
+        $data = $validator->validated();
+        session()->forget('team_form_password');
 
         // Prevent modifying the owner role unless the current user is owner
         if ($user->isOwner() && !Auth::user()->isOwner()) {
