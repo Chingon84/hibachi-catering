@@ -5,13 +5,17 @@
       $r = $reservation ?? null;
       $date = $r?->date ? \Carbon\Carbon::parse($r->date)->format('m/d/Y') : '—';
       try { $time = $r?->time ? \Carbon\Carbon::parse($r->time)->format('g:i A') : '—'; } catch (\Throwable $e) { $time = $r?->time ? substr($r->time,0,5) : '—'; }
-      $subtotal = (float)($r->subtotal ?? 0);
-      $travel   = (float)($r->travel_fee ?? 0);
-      $gratuity = (float)($r->gratuity ?? 0);
-      $tax      = (float)($r->tax ?? 0);
-      $total    = (float)($r->total ?? 0);
-      $paid     = (float)($r->deposit_paid ?? 0);
-      $balance  = max(0, round($total - $paid, 2));
+      $totals = \App\Support\ReservationTotals::compute($r);
+      $subtotal = $totals['subtotal'];
+      $travel   = $totals['travel'];
+      $gratuity = $totals['gratuity'];
+      $tax      = $totals['tax'];
+      $total    = $totals['total'];
+      $adjustments = $totals['adjustments'];
+      $paidDeposit = $totals['deposit_display'];
+      $paidOther   = $totals['additional_paid'];
+      $paid     = round($totals['paid_total'], 2);
+      $balance  = $totals['balance'];
       $invoiceNo = $r->invoice_number ?? ($r->code ?? ('#'.$r->id));
       $payUrl = $pay_url ?? '';
     @endphp
@@ -85,12 +89,20 @@
                     <td align="right" style="padding:8px 12px;color:#111">${{ number_format($subtotal,2) }}</td>
                   </tr>
                   <tr>
-                    <td style="padding:8px 12px;color:#374151">Gratuity</td>
-                    <td align="right" style="padding:8px 12px;color:#111">${{ number_format($gratuity,2) }}</td>
-                  </tr>
-                  <tr>
                     <td style="padding:8px 12px;color:#374151">Travel</td>
                     <td align="right" style="padding:8px 12px;color:#111">${{ number_format($travel,2) }}</td>
+                  </tr>
+                  @if(!empty($adjustments))
+                    @foreach($adjustments as $adj)
+                      <tr>
+                        <td style="padding:8px 12px;color:#374151">{{ $adj['label'] }}</td>
+                        <td align="right" style="padding:8px 12px;color:#111">${{ number_format((float)$adj['amount'],2) }}</td>
+                      </tr>
+                    @endforeach
+                  @endif
+                  <tr>
+                    <td style="padding:8px 12px;color:#374151">Gratuity</td>
+                    <td align="right" style="padding:8px 12px;color:#111">${{ number_format($gratuity,2) }}</td>
                   </tr>
                   <tr>
                     <td style="padding:8px 12px;color:#374151">Tax</td>
@@ -101,7 +113,17 @@
                     <td align="right" style="padding:10px 12px;border-top:1px solid #e5e7eb;font-weight:700;color:#111">${{ number_format($total,2) }}</td>
                   </tr>
                   <tr>
-                    <td style="padding:8px 12px;color:#16a34a">Paid</td>
+                    <td style="padding:8px 12px;color:#374151">Deposit paid</td>
+                    <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidDeposit,2) }}</td>
+                  </tr>
+                  @if ($paidOther > 0)
+                    <tr>
+                      <td style="padding:8px 12px;color:#374151">Additional paid</td>
+                      <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidOther,2) }}</td>
+                    </tr>
+                  @endif
+                  <tr>
+                    <td style="padding:8px 12px;color:#16a34a">Total paid</td>
                     <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paid,2) }}</td>
                   </tr>
                   <tr>

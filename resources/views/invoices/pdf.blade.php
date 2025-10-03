@@ -21,17 +21,17 @@
   $items = $r?->items ?? collect();
   $date = $r?->date ? \Carbon\Carbon::parse($r->date)->format('m/d/Y') : '—';
   $time = $r?->time ? substr($r->time,0,5) : '—';
-  $subtotal = (float)($r->subtotal ?? 0);
-  $travel   = (float)($r->travel_fee ?? 0);
-  $gratuity = (float)($r->gratuity ?? 0);
-  $tax      = (float)($r->tax ?? 0);
-  $total     = (float)($r->total ?? 0);
-  $paidTotal = (float)($r->deposit_paid ?? 0);
-  $depositDue = (float)($r->deposit_due ?? 0);
-  if ($depositDue <= 0) { $depositDue = round($total * 0.20, 2); }
-  $depositPaid = min($paidTotal, $depositDue);
-  $otherPaid   = max(0, round($paidTotal - $depositPaid, 2));
-  $balance     = max(0, round($total - $paidTotal, 2));
+  $totals = \App\Support\ReservationTotals::compute($r);
+  $subtotal = $totals['subtotal'];
+  $travel   = $totals['travel'];
+  $gratuity = $totals['gratuity'];
+  $adjustments = $totals['adjustments'];
+  $tax      = $totals['tax'];
+  $total    = $totals['total'];
+  $depositPaid = $totals['deposit_display'];
+  $otherPaid   = $totals['additional_paid'];
+  $paidTotal   = $totals['paid_total'];
+  $balance     = $totals['balance'];
 @endphp
 
 <div class="row" style="align-items:center">
@@ -91,11 +91,19 @@
   <table style="margin-top:8px; font-size:11px">
     <tr><td class="right" style="width:80%"><strong>Subtotal</strong></td><td class="right">${{ number_format($subtotal,2) }}</td></tr>
     <tr><td class="right">Travel fee</td><td class="right">${{ number_format($travel,2) }}</td></tr>
+    @if(!empty($adjustments))
+      @foreach($adjustments as $a)
+        <tr><td class="right">{{ $a['label'] ?? 'Adjustment' }}</td><td class="right">${{ number_format((float)($a['amount'] ?? 0),2) }}</td></tr>
+      @endforeach
+    @endif
     <tr><td class="right">Gratuity</td><td class="right">${{ number_format($gratuity,2) }}</td></tr>
     <tr><td class="right">Tax</td><td class="right">${{ number_format($tax,2) }}</td></tr>
     <tr><td class="right"><strong>Total</strong></td><td class="right"><strong>${{ number_format($total,2) }}</strong></td></tr>
     <tr><td class="right" style="color:#16a34a">Deposit paid</td><td class="right" style="color:#16a34a">-${{ number_format($depositPaid,2) }}</td></tr>
-    <tr><td class="right" style="color:#16a34a">Paid</td><td class="right" style="color:#16a34a">-${{ number_format($otherPaid,2) }}</td></tr>
+    @if ($otherPaid > 0)
+      <tr><td class="right" style="color:#16a34a">Additional paid</td><td class="right" style="color:#16a34a">-${{ number_format($otherPaid,2) }}</td></tr>
+    @endif
+    <tr><td class="right" style="color:#16a34a">Total paid</td><td class="right" style="color:#16a34a">-${{ number_format($paidTotal,2) }}</td></tr>
     <tr><td class="right"><strong>Balance</strong></td><td class="right"><strong>${{ number_format($balance,2) }}</strong></td></tr>
   </table>
 </div>

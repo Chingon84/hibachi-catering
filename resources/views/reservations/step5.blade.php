@@ -10,22 +10,27 @@
     $state = $state ?? [];
     $r = $reservation ?? null;
     $estimate = $state['estimate'] ?? [];
-    // Prefer DB totals if present; fallback to session estimate
-    $subtotal = (float)($r->subtotal ?? ($estimate['subtotal'] ?? 0));
-    $travel   = (float)($r->travel_fee ?? ($estimate['travel'] ?? 0));
-    $gratuity = (float)($r->gratuity ?? ($estimate['gratuity'] ?? 0));
-    $tax      = (float)($r->tax ?? ($estimate['tax'] ?? 0));
-    $total    = (float)($r->total ?? ($estimate['total'] ?? 0));
-    // Payment breakdown: treat deposit as up to deposit_due; any extra as general paid
-    // If DB has 0 (default), fallback to session 'deposit_amount' then 20%
-    $depositDue   = (float)($r->deposit_due ?? 0);
-    if ($depositDue <= 0) {
-      $depositDue = (float) (data_get($state, 'deposit_amount', 0) ?: round($total * 0.20, 2));
+    if (!empty($state['deposit_amount'])) {
+      $estimate['deposit_due'] = (float) $state['deposit_amount'];
     }
-    $paidTotal    = (float)($r->deposit_paid ?? 0); // total received to date
-    $depositPaid  = min($paidTotal, $depositDue);
-    $paidNow      = max(0, round($paidTotal - $depositPaid, 2)); // other payments beyond deposit
-    $balance      = (float)($r->balance ?? max(0, round($total - $paidTotal, 2)));
+    if (!empty($state['deposit_amount'])) {
+      $estimate['deposit_paid_session'] = (float) $state['deposit_amount'];
+    }
+    $totals = \App\Support\ReservationTotals::compute($r, $estimate);
+    $subtotal = $totals['subtotal'];
+    $travel   = $totals['travel'];
+    $gratuity = $totals['gratuity'];
+    $tax      = $totals['tax'];
+    $total    = $totals['total'];
+    $adjustments = $totals['adjustments'];
+    $depositDue  = $totals['deposit_due'];
+    $depositPaid = $totals['deposit_display'];
+    $otherPaid   = $totals['additional_paid'];
+    $balance    = $totals['balance'];
+    $fmtAdj = function($amount) {
+      $sign = $amount < 0 ? '- $' : '$';
+      return $sign . number_format(abs($amount), 2);
+    };
     $fullName = trim(($state['first_name'] ?? '') . ' ' . ($state['last_name'] ?? '')) ?: ($r->customer_name ?? '');
   @endphp
 
@@ -109,12 +114,17 @@
           <div class="kv">
             <div class="kv-row"><div class="kv-label">Subtotal</div><div class="kv-val">${{ number_format($subtotal,2) }}</div></div>
             <div class="kv-row"><div class="kv-label">Travel fee</div><div class="kv-val">${{ number_format($travel,2) }}</div></div>
+            @foreach($adjustments as $adj)
+              <div class="kv-row"><div class="kv-label">{{ $adj['label'] }}</div><div class="kv-val">{{ $fmtAdj($adj['amount']) }}</div></div>
+            @endforeach
             <div class="kv-row"><div class="kv-label">Gratuity</div><div class="kv-val">${{ number_format($gratuity,2) }}</div></div>
             <div class="kv-row"><div class="kv-label">Tax</div><div class="kv-val">${{ number_format($tax,2) }}</div></div>
             <div style="height:1px;background:#eee;margin:8px 0"></div>
             <div class="kv-row"><div class="kv-label"><b>Total</b></div><div class="kv-val"><b>${{ number_format($total,2) }}</b></div></div>
             <div class="kv-row" style="color:#16a34a"><div class="kv-label">Deposit paid</div><div class="kv-val"><b>- ${{ number_format($depositPaid,2) }}</b></div></div>
-            <div class="kv-row" style="color:#16a34a"><div class="kv-label">Paid</div><div class="kv-val"><b>- ${{ number_format($paidNow,2) }}</b></div></div>
+            @if ($otherPaid > 0)
+              <div class="kv-row" style="color:#16a34a"><div class="kv-label">Additional paid</div><div class="kv-val"><b>- ${{ number_format($otherPaid,2) }}</b></div></div>
+            @endif
             <div class="kv-row"><div class="kv-label"><b>Balance</b></div><div class="kv-val"><b>${{ number_format($balance,2) }}</b></div></div>
           </div>
         </div>

@@ -324,6 +324,9 @@ private function menuToCategories(array $menu): array
 
             // Persistir totales en la reserva
             try {
+                // Reinicia ajustes manuales previos cuando el cliente recompone su cotización
+                $reservation->invoice_adjustments = null;
+                $reservation->discount = 0;
                 $reservation->subtotal  = round($subtotal, 2);
                 $reservation->travel_fee= round($travelFee, 2);
                 $reservation->gratuity  = $gratuity;

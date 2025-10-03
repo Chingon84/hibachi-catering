@@ -120,20 +120,18 @@
     </div>
 
     @php
-      $subtotal = (float)($r->subtotal ?? $items->sum('line_total'));
-      $travel   = (float)($r->travel_fee ?? 0);
-      $gratuity = (float)($r->gratuity ?? round($subtotal*0.18,2));
-      $adj      = is_array($r->invoice_adjustments ?? null) ? $r->invoice_adjustments : [];
-      $adjSum   = array_reduce($adj, fn($c,$a)=> $c + (float)($a['amount'] ?? 0), 0.0);
-      $tax      = (float) round(max(0, $subtotal + $adjSum) * 0.1025, 2);
-      $total    = (float) round($subtotal+$travel+$gratuity+$tax+$adjSum,2);
-      $paidTotal   = (float)($r->deposit_paid ?? 0);
-      $depositDue  = (float)($r->deposit_due ?? 0);
-      if ($depositDue <= 0) { $depositDue = round($total * 0.20, 2); }
-      $depositPaid = min($paidTotal, $depositDue);
-      $otherPaid   = max(0, round($paidTotal - $depositPaid, 2));
-      $balance     = max(0, round($total - $paidTotal, 2));
-  @endphp
+      $totals = \App\Support\ReservationTotals::compute($r);
+      $subtotal = $totals['subtotal'];
+      $travel   = $totals['travel'];
+      $gratuity = $totals['gratuity'];
+      $adj      = $totals['adjustments'];
+      $tax      = $totals['tax'];
+      $total    = $totals['total'];
+      $depositPaid = $totals['deposit_display'];
+      $otherPaid   = $totals['additional_paid'];
+      $paidTotal   = $totals['paid_total'];
+      $balance     = $totals['balance'];
+    @endphp
 
     <div class="box" style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start">
       @php
@@ -162,7 +160,10 @@
         <tr><td>Tax</td><td class="right">{{ $fmt($tax) }}</td></tr>
         <tr><td style="border-top:1px solid #e5e7eb; padding-top:4px"><b>Total</b></td><td class="right" style="border-top:1px solid #e5e7eb; padding-top:4px"><b>{{ $fmt($total) }}</b></td></tr>
         <tr><td class="muted">Deposit paid</td><td class="right" style="color:#16a34a">- {{ $fmt($depositPaid) }}</td></tr>
-        <tr><td class="muted">Paid</td><td class="right" style="color:#16a34a">- {{ $fmt($otherPaid) }}</td></tr>
+        @if ($otherPaid > 0)
+          <tr><td class="muted">Additional paid</td><td class="right" style="color:#16a34a">- {{ $fmt($otherPaid) }}</td></tr>
+        @endif
+        <tr><td class="muted">Total paid</td><td class="right" style="color:#16a34a">- {{ $fmt($paidTotal) }}</td></tr>
         <tr><td><b>Balance</b></td><td class="right"><b>{{ $fmt($balance) }}</b></td></tr>
       </table>
     </div>

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\URL;
 use App\Models\Reservation;
 use App\Models\Payment;
 use App\Support\InvoiceRenderer;
+use App\Support\ReservationTotals;
 
 class PaymentController extends Controller
 {
@@ -155,9 +156,11 @@ class PaymentController extends Controller
                 try {
                     $itemsSubtotal = (float) ($reservation->items()->sum('line_total'));
                     $travelFee     = (float) ($reservation->travel_fee ?? 0);
+                    $adjustments   = ReservationTotals::adjustments($reservation);
+                    $adjSum        = array_reduce($adjustments, fn($c, $a) => $c + (float) ($a['amount'] ?? 0), 0.0);
                     $gratuity      = round($itemsSubtotal * 0.18, 2);
-                    $tax           = round($itemsSubtotal * 0.1025, 2);
-                    $grandTotal    = round($itemsSubtotal + $travelFee + $gratuity + $tax, 2);
+                    $tax           = round(max(0, $itemsSubtotal + $adjSum) * 0.1025, 2);
+                    $grandTotal    = round($itemsSubtotal + $travelFee + $gratuity + $tax + $adjSum, 2);
 
                     $reservation->subtotal  = round($itemsSubtotal, 2);
                     $reservation->gratuity  = $gratuity;
@@ -169,6 +172,13 @@ class PaymentController extends Controller
 
                 // Mark payment if succeeded
                 if (($data['payment_status'] ?? '') === 'paid') {
+                    $reservation->load('payments');
+                    [$stripeDeposit, $stripeExtra, $stripeTotal] = ReservationTotals::stripeBreakdown($reservation);
+                    if ($stripeTotal <= 0) {
+                        $stripeTotal = round(((float) ($reservation->deposit_paid ?? 0)) + $amountTotal, 2);
+                    }
+                    $reservation->deposit_paid = $stripeTotal;
+
                     // Ensure invoice number exists
                     if (empty($reservation->invoice_number)) {
                         try {
@@ -185,15 +195,14 @@ class PaymentController extends Controller
                             $reservation->deposit_due = $fallback;
                         } catch (\Throwable $e) {}
                     }
-                    // Sum payments into deposit_paid to reflect total paid toward invoice
-                    $reservation->deposit_paid = (float) ($reservation->deposit_paid ?? 0) + $amountTotal;
                     $reservation->status = 'confirmed';
                     // Mark source as Online
                     if (empty($reservation->booked_by)) {
                         $reservation->booked_by = 'Online';
                     }
                     // Update balance after payment
-                    $reservation->balance = max(0, round(($reservation->total ?? 0) - $reservation->deposit_paid, 2));
+                    $manualPaid = ReservationTotals::manualPaid($reservation);
+                    $reservation->balance = max(0, round(($reservation->total ?? 0) - $stripeTotal - $manualPaid, 2));
                     // If fully paid, mark invoice as paid
                     if (($reservation->balance ?? 0) <= 0.0) {
                         $reservation->invoice_status = 'paid';
@@ -299,7 +308,8 @@ class PaymentController extends Controller
         if (!$reservation) {
             return response('Invoice not found.', 404);
         }
-        $balance = max(0, (float) ($reservation->total ?? 0) - (float) ($reservation->deposit_paid ?? 0));
+        $manualPaid = ReservationTotals::manualPaid($reservation);
+        $balance = max(0, (float) ($reservation->total ?? 0) - (float) ($reservation->deposit_paid ?? 0) - $manualPaid);
         if ($balance <= 0.0) {
             return response('Nothing to pay for this invoice.', 200);
         }
