@@ -62,10 +62,14 @@ class CalendarController extends Controller
     public function eventJson(int $id)
     {
         $r = Reservation::with(['items','payments'])->findOrFail($id);
+        $status = strtolower((string) ($r->status ?? 'pending'));
+        if (in_array($status, ['draft', 'pending_payment'], true)) {
+            $status = 'pending';
+        }
         $out = [
             'id' => $r->id,
             'title' => $r->customer_name ?? '—',
-            'status' => $r->status,
+            'status' => $status,
             'invoice_status' => $r->invoice_status,
             'date' => optional($r->date)->format('Y-m-d'),
             'time' => \Carbon\Carbon::parse($r->time)->format('g:i A'),

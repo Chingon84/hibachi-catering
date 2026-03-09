@@ -29,7 +29,6 @@
   $tax      = $totals['tax'];
   $total    = $totals['total'];
   $depositPaid = $totals['deposit_display'];
-  $otherPaid   = $totals['additional_paid'];
   $paidTotal   = $totals['paid_total'];
   $balance     = $totals['balance'];
 @endphp
@@ -100,9 +99,6 @@
     <tr><td class="right">Tax</td><td class="right">${{ number_format($tax,2) }}</td></tr>
     <tr><td class="right"><strong>Total</strong></td><td class="right"><strong>${{ number_format($total,2) }}</strong></td></tr>
     <tr><td class="right" style="color:#16a34a">Deposit paid</td><td class="right" style="color:#16a34a">-${{ number_format($depositPaid,2) }}</td></tr>
-    @if ($otherPaid > 0)
-      <tr><td class="right" style="color:#16a34a">Additional paid</td><td class="right" style="color:#16a34a">-${{ number_format($otherPaid,2) }}</td></tr>
-    @endif
     <tr><td class="right" style="color:#16a34a">Total paid</td><td class="right" style="color:#16a34a">-${{ number_format($paidTotal,2) }}</td></tr>
     <tr><td class="right"><strong>Balance</strong></td><td class="right"><strong>${{ number_format($balance,2) }}</strong></td></tr>
   </table>

@@ -30,6 +30,7 @@ body{margin:0;background:var(--bg);color:var(--text);
 .muted{color:var(--muted)}
 .status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
 .status.confirmed{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.status.pending{background:#fff7ed;color:#92400e;border:1px solid #fed7aa}
 .status.draft{background:#f3f4f6;color:#374151;border:1px solid var(--border)}
 .status.pending_payment{background:#fff7ed;color:#92400e;border:1px solid #fed7aa}
 .status.canceled{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}

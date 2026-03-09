@@ -37,36 +37,114 @@
     .swatches{display:grid;grid-template-columns:repeat(5,16px);gap:8px}
     .sw{width:16px;height:16px;border-radius:999px;border:2px solid #fff;box-shadow:0 0 0 1px #d1d5db;position:relative;cursor:pointer}
     .sw .check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+    .summary-hero{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);border:1px solid var(--border);border-radius:18px;padding:16px 18px;box-shadow:0 12px 30px rgba(15,23,42,.05)}
+    .summary-main{display:flex;flex-direction:column;gap:10px}
+    .summary-identity{display:flex;flex-direction:column;gap:4px}
+    .summary-name{margin:0;font-size:30px;line-height:1.05;font-weight:800;letter-spacing:-.02em;color:#0f172a}
+    .summary-meta{font-size:13px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .summary-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .metric-chip{padding:7px 12px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-size:12px;font-weight:600;color:#334155}
+    .summary-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .resv-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+    .resv-main,.resv-side{display:flex;flex-direction:column;gap:14px}
+    .section-card{border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.05)}
+    .form-pane{background:#fcfdff;border:1px solid #edf0f4;border-radius:14px;padding:14px}
+    .pane-title{font-size:16px;font-weight:700;color:#0f172a;margin:0 0 12px 0}
+    .summary-kv{display:grid;grid-template-columns:1fr;gap:12px}
+    .summary-kv .card{margin-bottom:0}
+    .items-card table thead tr,.payments-card table thead tr{background:#f8fafc}
+    .items-card table thead th,.payments-card table thead th{color:#475569;padding-top:10px;padding-bottom:10px}
+    .items-card table tbody td,.payments-card table tbody td{padding-top:10px;padding-bottom:10px}
+    .items-card table tbody tr{transition:background-color .16s ease}
+    .items-card table tbody tr:hover{background:#f8fafc}
+    .payments-card table tbody tr:hover{background:#f8fbff}
+    .add-items-shell{margin-top:14px;padding-top:12px;border-top:1px solid #e7ebf0}
+    .add-items-head{display:flex;align-items:center;gap:10px;margin:0 0 9px}
+    .add-items-head::before,.add-items-head::after{content:"";height:1px;background:#e7ebf0;flex:1}
+    .add-items-title{font-size:14px;font-weight:600;letter-spacing:0;color:#64748b;text-transform:none;margin:0}
+    .add-row{display:grid;grid-template-columns:2.1fr 2fr .8fr 1fr auto;gap:8px;align-items:end;background:#fafbfd;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
+    .add-row + .add-row{margin-top:8px}
+    .add-row .field label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px}
+    .add-row .input{height:34px;padding:7px 10px;font-size:13px}
+    .add-row .add-btn{height:34px;min-width:34px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer}
+    .add-row .add-btn:hover{background:#f1f5f9}
+    @media (max-width: 1100px){
+      .add-row{grid-template-columns:1fr 1fr}
+      .add-row .field{grid-column:span 1}
+      .add-row .field.qty,.add-row .field.price{grid-column:span 1}
+    }
+    .totals-card{background:#f8fafc;border:1px solid #e6ecf5;border-radius:14px;padding:12px 14px}
+    .totals-card .totals-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+    .totals-card .totals-row.total{font-size:19px;font-weight:800;color:#0f172a;border-top:1px solid #e5e7eb;margin-top:6px;padding-top:8px}
+    .totals-card .totals-row.total span{font-size:20px;font-weight:900}
+    .totals-card .totals-row.balance{font-size:16px;font-weight:800;color:#b21e27}
+    .status-pill-select{min-width:140px !important;height:32px !important;padding:6px 30px 6px 10px !important;border-radius:999px !important;font-size:12px !important;font-weight:700;border:1px solid #e5e7eb !important;box-shadow:none !important}
+    .status-pill-select.status-confirmed{background:#ecfdf5;color:#166534;border-color:#bbf7d0 !important}
+    .status-pill-select.status-pending{background:#fffbeb;color:#92400e;border-color:#fde68a !important}
+    .status-pill-select.status-canceled{background:#fef2f2;color:#991b1b;border-color:#fecaca !important}
+    .btn{box-shadow:0 4px 12px rgba(178,30,39,.16)}
+    .btn.secondary{box-shadow:none;background:#e5e7eb;color:#334155}
+    .btn.secondary:hover{background:#dbe1e8}
+    .page-shell{max-width:88rem;margin:0 auto}
+    @media (min-width: 1024px){
+      .page-shell{max-width:92rem}
+      .resv-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.95fr)}
+    }
   </style>
-  @php $fmt = fn($n)=>'$'.number_format((float)$n,2); @endphp
+  @php
+    $fmt = fn($n)=>'$'.number_format((float)$n,2);
+    $statusCurrent = strtolower((string) ($r->status ?? 'pending'));
+    if (in_array($statusCurrent, ['draft', 'pending_payment'], true)) {
+      $statusCurrent = 'pending';
+    }
+    $statusSelected = strtolower((string) old('status', $statusCurrent));
+    if ($statusSelected === 'pending_payment') {
+      $statusSelected = 'pending';
+    }
+    $statusTone = $statusSelected === 'confirmed'
+      ? 'status-confirmed'
+      : ($statusSelected === 'canceled' ? 'status-canceled' : 'status-pending');
+  @endphp
 </head>
 <body>
-  <div class="max-w-7xl mx-auto p-4 lg:p-8">
+  <div class="page-shell p-4 lg:p-8">
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-6 gap-4">
-      <div>
-        <h1 class="text-2xl font-bold flex items-center gap-3 mb-2">
-          Reservation Details
-          @php $inv = $r->invoice_number ?? null; @endphp
-          @if($inv)<span class="badge">Invoice #{{ $inv }}</span>@endif
-        </h1>
-        <div class="flex flex-wrap gap-2 items-center">
-          <span class="chip" title="Date">
+    <div class="summary-hero mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+      <div class="summary-main">
+        <div class="summary-identity">
+          <h1 class="summary-name">{{ $r->customer_name ?: 'Reservation Details' }}</h1>
+          <div class="summary-meta">
+            <span>Reservation #{{ $r->code ?? $r->id }}</span>
+            <span>•</span>
+            <span>Invoice #{{ $r->invoice_number ?? '—' }}</span>
+          </div>
+        </div>
+        <div class="summary-chips">
+          <span class="chip metric-chip" title="Date">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1zm12 7H5v10h14V9z"/></svg>
             {{ $r->date?->format('m/d/Y') ?? '—' }}
           </span>
-          <span class="chip" title="Time">
+          <span class="chip metric-chip" title="Time">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2zm1 10.586V7a1 1 0 0 0-2 0v6a1 1 0 0 0 .293.707l3 3a1 1 0 1 0 1.414-1.414z"/></svg>
             {{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}
           </span>
-          <span class="chip" title="Guests">
+          <span class="chip metric-chip" title="Guests">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 11c1.654 0 3-1.346 3-3S17.654 5 16 5s-3 1.346-3 3 1.346 3 3 3zM8 11c1.654 0 3-1.346 3-3S9.654 5 8 5 5 6.346 5 8s1.346 3 3 3zm0 2c-2.673 0-8 1.337-8 4v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.663-5.327-4-8-4zm8 0c-.29 0-.62.017-.98.047A6.6 6.6 0 0 1 18 17v1a1 1 0 0 1-1 1h6a1 1 0 0 0 1-1v-1c0-2.273-3.876-4-6-4z"/></svg>
             {{ $r->guests }} guests
           </span>
           @php $balTop = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); $col = $r->color ?? '#6b7280'; @endphp
-          <span class="chip" title="Balance" style="display:inline-flex;align-items:center;gap:8px">
+          <span class="chip metric-chip" title="Balance" style="display:inline-flex;align-items:center;gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm1 17.93V20a1 1 0 0 1-2 0v-1a4.005 4.005 0 0 1-3-3.87 1 1 0 0 1 2 0 2 2 0 0 0 2 2h2a2 2 0 0 0 0-4h-2a4 4 0 0 1 0-8h1V4a1 1 0 0 1 2 0v1a4.005 4.005 0 0 1 3 3.87 1 1 0 0 1-2 0 2 2 0 0 0-2-2h-2a2 2 0 0 0 0 4h2a4 4 0 0 1 0 8h-1.05A10.027 10.027 0 0 1 12 21a10.013 10.013 0 0 1-1-.07z"/></svg>
             Balance: {{ '$'.number_format($balTop,2) }}
+          </span>
+          <span class="chip metric-chip" title="Reservation Status" style="display:inline-flex;align-items:center;gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 5a1 1 0 112 0v5.17l3.24 1.62a1 1 0 01-.9 1.79l-3.79-1.9A1 1 0 0111 12.8V7z"/></svg>
+            <select name="status" form="resvForm" class="input status-pill-select {{ $statusTone }}" onchange="syncStatusPill(this)">
+              <option value="confirmed" {{ $statusSelected==='confirmed' ? 'selected' : '' }}>Confirmed</option>
+              <option value="pending" {{ $statusSelected==='pending' ? 'selected' : '' }}>Pending</option>
+              <option value="canceled" {{ $statusSelected==='canceled' ? 'selected' : '' }}>Canceled</option>
+            </select>
           </span>
           <!-- Color picker button (separate from chip) -->
           <span class="inline-block relative" x-data="colorPicker('{{ $col }}')" style="margin-left:10px;display:inline-block;vertical-align:middle">
@@ -84,7 +162,7 @@
           </span>
         </div>
       </div>
-      <div class="flex gap-3 items-center">
+      <div class="summary-actions">
         <a class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md" href="{{ route('admin.reservations') }}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-2" aria-hidden="true">
             <path d="M11.03 3.97a.75.75 0 0 1 0 1.06l-6.22 6.22H21a.75.75 0 0 1 0 1.5H4.81l6.22 6.22a.75.75 0 1 1-1.06 1.06l-7.5-7.5a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 0 1 1.06 0z"/>
@@ -117,9 +195,12 @@
         </button>
       </div>
     </div>
+    </div>
 
+    <div class="resv-grid">
+    <div class="resv-main">
     <!-- Reservation Form -->
-    <div class="card">
+    <div class="card section-card form-card">
       <div class="p-6">
         @if (session('ok'))
           <div class="bg-green-50 text-green-700 border border-green-200 rounded-lg p-3 mb-4">
@@ -137,7 +218,8 @@
           <!-- Reordered Form: Left/Right columns -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- Left column fields -->
-            <div class="space-y-4">
+            <div class="form-pane space-y-4">
+              <h3 class="pane-title">Customer Information</h3>
               <div class="grid grid-cols-3 gap-2 items-center">
                 <label class="font-semibold text-sm">Customer name</label>
                 <input name="customer_name" value="{{ old('customer_name',$r->customer_name) }}" class="input col-span-2">
@@ -173,7 +255,8 @@
             </div>
 
             <!-- Right column fields -->
-            <div class="space-y-4">
+            <div class="form-pane space-y-4">
+              <h3 class="pane-title">Event Information</h3>
               <div class="grid grid-cols-3 gap-2 items-center">
                 <label class="font-semibold text-sm">Invoice #</label>
                 <input name="invoice_number" value="{{ $r->invoice_number ?? '' }}" class="input col-span-2" disabled>
@@ -232,7 +315,8 @@
     </div>
 
     <!-- Details Summary -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="summary-kv">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-0">
       <!-- Left column -->
       <div class="card">
         <div class="p-6">
@@ -266,17 +350,22 @@
         </div>
       </div>
     </div>
+    </div>
+
+    </div>
+    <aside class="resv-side">
 
     
 
     <!-- Items Section -->
-    <div class="card" x-data="itemsManager()">
+    <div class="card section-card items-card" x-data="itemsManager()">
       <div class="p-6">
         <h3 class="text-lg font-semibold mb-4">Items</h3>
         @php $its = $r->items ?? collect(); @endphp
+        <form method="post" action="{{ route('admin.reservations.items.update',['id'=>$r->id]) }}" id="itemsUpdateForm">
+          @csrf
+        </form>
         @if($its && $its->count())
-          <form method="post" action="{{ route('admin.reservations.items.update',['id'=>$r->id]) }}">
-            @csrf
             <div class="overflow-x-auto">
               <table class="w-full border-collapse">
                 <thead>
@@ -307,6 +396,7 @@
                                x-ref="input"
                                type="text" 
                                name="desc[{{ $it->id }}]" 
+                               form="itemsUpdateForm"
                                x-model="value"
                                @blur="editing = false"
                                @keydown.enter="editing = false"
@@ -319,6 +409,7 @@
                     <td class="p-3 text-right">
                       <input type="number" 
                              name="items[{{ $it->id }}]" 
+                             form="itemsUpdateForm"
                              value="{{ $it->qty }}" 
                              min="0" 
                              class="w-20 p-2 border border-gray-300 rounded text-center text-sm"
@@ -338,79 +429,20 @@
                 </tbody>
               </table>
             </div>
-            @php $bal = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); @endphp
-            <!-- Totals: stacked, right-aligned with custom adjustments -->
-            @php 
-              $TAX = 0.1025;
-              $adj = is_array($r->invoice_adjustments ?? null) ? $r->invoice_adjustments : [];
-              $sub = (float)($r->subtotal ?? 0); $trav = (float)($r->travel_fee ?? 0); $grat = (float)($r->gratuity ?? 0);
-              $adjSum = array_reduce($adj, fn($c,$a)=> $c + (float)($a['amount'] ?? 0), 0.0);
-              $taxCalc = round(max(0, $sub + $adjSum) * $TAX, 2);
-              $totalCalc = round($sub + $trav + $grat + $taxCalc + $adjSum, 2);
-              $paidCalc = (float)($r->deposit_paid ?? 0);
-              $balCalc = max(0, round($totalCalc - $paidCalc, 2));
-            @endphp
-            <div class="mt-4 flex justify-end">
-              <div class="text-sm text-gray-700 text-right space-y-1" x-data="adjustmentsManager({
-                    subtotal: {{ number_format($sub,2,'.','') }},
-                    travel: {{ number_format($trav,2,'.','') }},
-                    gratuity: {{ number_format($grat,2,'.','') }},
-                    taxRate: {{ number_format($TAX,4,'.','') }},
-                    paid: {{ number_format($r->deposit_paid ?? 0,2,'.','') }},
-                    adjInit: @js($adj)
-                })" x-init="init()">
-                <!-- Action button aligned to right, icon-only -->
-                <div class="flex items-center justify-end">
-                  <button type="button"
-                          class="adj-plus"
-                          :disabled="rows.length>=2"
-                          title="Add custom adjustment"
-                          aria-label="Add custom adjustment"
-                          @click="addRow()">+</button>
-                </div>
-                <!-- Totals before adjustments -->
-                <div><strong>Subtotal:</strong> <span x-text="fmt(subtotal)">{{ $fmt($sub) }}</span></div>
-                <div><strong>Travel fee:</strong> <span x-text="fmt(travel)">{{ $fmt($trav) }}</span></div>
-                <!-- Adjustment rows inserted right below Travel fee -->
-                <template x-for="(row,idx) in rows" :key="idx">
-                  <div class="flex items-center gap-2 justify-end" style="margin:2px 0">
-                    <input class="input" type="text" x-model="row.label" placeholder="Adjustment" aria-label="Adjustment label" style="width:160px;padding:4px 8px;font-size:13px;height:28px">
-                    <input class="input" type="text" x-model="row.amountStr" @focus="row.editing=true" @blur="normalize(idx)" @input="recalc()" aria-label="Adjustment amount" style="width:120px;text-align:right;padding:4px 8px;font-size:13px;height:28px">
-                    <button type="button" class="adj-remove" title="Remove" aria-label="Remove adjustment" @click="remove(idx)">×</button>
-                    <input type="hidden" name="adj_label[]" :value="row.label">
-                    <input type="hidden" name="adj_amount[]" :value="row.amount">
-                  </div>
-                </template>
-                <!-- Remaining totals -->
-                <div><strong>Gratuity:</strong> <span x-text="fmt(gratuity)">{{ $fmt($grat) }}</span></div>
-                <div><strong>Tax:</strong> <span x-text="fmt(tax)">{{ $fmt($taxCalc) }}</span></div>
-                <div><strong>Total:</strong> <span x-text="fmt(total)">{{ $fmt($totalCalc) }}</span></div>
-                <div><strong>Paid:</strong> <span x-text="fmt(paid)">{{ $fmt($r->deposit_paid ?? 0) }}</span></div>
-                <div><strong>Balance:</strong> <span x-text="fmt(balance)">{{ $fmt($balCalc) }}</span></div>
-              </div>
-            </div>
-            <!-- Save button line, right-aligned below totals -->
-            <div class="mt-2 flex justify-end">
-              <button class="btn" type="submit">Save item changes</button>
-            </div>
-          </form>
         @else
           <p class="text-gray-500 text-sm">No items recorded.</p>
         @endif
 
         <!-- Add Items Section -->
-        <div class="border-t border-gray-200 mt-8 pt-8">
-          <h4 class="text-xl font-semibold mb-6 text-gray-800">Add Items</h4>
-          
-          <!-- Menu Items Section -->
-          <div class="mb-8">
-            <h5 class="text-lg font-medium text-gray-700 mb-4">Menu Items</h5>
-            
-            <!-- Static Menu Form -->
-            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
+        <div class="add-items-shell">
+          <div class="add-items-head">
+            <h4 class="add-items-title">Add Items</h4>
+          </div>
+            <!-- Menu Items Row -->
+            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="add-row">
               @csrf
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">From menu</label>
+              <div class="field">
+                <label>From menu</label>
                 <select name="menu_key" class="input w-full" id="menuKey" aria-label="Select menu item">
                   <option value="">Select item...</option>
                   @foreach($menuOptions as $key=>$opt)
@@ -418,22 +450,22 @@
                   @endforeach
                 </select>
               </div>
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <div class="field">
+                <label>Description</label>
                 <input type="text" name="description" class="input w-full" placeholder="Optional description">
               </div>
-              <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+              <div class="field qty">
+                <label>Qty</label>
                 <input type="number" name="qty" min="1" value="0" class="input w-full">
               </div>
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+              <div class="field price">
+                <label>Unit Price</label>
                 <input type="text" class="input w-full bg-gray-100" id="unitPrice" value="$0.00" readonly>
               </div>
-              <div class="lg:col-span-1 flex items-end justify-center">
+              <div class="field">
                 <button type="button" 
                         @click="addMenuRow()" 
-                        class="bg-blue-500 hover:bg-blue-600 text-white rounded-md p-2 transition-colors duration-200" 
+                        class="add-btn"
                         title="Add new menu item row"
                         aria-label="Add new menu item row">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
@@ -445,9 +477,9 @@
             
             <!-- Dynamic Menu Rows -->
             <template x-for="(row, index) in menuRows" :key="index">
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200 mb-4">
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">From menu</label>
+              <div class="add-row">
+                <div class="field">
+                  <label>From menu</label>
                   <select x-model="row.menu_key" @change="updateUnitPrice(index, $event)" class="input w-full" aria-label="Select menu item">
                     <option value="">Select item...</option>
                     @foreach($menuOptions as $key=>$opt)
@@ -455,22 +487,22 @@
                     @endforeach
                   </select>
                 </div>
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <div class="field">
+                  <label>Description</label>
                   <input type="text" x-model="row.description" class="input w-full" placeholder="Optional description">
                 </div>
-                <div class="lg:col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                <div class="field qty">
+                  <label>Qty</label>
                   <input type="number" min="1" x-model="row.qty" class="input w-full">
                 </div>
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+                <div class="field price">
+                  <label>Unit Price</label>
                   <input type="text" class="input w-full bg-gray-100" x-model="row.unit_price" readonly>
                 </div>
-                <div class="lg:col-span-1 flex items-end justify-center">
+                <div class="field">
                   <button type="button" 
                           @click="addMenuRow()" 
-                          class="bg-blue-500 hover:bg-blue-600 text-white rounded-md p-2 transition-colors duration-200" 
+                          class="add-btn"
                           title="Add new menu item row"
                           aria-label="Add new menu item row">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
@@ -480,35 +512,30 @@
                 </div>
               </div>
             </template>
-          </div>
 
-          <!-- Custom Items Section -->
-          <div class="mb-8">
-            <h5 class="text-lg font-medium text-gray-700 mb-4">Custom Items</h5>
-            
-            <!-- Static Custom Form -->
-            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
+            <!-- Custom Items Row -->
+            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="add-row">
               @csrf
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Custom name</label>
+              <div class="field">
+                <label>Custom name</label>
                 <input type="text" name="custom_name" placeholder="Enter item name" class="input w-full">
               </div>
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <div class="field">
+                <label>Description</label>
                 <input type="text" name="description" class="input w-full" placeholder="Optional description">
               </div>
-              <div class="lg:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+              <div class="field qty">
+                <label>Qty</label>
                 <input type="number" name="qty" min="1" value="0" class="input w-full">
               </div>
-              <div class="lg:col-span-3">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Custom Price</label>
+              <div class="field price">
+                <label>Custom Price</label>
                 <input type="number" step="0.01" name="custom_price" placeholder="0.00" class="input w-full" id="customPrice">
               </div>
-              <div class="lg:col-span-1 flex items-end justify-center">
+              <div class="field">
                 <button type="button" 
                         @click="addCustomRow()" 
-                        class="bg-green-500 hover:bg-green-600 text-white rounded-md p-2 transition-colors duration-200" 
+                        class="add-btn"
                         title="Add new custom item row"
                         aria-label="Add new custom item row">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
@@ -520,27 +547,27 @@
             
             <!-- Dynamic Custom Rows -->
             <template x-for="(row, index) in customRows" :key="index">
-              <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 bg-green-50 rounded-lg border border-green-200 mb-4">
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Custom name</label>
+              <div class="add-row">
+                <div class="field">
+                  <label>Custom name</label>
                   <input type="text" x-model="row.custom_name" placeholder="Enter item name" class="input w-full">
                 </div>
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <div class="field">
+                  <label>Description</label>
                   <input type="text" x-model="row.description" class="input w-full" placeholder="Optional description">
                 </div>
-                <div class="lg:col-span-2">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                <div class="field qty">
+                  <label>Qty</label>
                   <input type="number" min="1" x-model="row.qty" class="input w-full">
                 </div>
-                <div class="lg:col-span-3">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Custom Price</label>
+                <div class="field price">
+                  <label>Custom Price</label>
                   <input type="number" step="0.01" x-model="row.custom_price" placeholder="0.00" class="input w-full">
                 </div>
-                <div class="lg:col-span-1 flex items-end justify-center">
+                <div class="field">
                   <button type="button" 
                           @click="addCustomRow()" 
-                          class="bg-green-500 hover:bg-green-600 text-white rounded-md p-2 transition-colors duration-200" 
+                          class="add-btn"
                           title="Add new custom item row"
                           aria-label="Add new custom item row">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
@@ -550,13 +577,12 @@
                 </div>
               </div>
             </template>
-          </div>
 
           <!-- Save All Items Button -->
-          <div class="flex justify-end">
+          <div class="flex justify-end mt-2">
             <button type="button" 
                     @click="saveAllItems()" 
-                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold text-lg shadow-lg transition-all duration-200 hover:shadow-xl" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm shadow-md transition-all duration-200 hover:shadow-lg" 
                     title="Save all items"
                     aria-describedby="save-all-help">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 inline-block mr-2" aria-hidden="true">
@@ -567,6 +593,58 @@
             <p id="save-all-help" class="sr-only">Saves all items added in the forms above</p>
           </div>
         </div>
+
+        @if($its && $its->count())
+          @php $bal = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); @endphp
+          @php 
+            $TAX = 0.1025;
+            $adj = is_array($r->invoice_adjustments ?? null) ? $r->invoice_adjustments : [];
+            $sub = (float)($r->subtotal ?? 0); $trav = (float)($r->travel_fee ?? 0); $grat = (float)($r->gratuity ?? 0);
+            $adjSum = array_reduce($adj, fn($c,$a)=> $c + (float)($a['amount'] ?? 0), 0.0);
+            $taxCalc = round(max(0, $sub + $adjSum) * $TAX, 2);
+            $totalCalc = round($sub + $trav + $grat + $taxCalc + $adjSum, 2);
+            $paidCalc = (float)($r->deposit_paid ?? 0);
+            $balCalc = max(0, round($totalCalc - $paidCalc, 2));
+          @endphp
+          <div class="mt-5">
+            <div class="totals-card text-sm text-gray-700 space-y-1" x-data="adjustmentsManager({
+                  subtotal: {{ number_format($sub,2,'.','') }},
+                  travel: {{ number_format($trav,2,'.','') }},
+                  gratuity: {{ number_format($grat,2,'.','') }},
+                  taxRate: {{ number_format($TAX,4,'.','') }},
+                  paid: {{ number_format($r->deposit_paid ?? 0,2,'.','') }},
+                  adjInit: @js($adj)
+              })" x-init="init()">
+              <div class="flex items-center justify-end mb-2">
+                <button type="button"
+                        class="adj-plus"
+                        :disabled="rows.length>=2"
+                        title="Add custom adjustment"
+                        aria-label="Add custom adjustment"
+                        @click="addRow()">+</button>
+              </div>
+              <div class="totals-row"><strong>Subtotal</strong> <span x-text="fmt(subtotal)">{{ $fmt($sub) }}</span></div>
+              <div class="totals-row"><strong>Travel fee</strong> <span x-text="fmt(travel)">{{ $fmt($trav) }}</span></div>
+              <template x-for="(row,idx) in rows" :key="idx">
+                <div class="flex items-center gap-2 justify-end" style="margin:4px 0">
+                  <input class="input" type="text" x-model="row.label" placeholder="Adjustment" aria-label="Adjustment label" style="width:160px;padding:4px 8px;font-size:13px;height:28px">
+                  <input class="input" type="text" x-model="row.amountStr" @focus="row.editing=true" @blur="normalize(idx)" @input="recalc()" aria-label="Adjustment amount" style="width:120px;text-align:right;padding:4px 8px;font-size:13px;height:28px">
+                  <button type="button" class="adj-remove" title="Remove" aria-label="Remove adjustment" @click="remove(idx)">×</button>
+                  <input type="hidden" name="adj_label[]" form="itemsUpdateForm" :value="row.label">
+                  <input type="hidden" name="adj_amount[]" form="itemsUpdateForm" :value="row.amount">
+                </div>
+              </template>
+              <div class="totals-row"><strong>Gratuity</strong> <span x-text="fmt(gratuity)">{{ $fmt($grat) }}</span></div>
+              <div class="totals-row"><strong>Tax</strong> <span x-text="fmt(tax)">{{ $fmt($taxCalc) }}</span></div>
+              <div class="totals-row total"><strong>Total</strong> <span x-text="fmt(total)">{{ $fmt($totalCalc) }}</span></div>
+              <div class="totals-row"><strong>Paid</strong> <span x-text="fmt(paid)">{{ $fmt($r->deposit_paid ?? 0) }}</span></div>
+              <div class="totals-row balance"><strong>Balance</strong> <span x-text="fmt(balance)">{{ $fmt($balCalc) }}</span></div>
+            </div>
+          </div>
+          <div class="mt-2 flex justify-end">
+            <button class="btn" type="submit" form="itemsUpdateForm">Save item changes</button>
+          </div>
+        @endif
 
         <script>
           function itemsManager() {
@@ -787,7 +865,7 @@
 
 
     <!-- Payments Section -->
-    <div class="card" x-data="manualPayments({
+    <div class="card section-card payments-card" x-data="manualPayments({
         list: @js($r->manual_payments ?? []),
         basePaid: {{ number_format($r->deposit_paid ?? 0,2,'.','') }},
         total: {{ number_format($r->total ?? 0,2,'.','') }}
@@ -868,6 +946,8 @@
         @endif
         </div>
       </div>
+    </div>
+    </aside>
     </div>
 
   <style>
@@ -1156,6 +1236,18 @@
   </div>
 
   <script>
+    function syncStatusPill(el){
+      if (!el) return;
+      el.classList.remove('status-confirmed','status-pending','status-canceled');
+      if (el.value === 'confirmed') el.classList.add('status-confirmed');
+      else if (el.value === 'canceled') el.classList.add('status-canceled');
+      else el.classList.add('status-pending');
+    }
+    window.addEventListener('DOMContentLoaded', function(){
+      const statusSelect = document.querySelector('select[name="status"][form="resvForm"]');
+      if (statusSelect) syncStatusPill(statusSelect);
+    });
+
     function printReservation() {
       window.print();
     }

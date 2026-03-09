@@ -13,11 +13,9 @@
       $total    = $totals['total'];
       $adjustments = $totals['adjustments'];
       $paidDeposit = $totals['deposit_display'];
-      $paidOther   = $totals['additional_paid'];
       $paid     = round($totals['paid_total'], 2);
       $balance  = $totals['balance'];
       $invoiceNo = $r->invoice_number ?? ($r->code ?? ('#'.$r->id));
-      $payUrl = $pay_url ?? '';
     @endphp
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f7f7fb">
@@ -116,12 +114,6 @@
                     <td style="padding:8px 12px;color:#374151">Deposit paid</td>
                     <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidDeposit,2) }}</td>
                   </tr>
-                  @if ($paidOther > 0)
-                    <tr>
-                      <td style="padding:8px 12px;color:#374151">Additional paid</td>
-                      <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidOther,2) }}</td>
-                    </tr>
-                  @endif
                   <tr>
                     <td style="padding:8px 12px;color:#16a34a">Total paid</td>
                     <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paid,2) }}</td>
@@ -131,17 +123,6 @@
                     <td align="right" style="padding:10px 12px;border-top:1px solid #e5e7eb;font-weight:700;color:#111">${{ number_format($balance,2) }}</td>
                   </tr>
                 </table>
-
-                @if ($payUrl && $balance > 0)
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:18px auto 6px">
-                    <tr>
-                      <td align="center" bgcolor="#b21e27" style="border-radius:10px">
-                        <a href="{{ $payUrl }}" target="_blank" rel="noopener" style="display:inline-block;padding:12px 18px;color:#ffffff;text-decoration:none;font-weight:700;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif">Pay Balance</a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="text-align:center;margin:6px 0 0;font-size:12px;color:#6b7280;word-break:break-all">If the button doesn’t work, copy and paste this link:<br>{{ $payUrl }}</p>
-                @endif
 
                 @php $items = $r?->items ?? collect(); @endphp
                 @if($items && $items->count())

@@ -7,14 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>Reservations</h1>
-    <div><small>Step {{ $step ?? 1 }} of 5</small></div>
+<div class="rs-shell">
+  <div class="rs-header">
+    <h1 class="rs-title">Reservations</h1>
+    <div class="rs-step-meta">Step {{ $step ?? 1 }} of 5</div>
   </div>
-  <div class="card">
-    @yield('content')
-  </div>
+  @yield('content')
 </div>
 @stack('scripts')
 </body>

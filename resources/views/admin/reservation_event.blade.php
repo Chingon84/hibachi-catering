@@ -83,7 +83,6 @@
           $totals = \App\Support\ReservationTotals::compute($r);
           $depositDue = $totals['deposit_due'];
           $depositPaid = $totals['deposit_display'];
-          $additionalPaid = $totals['additional_paid'];
           $balance = $totals['balance'];
           if (!empty(session('resv.deposit_amount'))) {
             $totals['deposit_paid_session'] = (float) session('resv.deposit_amount');
@@ -92,9 +91,6 @@
         <div class="kv" style="margin-bottom:10px">
           <div>Deposit due</div><div><b>{{ $fmt($depositDue) }}</b></div>
           <div>Deposit paid</div><div><b style="color:#16a34a">{{ $fmt($depositPaid) }}</b></div>
-          @if($additionalPaid > 0)
-            <div>Additional paid</div><div><b style="color:#16a34a">{{ $fmt($additionalPaid) }}</b></div>
-          @endif
           <div>Balance</div><div><b>{{ $fmt($balance) }}</b></div>
         </div>
         <div><a class="btn secondary" href="{{ route('admin.reservations.invoice',['id'=>$r->id,'back'=>request()->fullUrl()]) }}">View Invoice</a></div>

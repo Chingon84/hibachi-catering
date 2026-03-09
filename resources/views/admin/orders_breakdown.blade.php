@@ -6,123 +6,149 @@
   <title>Admin – Orders Breakdown</title>
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
-    .table{border-collapse:collapse}
-    .table thead th{background:var(--card);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:11px;padding:4px;vertical-align:middle;text-align:center;line-height:1.2}
-    .table tbody td{font-weight:500;font-size:12px;padding:4px;vertical-align:middle;text-align:center;line-height:1.2}
-    .table tbody tr + tr td{border-top:1px solid var(--border)}
-    .table thead th.qty-col,
-    .table tbody td.qty{width:10%;padding-right:3px}
-    .table thead th.unit-col,
-    .table tbody td.unit{width:10%;padding-left:3px;padding-right:3px}
-    .table thead th.item-col,
-    .table tbody td.item-col{width:40%;padding-left:4px;padding-right:0;text-align:left}
-    .table thead th.total-col,
-    .table tbody td.total{width:18%;padding-left:0;padding-right:2px;position:relative;left:-110px}
-    .table thead th.ozs-col,
-    .table tbody td.ozs-col{width:14%;padding-left:2px;padding-right:0;position:relative;left:-110px}
-    .table thead th.lbs-col,
-    .table tbody td.lbs-col{width:12%;padding-left:2px;padding-right:0;text-align:center;position:relative;left:-110px;color:#b21e27}
-    .table tbody td.qty,
-    .table tbody td.unit,
-    .table tbody td.total,
-    .table tbody td.ozs-col,
-    .table tbody td.lbs-col{font-variant-numeric:tabular-nums}
-    .table tbody td.item-col .text-input{width:50%;max-width:none}
-    .table tbody td.ozs-col .text-input{width:52px;max-width:52px}
-    .table tbody td.lbs-col .text-input{width:52px;max-width:52px;text-align:center;color:#b21e27;font-weight:600}
-    .table tbody td .num-input{width:52px;max-width:100%;padding:2px 3px;height:22px;line-height:1.2;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;text-align:center;font-size:12px;font-weight:500;-moz-appearance:textfield}
-    .table tbody td.qty .num-input{width:48px}
-    .table tbody td.total .num-input{width:60px}
-    .table tbody td .num-input::-webkit-outer-spin-button,
-    .table tbody td .num-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}
-    .table tbody td .num-input:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
-    .table tbody td .num-input[readonly]{background:#f9fafb;color:#4b5563;cursor:default;border-bottom-color:#d1d5db}
-    .table tbody td .text-input{width:100%;max-width:110px;padding:2px 3px;height:22px;line-height:1.2;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;font-size:12px;font-weight:500}
-    .table tbody td .text-input:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
-    .table tbody td .unit-select{width:40px;max-width:100%;padding:2px;height:22px;line-height:1.2;border:0;border-bottom:1px solid var(--border);border-radius:0;background:#fff;font-size:12px;font-weight:500;text-align:center;text-align-last:center;appearance:none;-moz-appearance:none;-webkit-appearance:none}
-    .table tbody td .unit-select:focus{outline:none;border-bottom-color:var(--brand,#b21e27)}
-    .table tbody td .unit-select.pc-selected{color:#b21e27;font-weight:600}
-    .search-card{margin:0 auto 12px;max-width:1080px}
-    .search-card label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase}
-    .search-results{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-    .selected-widgets{display:flex;flex-direction:column;gap:16px;margin-top:12px}
-    @media (min-width: 1100px){
-      .selected-widgets{flex-direction:row;align-items:flex-start;gap:24px;flex-wrap:nowrap}
-      .selected-items-area{flex:0 0 65%;max-width:65%}
-      .selected-summary-area{flex:0 0 35%;max-width:35%}
-    }
-    .search-result{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;justify-content:space-between;align-items:center;font-size:12px;cursor:pointer;transition:background .12s ease,border-color .12s ease}
-    .search-result .name{font-weight:600;font-size:13px;color:var(--text)}
+    :root{--bg:#f7f7f9;--surface:#fff;--surface-soft:#f8fafc;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--brand:#b21e27;--brand-hover:#991b1b;--shadow:0 8px 26px rgba(15,23,42,.06)}
+    body{background:var(--bg)}
+    .page-wrap{max-width:1280px;margin:0 auto;padding:20px 16px 28px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .title{font-size:30px;font-weight:800;letter-spacing:-.02em}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700;font-size:13px;transition:all .15s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,23,42,.08);border-color:#cbd5e1}
+    .btn.secondary{background:#fff}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+    .card-body{padding:22px}
+    .layout-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:20px}
+    @media (max-width:1050px){.layout-grid{grid-template-columns:1fr}}
+    .totals-card{margin-top:20px}
+    .section-title{margin:0 0 12px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#475569}
+    .search-label{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin-bottom:8px}
+    .search-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .search-wrap{position:relative;max-width:440px}
+    .search-wrap:before{content:"\1F50D";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:#64748b;pointer-events:none}
+    .input{width:100%;height:42px;border-radius:12px;border:1px solid var(--border);padding:10px 12px 10px 34px;background:#fff;transition:border-color .15s ease,box-shadow .15s ease}
+    .date-input{height:42px;border-radius:12px;border:1px solid var(--border);padding:10px 12px;background:#fff;transition:border-color .15s ease,box-shadow .15s ease;min-width:170px}
+    .date-input:focus{outline:0;border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+    .input:focus{outline:0;border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+    .search-helper{margin-top:6px;font-size:12px;color:var(--muted)}
+    .search-results{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+    .search-result{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;justify-content:space-between;align-items:center;font-size:12px;cursor:pointer;transition:all .15s ease}
+    .search-result .name{font-weight:700;font-size:13px;color:var(--text)}
     .search-result .meta{color:var(--muted);font-size:12px;margin-left:12px;white-space:nowrap}
-    .search-result:hover{border-color:#cbd5f5;background:#f8fafc}
+    .search-result:hover{border-color:#cbd5f5;background:#f8fafc;transform:translateY(-1px)}
     .search-result.is-selected{border-color:#b21e27;background:rgba(178,30,39,.08)}
-    .selected-area{margin-top:12px}
-    .selected-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-    .selected-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:6px 8px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
-    .selected-table tbody td{padding:6px 8px;border-top:1px solid var(--border)}
-    .selected-table tbody tr:first-child td{border-top:0}
-    .selected-table .muted{color:var(--muted);font-size:11px}
-    .selected-remove{background:none;border:0;color:#b21e27;font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
-    .selected-remove:hover{color:#9a1a22}
-    .selected-empty{color:var(--muted);text-align:center}
-    .selected-items-area{margin-top:0;padding-top:10px;border-top:1px solid var(--border)}
-    .selected-items-area h3{margin:0 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;color:#374151}
-    .selected-items-container{overflow-x:auto}
-    .selected-items-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-    .selected-items-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:4px 6px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
-    .selected-items-table tbody td{padding:4px 6px;border-top:1px solid var(--border)}
-    .selected-items-table tbody tr:first-of-type td{border-top:0}
-    .selected-items-table tbody tr.client-heading td{background:#e8f9f2;font-weight:700;color:#111;text-transform:uppercase;font-size:13px;position:relative;padding-right:32px}
-    .selected-items-table tbody tr.client-heading td span{color:#111;font-weight:700;margin-left:6px;font-size:11px;text-transform:none}
-    .client-remove-icon{position:absolute;top:50%;right:8px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #d1d5db;border-radius:999px;background:#fff;color:#b21e27;font-size:14px;line-height:1;font-weight:700;cursor:pointer}
-    .client-remove-icon:hover{background:#fdecec;border-color:#fca5a5;color:#991b1b}
+    .selected-widgets{display:grid;grid-template-columns:1fr;gap:18px;margin-top:16px}
+    .selected-items-area,.selected-summary-area{background:var(--surface-soft);border:1px solid #e8edf4;border-radius:14px;padding:14px}
+    .selected-items-area h3,.selected-summary-area h3{margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#475569}
+    .selected-empty{color:var(--muted);text-align:center;padding:18px 8px;border:1px dashed #d8e0ea;border-radius:10px;background:#fff}
+    .selected-items-container{overflow:auto;max-height:430px;border-radius:10px}
+    .selected-summary-container{overflow:auto;max-height:430px;border-radius:10px}
+    .selected-items-table,.selected-summary-table,.table{width:100%;border-collapse:separate;border-spacing:0}
+    .selected-items-table thead th,.selected-summary-table thead th,.table thead th{position:sticky;top:0;z-index:1;background:#f8fafc;color:#64748b;font-weight:800;font-size:11px;padding:10px 12px;text-transform:uppercase;letter-spacing:.06em;text-align:left;border-bottom:1px solid var(--border)}
+    .selected-items-table tbody td,.selected-summary-table tbody td,.table tbody td{padding:10px 12px;border-bottom:1px solid #eef2f7;font-size:13px;vertical-align:middle}
+    .selected-items-table tbody tr:nth-child(even):not(.client-heading):not(.client-empty) td,.selected-summary-table tbody tr:nth-child(even) td,.table tbody tr:nth-child(even) td{background:#fcfdff}
+    .selected-items-table tbody tr:hover td,.selected-summary-table tbody tr:hover td,.table tbody tr:hover td{background:#f7faff}
+    .selected-items-table tbody tr.client-heading td{background:#eef7f3;font-weight:800;color:#0f172a;text-transform:uppercase;font-size:12px;position:relative;padding-right:36px}
+    .selected-items-table tbody tr.client-heading td span{display:inline-flex;margin-left:8px;padding:2px 8px;border:1px solid #cde7dc;border-radius:999px;background:#fff;color:#065f46;font-size:11px;font-weight:700;text-transform:none}
     .selected-items-table tbody tr.client-empty td{color:#6b7280;font-style:italic}
-    .selected-items-table tbody td.qty{text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
-    .selected-summary-area{padding-top:10px;border-top:1px solid var(--border)}
-    .selected-summary-area h3{margin:0 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;color:#374151}
-    .selected-summary-container{overflow-x:auto}
-    .selected-summary-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
-    .selected-summary-table thead th{background:#f3f4f6;color:#374151;font-weight:600;font-size:11px;padding:4px 6px;text-transform:uppercase;letter-spacing:.03em;text-align:left}
-    .selected-summary-table tbody td{padding:4px 6px;border-top:1px solid var(--border)}
-    .selected-summary-table tbody tr:first-of-type td{border-top:0}
-    .selected-summary-table tbody td.qty{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-    .portion-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .portion-actions{display:flex;align-items:center;gap:6px}
-    .portion-save-btn{appearance:none;border:1px solid var(--border);background:var(--card,#fff);color:var(--text,#374151);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;line-height:1.1;transition:background .12s ease,border-color .12s ease,color .12s ease}
-    .portion-save-btn:hover{background:#f3f4f6;border-color:#d1d5db;color:#111}
-    .portion-save-btn.secondary{background:var(--brand,#b21e27);border-color:var(--brand,#b21e27);color:#fff}
-    .portion-add-btn{appearance:none;border:1px solid var(--border);background:#fff;color:#374151;border-radius:8px;width:30px;height:28px;font-size:18px;line-height:1;font-weight:600;cursor:pointer;transition:background .12s ease,border-color .12s ease,color .12s ease}
-    .portion-add-btn:hover{background:#f3f4f6;border-color:#d1d5db;color:#111}
-    .totals-card{max-width:760px;margin:0 auto 12px}
+    .selected-items-table tbody td.qty{padding-left:18px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#0f172a}
+    .selected-summary-table tbody td.qty{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;color:#0f172a}
+    .client-remove-icon{position:absolute;top:50%;right:10px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid #fbcaca;border-radius:999px;background:#fff;color:#b21e27;font-size:14px;line-height:1;font-weight:700;cursor:pointer;transition:.12s ease}
+    .client-remove-icon:hover{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+    .totals-card{border-radius:20px}
+    .totals-card .card-body{padding:18px}
+    .portion-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .portion-header h3{margin:0;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#475569}
+    .portion-actions{display:flex;align-items:center;gap:8px}
+    .portion-status{min-height:18px;font-size:12px;color:#64748b;font-weight:600}
+    .portion-status.success{color:#166534}
+    .portion-status.error{color:#b91c1c}
+    .portion-edit-btn{appearance:none;border:1px solid #dbe2ea;background:#fff;color:#334155;border-radius:999px;cursor:pointer;font-weight:800;padding:8px 12px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;transition:.15s ease}
+    .portion-edit-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .portion-save-btn,.portion-add-btn{appearance:none;border:1px solid #dbe2ea;background:#fff;color:#334155;border-radius:999px;cursor:pointer;font-weight:800;transition:.15s ease}
+    .portion-save-btn{padding:8px 14px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;background:var(--brand);border-color:var(--brand);color:#fff}
+    .portion-save-btn:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+    .portion-save-btn.secondary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .portion-save-btn.secondary:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+    .portion-add-btn{width:34px;height:34px;font-size:18px;line-height:1;background:#fff}
+    .portion-add-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .portion-table-wrap{overflow:auto;max-height:500px;border:1px solid #e2e8f0;border-radius:16px;background:#fff}
+    .totals-card .table{width:100%;min-width:860px;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    .totals-card .table thead th{position:sticky;top:0;z-index:2;background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:10px 10px;line-height:1.2}
+    .totals-card .table tbody td{padding:8px 10px;vertical-align:middle;background:#fff}
+    .totals-card .table tbody tr + tr td{border-top:1px solid #eef2f7}
+    .totals-card .table thead th.qty-col,.totals-card .table tbody td.qty{width:80px;text-align:right}
+    .totals-card .table thead th.unit-col,.totals-card .table tbody td.unit{width:96px;text-align:center}
+    .totals-card .table thead th.item-col,.totals-card .table tbody td.item-col{width:auto;text-align:left}
+    .totals-card .table thead th.total-col,.totals-card .table tbody td.total{width:96px;text-align:right}
+    .totals-card .table thead th.ozs-col,.totals-card .table tbody td.ozs-col{width:112px;text-align:right}
+    .totals-card .table thead th.lbs-col,.totals-card .table tbody td.lbs-col{width:112px;text-align:right}
+    .totals-card .table tbody td.qty,.totals-card .table tbody td.total,.totals-card .table tbody td.ozs-col,.totals-card .table tbody td.lbs-col{font-variant-numeric:tabular-nums}
+    .totals-card .table tbody td .num-input,
+    .totals-card .table tbody td .text-input,
+    .totals-card .table tbody td .unit-select{
+      height:36px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;
+      padding:6px 10px;font-size:13px;font-weight:600;color:#0f172a;max-width:100%
+    }
+    .totals-card .table tbody td .num-input{text-align:right}
+    .totals-card .table tbody td .text-input{text-align:left}
+    .totals-card .table tbody td .unit-select{text-align:center;text-align-last:center;appearance:none;-moz-appearance:none;-webkit-appearance:none}
+    .totals-card .table tbody td .unit-select.pc-selected{color:#b21e27;font-weight:700}
+    .totals-card .table tbody td .num-input:focus-visible,
+    .totals-card .table tbody td .text-input:focus-visible,
+    .totals-card .table tbody td .unit-select:focus-visible{
+      outline:none;border-color:#c7d2fe;box-shadow:0 0 0 3px rgba(99,102,241,.15);background:#fff
+    }
+    .totals-card .table tbody td .num-input::-webkit-outer-spin-button,
+    .totals-card .table tbody td .num-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}
+    .totals-card .table tbody td.qty .num-input,
+    .totals-card .table tbody td.total .num-input{width:80px;margin-left:auto}
+    .totals-card .table tbody td.unit .unit-select{width:72px}
+    .totals-card .table tbody td.item-col .text-input{width:min(100%, 480px)}
+    .totals-card .table tbody td.ozs-col .text-input,
+    .totals-card .table tbody td.lbs-col .text-input{width:96px;margin-left:auto}
+    .totals-card .table tbody td.lbs-col .text-input{font-weight:700;color:#b21e27}
+    .totals-card .table tbody td .is-locked{background:#f1f5f9;border-color:#e2e8f0;color:#64748b;box-shadow:none;cursor:not-allowed}
+    .totals-card .table tbody td .is-locked:focus-visible{outline:none;box-shadow:none;border-color:#e2e8f0}
   </style>
 </head>
 @php
   $items = \App\Support\MenuLabel::primaryItems();
 @endphp
 <body>
-  <div class="container">
+  <div class="page-wrap">
     <div class="header">
-      <h1 class="title" style="margin-right:auto">Orders Breakdown</h1>
+      <h1 class="title">Orders Breakdown</h1>
       <a href="{{ route('admin.dashboard') }}" class="btn secondary">Dashboard</a>
     </div>
 
-    <div class="card search-card">
-      <div class="card-body">
-        <label for="ordersSearch">Search</label>
-        <input type="text" class="input" id="ordersSearch" placeholder="Search confirmed clients" style="max-width:320px">
-        <div id="ordersSearchResults" class="search-results muted">Type at least 2 characters to search</div>
-        <div class="selected-widgets">
-          <div class="selected-items-area" aria-label="Selected menu items">
-            <h3>Menu Items</h3>
-            <div id="selectedItemsContainer" class="selected-items-container">
-              <div class="selected-empty">No menu items yet.</div>
+    <div class="layout-grid">
+      <div class="card search-card">
+        <div class="card-body">
+          <label class="search-label" for="ordersSearch">Search</label>
+          <div class="search-controls">
+            <div class="search-wrap">
+              <input type="text" class="input" id="ordersSearch" placeholder="Search confirmed clients" value="{{ (string) request('q', '') }}">
+            </div>
+            <input type="date" class="date-input" id="ordersDate" value="{{ (string) request('date', '') }}" aria-label="Select date">
+          </div>
+          <div class="search-helper">Type at least 2 characters to search.</div>
+          <div id="ordersSearchResults" class="search-results muted">Type at least 2 characters to search</div>
+
+          <div class="selected-widgets">
+            <div class="selected-items-area" aria-label="Selected menu items">
+              <h3>Menu Items</h3>
+              <div id="selectedItemsContainer" class="selected-items-container">
+                <div class="selected-empty">No menu items yet.</div>
+              </div>
             </div>
           </div>
-          <div class="selected-summary-area" aria-label="Items totals">
-            <h3>Totals by Item</h3>
-            <div id="selectedSummaryContainer" class="selected-summary-container">
-              <div class="selected-empty">No totals yet.</div>
-            </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h3 class="section-title">Totals by Item</h3>
+          <div id="selectedSummaryContainer" class="selected-summary-container">
+            <div class="selected-empty">No totals yet.</div>
           </div>
         </div>
       </div>
@@ -131,45 +157,57 @@
     <div class="card totals-card">
       <div class="card-body">
         <div class="portion-header">
-          <h3 style="margin:0;font-size:14px;font-weight:600;text-transform:uppercase;color:#374151">Portions</h3>
+          <h3>Portions</h3>
           <div class="portion-actions">
+            <button type="button" class="portion-edit-btn" id="ordersEditBtn">Edit</button>
             <button type="button" class="portion-save-btn" id="ordersSaveBtn">Save</button>
             <button type="button" class="portion-add-btn" id="portionAddRowBtn" title="Add portion row">+</button>
           </div>
         </div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="qty-col">Qty</th>
-              <th class="unit-col">oz/pc</th>
-              <th class="item-col">Item</th>
-              <th class="total-col">Total</th>
-              <th class="ozs-col">ozs</th>
-              <th class="lbs-col">lbs</th>
-            </tr>
-          </thead>
-          <tbody> 
-            @foreach($items as $item)
-              @php
-                $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $item));
-                $rowKey = trim($slug, '-') . '-' . $loop->index;
-              @endphp
-              <tr data-item="{{ $rowKey }}" data-label="{{ $item }}">
-                <td class="qty"><input type="number" class="num-input qty-input" value="0" min="0" data-field="qty"></td>
-                <td class="unit">
-                  <select class="unit-select unit-input" data-field="unit">
-                    <option value="oz">oz</option>
-                    <option value="pc">pc</option>
-                  </select>
-                </td>
-                <td class="item-col"><input type="text" class="text-input item-name-input" value="{{ $item }}" data-field="label"></td>
-                <td class="total"><input type="number" class="num-input total-input" value="0" min="0" step="0.01" data-field="total"></td>
-              <td class="ozs-col"><input type="text" class="text-input lbpcs-input" value="" data-field="lbpcs" placeholder="0" readonly></td>
-              <td class="lbs-col"><input type="text" class="text-input lbs-input" value="" data-field="lbs" placeholder="0" readonly></td>
+        <div id="portionStatus" class="portion-status" aria-live="polite"></div>
+        <div class="portion-table-wrap">
+          <table class="table">
+            <colgroup>
+              <col style="width:80px">
+              <col style="width:96px">
+              <col>
+              <col style="width:96px">
+              <col style="width:112px">
+              <col style="width:112px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="qty-col">Qty</th>
+                <th class="unit-col">oz/pc</th>
+                <th class="item-col">Item</th>
+                <th class="total-col">Total</th>
+                <th class="ozs-col">ozs</th>
+                <th class="lbs-col">lbs</th>
               </tr>
-            @endforeach
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @foreach($items as $item)
+                @php
+                  $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $item));
+                  $rowKey = trim($slug, '-') . '-' . $loop->index;
+                @endphp
+                <tr data-item="{{ $rowKey }}" data-label="{{ $item }}">
+                  <td class="qty"><input type="number" class="num-input qty-input" value="0" min="0" data-field="qty"></td>
+                  <td class="unit">
+                    <select class="unit-select unit-input" data-field="unit">
+                      <option value="oz">oz</option>
+                      <option value="pc">pc</option>
+                    </select>
+                  </td>
+                  <td class="item-col"><input type="text" class="text-input item-name-input" value="{{ $item }}" data-field="label"></td>
+                  <td class="total"><input type="number" class="num-input total-input" value="0" min="0" step="0.01" data-field="total"></td>
+                  <td class="ozs-col"><input type="text" class="text-input lbpcs-input" value="" data-field="lbpcs" placeholder="0" readonly></td>
+                  <td class="lbs-col"><input type="text" class="text-input lbs-input" value="" data-field="lbs" placeholder="0" readonly></td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -178,11 +216,14 @@
       const SEARCH_URL = "{{ route('admin.orders.breakdown.search') }}";
       const resultsBox = document.getElementById('ordersSearchResults');
       const searchInput = document.getElementById('ordersSearch');
+      const dateInput = document.getElementById('ordersDate');
       const itemsContainer = document.getElementById('selectedItemsContainer');
       const summaryContainer = document.getElementById('selectedSummaryContainer');
       const portionTableBody = document.querySelector('.totals-card tbody');
       const portionAddBtn = document.getElementById('portionAddRowBtn');
+      const editBtn = document.getElementById('ordersEditBtn');
       const saveBtn = document.getElementById('ordersSaveBtn');
+      const portionStatus = document.getElementById('portionStatus');
       const PORTIONS_URL = "{{ route('admin.orders.breakdown.portions') }}";
       const PORTIONS_SAVE_URL = "{{ route('admin.orders.breakdown.portions.save') }}";
       const CSRF_TOKEN = "{{ csrf_token() }}";
@@ -211,6 +252,10 @@
       let selectedClients = [];
       let tableDirty = false;
       let lastSummaryTotals = [];
+      let isEditing = false;
+      let lastSavedRows = [];
+      const initialQuery = searchInput ? searchInput.value.trim() : '';
+      const initialDate = dateInput ? dateInput.value : '';
 
       const escapeAttr = (value) => {
         if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
@@ -396,17 +441,58 @@
 
       function markDirty() {
         if (!saveBtn) return;
+        if (!isEditing) return;
         if (tableDirty) return;
         tableDirty = true;
         saveBtn.textContent = 'Save*';
         saveBtn.classList.add('secondary');
+        saveBtn.disabled = false;
       }
 
       function markSaved() {
         if (!saveBtn) return;
         tableDirty = false;
         saveBtn.textContent = 'Save';
-        saveBtn.classList.remove('secondary');
+        saveBtn.classList.add('secondary');
+        if (!isEditing) {
+          saveBtn.disabled = true;
+        }
+      }
+
+      function setPortionStatus(message, type = '') {
+        if (!portionStatus) return;
+        portionStatus.textContent = message || '';
+        portionStatus.classList.remove('success', 'error');
+        if (type) {
+          portionStatus.classList.add(type);
+        }
+      }
+
+      function setEditingMode(nextEditing) {
+        isEditing = !!nextEditing;
+        const controls = portionTableBody ? portionTableBody.querySelectorAll('[data-field]') : [];
+        controls.forEach(ctrl => {
+          ctrl.disabled = !isEditing;
+          ctrl.classList.toggle('is-locked', !isEditing);
+          if ((ctrl.dataset.field === 'lbpcs' || ctrl.dataset.field === 'lbs') && !isEditing) {
+            ctrl.setAttribute('readonly', 'readonly');
+          }
+          if ((ctrl.dataset.field === 'lbpcs' || ctrl.dataset.field === 'lbs') && isEditing) {
+            ctrl.removeAttribute('readonly');
+          }
+        });
+
+        if (portionAddBtn) {
+          portionAddBtn.disabled = !isEditing;
+          portionAddBtn.style.opacity = isEditing ? '1' : '.55';
+          portionAddBtn.style.cursor = isEditing ? 'pointer' : 'not-allowed';
+        }
+        if (saveBtn) {
+          saveBtn.disabled = !isEditing;
+        }
+        if (editBtn) {
+          editBtn.textContent = isEditing ? 'Cancel' : 'Edit';
+        }
       }
 
       function collectTableState() {
@@ -470,6 +556,7 @@
         });
         getPortionRows().forEach(row => updateRowOzs(row));
         removeEmptyRows();
+        lastSavedRows = ordered.map(row => ({ ...row }));
         tableDirty = false;
         markSaved();
       }
@@ -484,9 +571,12 @@
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
           applyTableState(Array.isArray(data) ? data : []);
+          setEditingMode(false);
         } catch (err) {
           console.warn('Unable to load saved portions table', err);
+          setPortionStatus('Could not load saved portions.', 'error');
           markSaved();
+          setEditingMode(false);
         }
       }
 
@@ -506,8 +596,13 @@
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const data = await response.json();
           applyTableState(Array.isArray(data) ? data : []);
+          setPortionStatus('Saved.', 'success');
+          setEditingMode(false);
+          return true;
         } catch (err) {
           console.error('Unable to save orders breakdown totals', err);
+          setPortionStatus('Could not save portions. Try again.', 'error');
+          return false;
         }
       }
 
@@ -515,9 +610,23 @@
 
       if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
-      await saveTableState();
-    });
-  }
+          await saveTableState();
+        });
+      }
+
+      if (editBtn) {
+        editBtn.addEventListener('click', () => {
+          if (!isEditing) {
+            setPortionStatus('');
+            setEditingMode(true);
+            return;
+          }
+
+          applyTableState(lastSavedRows);
+          setEditingMode(false);
+          setPortionStatus('Changes discarded.');
+        });
+      }
 
   getPortionRows().forEach(row => {
     attachRowListeners(row);
@@ -527,6 +636,7 @@
 
       if (portionAddBtn && portionTableBody) {
         portionAddBtn.addEventListener('click', () => {
+          if (!isEditing) return;
           createPortionRow({});
           if (lastSummaryTotals.length) {
             updatePortionTotals(lastSummaryTotals);
@@ -844,16 +954,36 @@
         updateResultHighlights();
       }
 
-      async function performSearch(term) {
-        if (!term || term.length < 2) {
+      function syncFiltersUrl(q, date) {
+        const url = new URL(window.location.href);
+        if (q) url.searchParams.set('q', q);
+        else url.searchParams.delete('q');
+        if (date) url.searchParams.set('date', date);
+        else url.searchParams.delete('date');
+        window.history.replaceState({}, '', url.toString());
+      }
+
+      async function performSearch({ q = '', date = '', autoSelect = false } = {}) {
+        const term = (q || '').trim();
+        const selectedDate = (date || '').trim();
+
+        if (!selectedDate && term.length < 2) {
+          if (autoSelect) {
+            selectedClients = [];
+            renderSelectedItems();
+          }
           setResultsMessage('Type at least 2 characters to search');
           return;
         }
 
         setResultsMessage('Searching…');
+        syncFiltersUrl(term, selectedDate);
 
         try {
-          const response = await fetch(`${SEARCH_URL}?q=${encodeURIComponent(term)}`, {
+          const params = new URLSearchParams();
+          if (term) params.set('q', term);
+          if (selectedDate) params.set('date', selectedDate);
+          const response = await fetch(`${SEARCH_URL}?${params.toString()}`, {
             headers: { 'Accept': 'application/json' },
           });
           if (!response.ok) {
@@ -861,6 +991,13 @@
           }
           const data = await response.json();
           renderResults(data);
+
+          if (autoSelect) {
+            selectedClients = (Array.isArray(data) ? data : [])
+              .map(buildClientPayload)
+              .filter(Boolean);
+            renderSelectedItems();
+          }
         } catch (error) {
           console.error('Orders breakdown search failed', error);
           setResultsMessage('Search failed. Try again.');
@@ -870,17 +1007,48 @@
       if (searchInput) {
         searchInput.addEventListener('input', () => {
           const term = searchInput.value.trim();
+          const selectedDate = dateInput ? dateInput.value : '';
           clearTimeout(searchTimer);
-          if (term.length < 2) {
+          if (!selectedDate && term.length < 2) {
+            syncFiltersUrl('', '');
             setResultsMessage('Type at least 2 characters to search');
+            selectedClients = [];
+            renderSelectedItems();
             return;
           }
-          searchTimer = setTimeout(() => performSearch(term), 250);
+          searchTimer = setTimeout(() => performSearch({
+            q: term,
+            date: selectedDate,
+            autoSelect: true,
+          }), 250);
+        });
+      }
+
+      if (dateInput) {
+        dateInput.addEventListener('change', () => {
+          const term = searchInput ? searchInput.value.trim() : '';
+          const selectedDate = dateInput.value;
+          clearTimeout(searchTimer);
+          performSearch({
+            q: term,
+            date: selectedDate,
+            autoSelect: true,
+          });
         });
       }
 
       setResultsMessage('Type at least 2 characters to search');
       renderSelectedItems();
+      setEditingMode(false);
+      if (initialDate || initialQuery.length >= 2) {
+        performSearch({
+          q: initialQuery,
+          date: initialDate,
+          autoSelect: true,
+        });
+      } else {
+        syncFiltersUrl(initialQuery, initialDate);
+      }
     });
   </script>
 </body>

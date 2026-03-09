@@ -254,7 +254,7 @@ class TimeslotController extends Controller
             $start = Carbon::create($y, $m, 1)->toDateString();
             $end   = Carbon::create($y, $m, 1)->endOfMonth()->toDateString();
         } catch (\Throwable $e) {
-            return response()->json(['full'=>[]]);
+            return response()->json(['full'=>[], 'days'=>[]]);
         }
 
         $rows = Timeslot::selectRaw("date, SUM(CASE WHEN is_open=1 THEN 1 ELSE 0 END) as open_cnt, COUNT(*) as total_cnt")
@@ -262,16 +262,58 @@ class TimeslotController extends Controller
             ->groupBy('date')
             ->get();
 
-        $full = [];
+        $bookedRows = \App\Models\Reservation::query()
+            ->selectRaw('DATE(date) as date_key, COUNT(*) as booked_cnt')
+            ->whereBetween('date', [$start, $end])
+            ->where(function($q){ $q->whereNull('status')->orWhere('status','!=','canceled'); })
+            ->groupBy('date_key')
+            ->get();
+
+        $bookedByDate = [];
+        foreach ($bookedRows as $r) {
+            $dateKey = (string) ($r->date_key ?? '');
+            if ($dateKey === '') continue;
+            $bookedByDate[$dateKey] = (int) ($r->booked_cnt ?? 0);
+        }
+
+        $rowsByDate = [];
         foreach ($rows as $r) {
             $date = is_string($r->date) ? $r->date : optional($r->date)->format('Y-m-d');
             if (!$date) continue;
+            $rowsByDate[$date] = $r;
+        }
+
+        $full = [];
+        $days = [];
+        $allDates = array_unique(array_merge(array_keys($rowsByDate), array_keys($bookedByDate)));
+        foreach ($allDates as $date) {
+            $r = $rowsByDate[$date] ?? null;
             $open = (int) ($r->open_cnt ?? 0);
-            $total= (int) ($r->total_cnt ?? 0);
+            $total = (int) ($r->total_cnt ?? 0);
+            $booked = (int) ($bookedByDate[$date] ?? 0);
+            $pct = $total > 0 ? round(($booked / $total) * 100, 1) : 0.0;
+            $class = 'occ-none';
+            if ($total > 0) {
+                if ($pct >= 100) {
+                    $class = 'occ-full';
+                } elseif ($pct >= 71) {
+                    $class = 'occ-high';
+                } elseif ($pct >= 41) {
+                    $class = 'occ-mid';
+                } else {
+                    $class = 'occ-low';
+                }
+            }
             // Fully booked if there is at least one slot and none is open
             $full[$date] = ($total > 0 && $open === 0);
+            $days[$date] = [
+                'booked_events' => $booked,
+                'total_slots' => $total,
+                'occupancy_pct' => $pct,
+                'occupancy_class' => $class,
+            ];
         }
-        return response()->json(['full' => $full]);
+        return response()->json(['full' => $full, 'days' => $days]);
     }
 
     // Auto-fill all days in the visible month with hourly slots (07:00–22:00)

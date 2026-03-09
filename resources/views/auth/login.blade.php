@@ -15,7 +15,7 @@
     .field{margin-bottom:14px}
     .label{display:block;margin-bottom:6px;font-weight:600}
     .input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
-l      .password-field{position:relative}
+    .password-field{position:relative}
     .password-toggle{position:absolute;top:50%;right:12px;transform:translateY(-50%);background:none;border:none;padding:0;margin:0;display:flex;align-items:center;cursor:pointer;color:var(--muted)}
     .password-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
     .password-toggle svg{width:20px;height:20px}
@@ -44,7 +44,7 @@ l      .password-field{position:relative}
         @csrf
         <div class="field">
           <label class="label" for="login">Email or Username</label>
-          <input class="input" id="login" name="login" value="{{ old('login') }}" required>
+          <input class="input" id="login" name="login" value="{{ old('login') }}" placeholder="Enter your email or username" required>
         </div>
         <div class="field">
           <label class="label" for="password">Password</label>

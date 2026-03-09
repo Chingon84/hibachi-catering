@@ -8,29 +8,44 @@
   <style>
     /* Expand page width for calendar view */
     .container{max-width:100%;margin:12px auto;padding:0 12px}
-    .cal-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border)}
-    .cal-title{font-size:18px;font-weight:700}
-    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-    .cal-dow{padding:6px 10px;background:#f3f4f6;color:#374151;font-weight:700;border-bottom:1px solid var(--border)}
-    .cal-cell{min-height:140px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 6px 6px;position:relative}
+    .cal-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+    .cal-page-title{font-size:25px;line-height:1.18;font-weight:700;letter-spacing:-.01em;color:#0f172a;margin:0}
+    .cal-page-meta{margin-top:5px;color:#6b7280;font-size:13px}
+    .cal-wrap{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;box-shadow:0 6px 20px rgba(17,24,39,.03)}
+    .cal-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #e5e7eb;background:#fcfcfd}
+    .cal-title{font-size:19px;font-weight:600;letter-spacing:.01em;color:#0f172a}
+    .cal-controls{display:flex;gap:14px;align-items:center}
+    .cal-nav{display:flex;gap:10px;align-items:center}
+    .cal-nav .icon-btn{border-radius:999px;width:32px;height:32px;color:#374151;border-color:#d1d5db}
+    .cal-nav .icon-btn:hover{box-shadow:0 4px 10px rgba(15,23,42,.08);background:#f9fafb;border-color:#cbd5e1}
+    .cal-today-btn{background:#fff !important;color:#374151 !important;border:1px solid #d1d5db !important;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600}
+    .cal-today-btn:hover{background:#f9fafb !important;border-color:#cbd5e1 !important}
+    .cal-view-select{min-height:34px;padding:7px 12px;border-radius:999px;font-size:13px}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:#f8fafc}
+    .cal-dow{padding:10px 12px;background:#f8fafc;color:#6b7280;font-weight:600;font-size:12px;letter-spacing:.02em;border-bottom:1px solid #e5e7eb}
+    .cal-cell{min-height:148px;border-right:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:26px 10px 10px;position:relative;background:#fff}
     .cal-cell:nth-child(7n){border-right:none}
-    .cal-date{position:absolute;top:6px;right:8px;font-size:12px;color:#6b7280}
-    .cal-other{background:#fafafa}
-    .pill{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:3px 6px;margin:3px 0;font-size:12px;color:#111;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-    .pill:hover{border-color:#d1d5db;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-    .pill .time{color:#374151;font-weight:700;margin-right:6px}
-    .pill .guests{margin-left:auto;color:#374151;font-weight:700}
+    .cal-date{position:absolute;top:8px;right:10px;font-size:13px;font-weight:600;color:#374151}
+    .cal-other{background:#f9fafb}
+    .cal-other .cal-date{color:#9ca3af}
+    .cal-today{background:linear-gradient(180deg,#fffbeb 0%,#fef3c7 100%);border-radius:11px;box-shadow:inset 0 0 0 1px rgba(245,158,11,.22)}
+    .cal-today .cal-date{font-weight:700;color:#92400e}
+    .calendar-event{display:block;border:1px solid #e5e7eb;border-left:3px solid var(--event-accent,#22c55e);border-radius:10px;padding:5px 8px;margin:3px 0;color:#111827;text-align:left;background:#fff;text-decoration:none;width:100%;box-shadow:0 1px 2px rgba(15,23,42,.04);cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease}
+    .calendar-event:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(15,23,42,.08);border-color:#d1d5db}
+    .calendar-event .event-top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+    .calendar-event .event-client{font-size:13px;font-weight:600;color:#1f2937;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:capitalize;min-width:0}
+    .calendar-event .event-guests{font-size:11px;font-weight:700;color:#334155;line-height:1;white-space:nowrap;margin-left:8px;flex-shrink:0;padding:3px 7px;border-radius:999px;background:#f8fafc;border:1px solid #e5e7eb;min-width:22px;text-align:center}
+    .calendar-event .event-time{font-size:11px;font-weight:500;color:#6b7280;line-height:1.1;margin-top:1px}
     .legend{display:flex;gap:8px;align-items:center;color:#6b7280;font-size:12px}
     .legend .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
-    .st-confirmed{border-color:#a7f3d0;background:#ecfdf5}
-    .st-draft{border-color:var(--border);background:#fff}
-    .st-pending_payment{border-color:#fed7aa;background:#fff7ed}
-    .st-canceled{border-color:#fecaca;background:#fef2f2}
+    .status-confirmed{background:#ecfdf5;border-left-color:var(--event-accent,#22c55e)}
+    .status-pending{background:#fffbeb;border-left-color:var(--event-accent,#f59e0b)}
+    .status-canceled{background:#fef2f2;border-left-color:var(--event-accent,#ef4444)}
     /* Position the standard icon button inside cells */
     .add-icon{position:absolute;top:6px;left:8px;z-index:2}
-    .icon-btn.add-icon{width:22px;height:22px;font-size:14px;border-radius:8px;opacity:.85}
-    .cal-cell:hover .icon-btn.add-icon{opacity:1}
+    .icon-btn.add-icon{width:24px;height:24px;font-size:14px;border-radius:999px;opacity:.2;transition:opacity .15s ease, transform .15s ease, background .15s ease;border-color:#d1d5db;background:#fff;color:#6b7280}
+    .icon-btn.add-icon:hover{background:#f9fafb;color:#374151}
+    .cal-cell:hover .add-event-btn{opacity:1}
     /* Ensure icon buttons have no underline */
     .icon-btn, .icon-btn:hover, .icon-btn:focus, .icon-btn:visited { text-decoration: none; }
 
@@ -56,6 +71,11 @@
     .event-pop.tip:before{content:"";position:absolute;width:12px;height:12px;background:#fff;border:1px solid var(--border);border-right:none;border-bottom:none;transform:rotate(45deg);top:-6px;right:18px}
 
     @media (max-width: 768px){
+      .cal-page-head{flex-direction:column;align-items:flex-start}
+      .cal-page-title{font-size:21px}
+      .cal-head{flex-wrap:wrap;gap:10px}
+      .cal-controls{width:100%;justify-content:space-between}
+      .cal-cell{min-height:132px}
       .event-pop{width:min(540px,96vw);left:50%!important;top:50%!important;transform:translate(-50%,-50%);}
       .event-pop:before{display:none}
     }
@@ -83,36 +103,44 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div class="legend" style="margin-right:auto">
+    <div class="cal-page-head">
+      <div>
+        <h1 class="cal-page-title">Calendar</h1>
+        <div class="cal-page-meta">Reservation schedule overview</div>
+      </div>
+      <div class="header" style="margin-bottom:0">
+        <div class="legend" style="margin-right:auto">
         <span class="dot" style="background:#ecfdf5;border:1px solid #a7f3d0"></span> Confirmed
         <span class="dot" style="background:#fff7ed;border:1px solid #fed7aa"></span> Pending
         <span class="dot" style="background:#fef2f2;border:1px solid #fecaca"></span> Canceled
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <a href="{{ route('admin.staff_bookings.step1', $view==='month' ? [] : ['date'=>$start->toDateString()]) }}" class="icon-btn" title="Add Event">+</a>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <a href="{{ route('admin.staff_bookings.step1', $view==='month' ? [] : ['date'=>$start->toDateString()]) }}" class="icon-btn" title="Add Event">+</a>
+        </div>
       </div>
     </div>
 
     <div class="cal-wrap">
       <div class="cal-head">
         <div class="cal-title">{{ $titleLabel }}</div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div class="cal-controls">
+          <div class="cal-nav">
           @if($view==='month')
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'month','m'=>$prevKey]) }}" title="Prev" aria-label="Previous">‹</a>
-            <a class="btn secondary" href="{{ route('admin.calendar', ['view'=>'month']) }}">Today</a>
+            <a class="btn secondary cal-today-btn" href="{{ route('admin.calendar', ['view'=>'month']) }}">Today</a>
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'month','m'=>$nextKey]) }}" title="Next" aria-label="Next">›</a>
           @elseif($view==='week')
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'week','d'=>$prevKey]) }}" title="Prev" aria-label="Previous">‹</a>
-            <a class="btn secondary" href="{{ route('admin.calendar', ['view'=>'week']) }}">Today</a>
+            <a class="btn secondary cal-today-btn" href="{{ route('admin.calendar', ['view'=>'week']) }}">Today</a>
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'week','d'=>$nextKey]) }}" title="Next" aria-label="Next">›</a>
           @else
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'day','d'=>$prevKey]) }}" title="Prev" aria-label="Previous">‹</a>
-            <a class="btn secondary" href="{{ route('admin.calendar', ['view'=>'day']) }}">Today</a>
+            <a class="btn secondary cal-today-btn" href="{{ route('admin.calendar', ['view'=>'day']) }}">Today</a>
             <a class="icon-btn" href="{{ route('admin.calendar', ['view'=>'day','d'=>$nextKey]) }}" title="Next" aria-label="Next">›</a>
           @endif
+          </div>
           <form method="get" action="{{ route('admin.calendar') }}" style="margin-left:8px;display:inline-flex;gap:6px;align-items:center">
-            <select name="view" class="select" onchange="this.form.submit()">
+            <select name="view" class="select cal-view-select" onchange="this.form.submit()">
               <option value="month" {{ $view==='month'?'selected':'' }}>Month</option>
               <option value="week"  {{ $view==='week'?'selected':'' }}>Week</option>
               <option value="day"   {{ $view==='day'?'selected':'' }}>Day</option>
@@ -136,23 +164,28 @@
             $key = $cursor->toDateString();
             $items = $byDate[$key] ?? [];
             $isOther = $cursor->month !== $month->month;
+            $isToday = $cursor->isToday();
           @endphp
-          <div class="cal-cell {{ $isOther ? 'cal-other':'' }}">
+          <div class="cal-cell {{ $isOther ? 'cal-other':'' }} {{ $isToday ? 'cal-today':'' }}">
             <div class="cal-date">{{ $cursor->day }}</div>
-            <a href="{{ route('admin.staff_bookings.step1', ['date'=>$cursor->toDateString()]) }}" class="icon-btn add-icon" title="Add event on {{ $cursor->toFormattedDateString() }}">+</a>
+            <a href="{{ route('admin.staff_bookings.step1', ['date'=>$cursor->toDateString()]) }}" class="icon-btn add-icon add-event-btn" title="Add event on {{ $cursor->toFormattedDateString() }}">+</a>
             @foreach($items as $r)
               @php
                 $st = $r->status ?? 'draft';
-                $cls = 'st-'.str_replace(' ','_',$st);
+                $cls = in_array($st, ['canceled','cancelled'], true)
+                  ? 'status-canceled'
+                  : (in_array($st, ['confirmed'], true) ? 'status-confirmed' : 'status-pending');
                 try { $tm = \Carbon\Carbon::parse($r->time)->format('g:i A'); } catch (\Throwable $e) { $tm = substr((string)$r->time,0,5); }
               @endphp
-              @php $col = $r->color ?? '#6b7280'; $bg = $col.(strlen($col)===7?'20':''); @endphp
-              <button type="button" class="pill {{ $cls }}" title="{{ $r->customer_name ?? '' }}" data-event-id="{{ $r->id }}" style="border-color: {{ $col }}; background: {{ $bg }}">
-                <span class="time">{{ $tm }}</span>
-                <span class="name">{{ \Illuminate\Support\Str::limit($r->customer_name ?? '—', 22) }}</span>
-                @if((int)($r->guests ?? 0) > 0)
-                  <span class="guests">{{ (int) $r->guests }}</span>
-                @endif
+              @php $col = $r->color ?? null; @endphp
+              <button type="button" class="calendar-event {{ $cls }}" title="{{ $r->customer_name ?? '' }}" data-event-id="{{ $r->id }}" @if($col) style="--event-accent: {{ $col }};" @endif>
+                <div class="event-top">
+                  <div class="event-client">{{ \Illuminate\Support\Str::limit($r->customer_name ?? '—', 24) }}</div>
+                  @if((int)($r->guests ?? 0) > 0)
+                    <div class="event-guests">{{ (int) $r->guests }}</div>
+                  @endif
+                </div>
+                <div class="event-time">{{ $tm }}</div>
               </button>
             @endforeach
           </div>
@@ -244,9 +277,9 @@
           position(anchor);
         } catch(e){ pop.innerHTML = '<div class="body">Failed to load event.</div>'; setTimeout(()=>pop.classList.add('shown'), 10); position(anchor); }
       }
-      // Delegate clicks on .pill
+      // Delegate clicks on event cards
       document.addEventListener('click', (e)=>{
-        const btn = e.target.closest('.pill[data-event-id]');
+        const btn = e.target.closest('.calendar-event[data-event-id]');
         if (!btn) return;
         e.preventDefault();
         const id = parseInt(btn.getAttribute('data-event-id'),10);
@@ -260,9 +293,8 @@
           const data = JSON.parse(e.newValue);
           const id = String(data.id);
           const color = data.color || '#6b7280';
-          const pills = document.querySelectorAll(`[data-event-id="${id}"]`);
-          const bg = /^#[0-9a-fA-F]{6}$/.test(color) ? (color + '20') : '#6b728020';
-          pills.forEach(el => { el.style.borderColor = color; el.style.background = bg; });
+          const cards = document.querySelectorAll(`[data-event-id="${id}"]`);
+          cards.forEach(el => el.style.setProperty('--event-accent', color));
         } catch(_){}
       });
       // Format date as "Month mm-dd-yyyy" with a graceful fallback

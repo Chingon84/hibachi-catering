@@ -128,26 +128,11 @@
       $tax      = $totals['tax'];
       $total    = $totals['total'];
       $depositPaid = $totals['deposit_display'];
-      $otherPaid   = $totals['additional_paid'];
       $paidTotal   = $totals['paid_total'];
       $balance     = $totals['balance'];
     @endphp
 
     <div class="box" style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start">
-      @php
-        $payUrl = null;
-        try { if (!empty($r->code) && $balance > 0) { $payUrl = URL::temporarySignedRoute('invoice.pay', now()->addHours(72), ['code'=>$r->code]); } } catch (\Throwable $e) {}
-      @endphp
-      @if($payUrl)
-        <div class="no-print" style="min-width:200px;text-align:center">
-          <div style="font-weight:600;margin-bottom:6px">Pay Balance</div>
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ urlencode($payUrl) }}" alt="Pay QR" style="border:1px solid #e5e7eb;border-radius:8px">
-          <div style="font-size:12px;color:#6b7280;margin-top:6px">Scan to pay (expires in 72h)</div>
-          <div style="margin-top:6px;word-break:break-all">
-            <a href="{{ $payUrl }}" target="_top" rel="noopener" style="font-size:12px;color:#b21e27;text-decoration:underline">Open payment link</a>
-          </div>
-        </div>
-      @endif
       <table class="totals" style="margin-left:auto">
         <tr><td>Subtotal</td><td class="right">{{ $fmt($subtotal) }}</td></tr>
         <tr><td>Travel fee</td><td class="right">{{ $fmt($travel) }}</td></tr>
@@ -160,9 +145,6 @@
         <tr><td>Tax</td><td class="right">{{ $fmt($tax) }}</td></tr>
         <tr><td style="border-top:1px solid #e5e7eb; padding-top:4px"><b>Total</b></td><td class="right" style="border-top:1px solid #e5e7eb; padding-top:4px"><b>{{ $fmt($total) }}</b></td></tr>
         <tr><td class="muted">Deposit paid</td><td class="right" style="color:#16a34a">- {{ $fmt($depositPaid) }}</td></tr>
-        @if ($otherPaid > 0)
-          <tr><td class="muted">Additional paid</td><td class="right" style="color:#16a34a">- {{ $fmt($otherPaid) }}</td></tr>
-        @endif
         <tr><td class="muted">Total paid</td><td class="right" style="color:#16a34a">- {{ $fmt($paidTotal) }}</td></tr>
         <tr><td><b>Balance</b></td><td class="right"><b>{{ $fmt($balance) }}</b></td></tr>
       </table>

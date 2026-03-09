@@ -30,7 +30,7 @@
   <div class="container">
     <div class="header">
       <div></div>
-      <a href="{{ route('admin.clients') }}" class="btn secondary">Back</a>
+      <a href="{{ $mode==='edit' ? route('admin.clients.show', ['id'=>$client->id]) : route('admin.clients') }}" class="btn secondary">Back</a>
     </div>
 
     @if ($errors->any())
@@ -166,7 +166,7 @@
           </div>
 
           <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
-            <a class="btn secondary" href="{{ route('admin.clients') }}">Cancel</a>
+            <a class="btn secondary" href="{{ $mode==='edit' ? route('admin.clients.show', ['id'=>$client->id]) : route('admin.clients') }}">Cancel</a>
             <button class="btn" type="submit">{{ $mode==='edit' ? 'Save Changes' : 'Create Client' }}</button>
           </div>
         </form>

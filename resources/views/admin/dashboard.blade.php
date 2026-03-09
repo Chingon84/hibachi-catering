@@ -98,6 +98,13 @@
             <div class="nav-sub">KPIs and exports</div>
           </div>
         </a>
+        <a href="{{ route('admin.reports.financial') }}" target="pane" class="nav-item" data-url="{{ route('admin.reports.financial') }}">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18h16v2H4zm1-4h3v3H5zm5-6h3v9h-3zm5 2h3v7h-3z"/></svg>
+          <div>
+            <div class="nav-label">Financial Overview</div>
+            <div class="nav-sub">Profit &amp; loss dashboard</div>
+          </div>
+        </a>
         @endif
         @if($u && $u->hasPermission('orders.view'))
         <a href="{{ route('admin.orders.breakdown') }}" target="pane" class="nav-item" data-url="{{ route('admin.orders.breakdown') }}">
@@ -112,8 +119,8 @@
         <a href="{{ url('/admin/team') }}" target="pane" class="nav-item" data-url="{{ url('/admin/team') }}">
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-8 0a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm8 2c-3.3 0-6 1.7-6 3.8V19h12v-2.2C22 14.7 19.3 13 16 13zM3 16.8V19h6v-2.2C9 15.6 7.3 15 5.5 15S2 15.6 2 16.8z"/></svg>
           <div>
-            <div class="nav-label">Team Management</div>
-            <div class="nav-sub">Users and roles</div>
+            <div class="nav-label">Team</div>
+            <div class="nav-sub">Staff directory</div>
           </div>
         </a>
         @endif
@@ -130,8 +137,8 @@
         <a href="{{ url('/admin/complains') }}" target="pane" class="nav-item" data-url="{{ url('/admin/complains') }}">
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
           <div>
-            <div class="nav-label">Complains</div>
-            <div class="nav-sub">Customer issues</div>
+            <div class="nav-label">Feedback Center</div>
+            <div class="nav-sub">Customer issues & service feedback</div>
           </div>
         </a>
         @endif
@@ -172,10 +179,11 @@
         'Clients':'Clients',
         'Menu':'Menu',
         'Reports':'Reports',
+        'Financial Overview':'Financial Overview',
         'Orders Breakdown':'Orders Breakdown',
-        'Team Management':'Team Management',
+        'Team':'Team',
         'Settings':'Settings',
-        'Complains':'Complains',
+        'Feedback Center':'Feedback Center',
         'Trash':'Trash',
       };
 
@@ -185,11 +193,17 @@
         try { localStorage.setItem('admin:lastPaneUrl', url); } catch(e) {}
         // highlight matching nav item and set title
         let matched = null;
+        let matchedLength = -1;
         document.querySelectorAll('.nav-item').forEach(a => {
           const navUrl = a.getAttribute('data-url') || '';
-          const isMatch = url.indexOf(navUrl) === 0; // starts with
-          a.classList.toggle('active', isMatch);
-          if (isMatch) matched = a;
+          const isMatch = navUrl !== '' && url.indexOf(navUrl) === 0;
+          if (isMatch && navUrl.length > matchedLength) {
+            matched = a;
+            matchedLength = navUrl.length;
+          }
+        });
+        document.querySelectorAll('.nav-item').forEach(a => {
+          a.classList.toggle('active', a === matched);
         });
         const label = matched?.querySelector('.nav-label')?.textContent?.trim() || '';
         title.textContent = map[label] || label || 'Dashboard';

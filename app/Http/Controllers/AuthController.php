@@ -19,24 +19,22 @@ class AuthController extends Controller
             'password' => ['required','string'],
         ]);
 
-        $login = $request->input('login');
+        $login = trim((string) $request->input('login'));
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
         $creds = [
-            filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username' => $login,
+            $field => $login,
             'password' => $request->input('password'),
-            'is_active' => 1,
         ];
 
         if (Auth::attempt($creds, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            $intended = session('intended');
-            if ($intended) {
-                session()->forget('intended');
-                return redirect()->to($intended);
-            }
-            return redirect()->route('admin.dashboard');
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        return back()->withErrors(['login' => 'Invalid credentials'])->onlyInput('login');
+        return back()->withErrors([
+            'login' => 'We could not sign you in with those credentials.',
+        ])->onlyInput('login');
     }
 
     public function logout(Request $request)
@@ -47,4 +45,3 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 }
-

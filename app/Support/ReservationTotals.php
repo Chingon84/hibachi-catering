@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Reservation;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Utility helpers to derive consistent totals/balance figures
@@ -85,7 +86,7 @@ class ReservationTotals
 
         $computedTotal = round($subtotal + $travel + $gratuity + $tax + $adjSum, 2);
         $total = self::value($reservation?->total, data_get($fallback, 'total', $computedTotal));
-        if ($total === null || abs($total - $computedTotal) > 0.009) {
+        if ($total === null || $total <= 0) {
             $total = $computedTotal;
         }
 
@@ -98,33 +99,36 @@ class ReservationTotals
 
         $depositPaidStored = self::value($reservation?->deposit_paid, data_get($fallback, 'deposit_paid', 0));
         if ($stripeTotal > 0) {
-        $depositPaidTotal = $stripeTotal;
-        // Si el depósito sigue sin registrarse pero hay un monto en sesión, úsalo para separar
-        if ($stripeDeposit <= 0 && ($fallbackDeposit = (float) data_get($fallback, 'deposit_paid_session', 0)) > 0) {
-            $stripeDeposit = min($fallbackDeposit, $depositDue);
-            $stripeExtra   = max(0, $depositPaidTotal - $stripeDeposit);
-        }
-        } else {
-            $depositPaidTotal = $depositPaidStored ?? 0.0;
-            if ($depositPaidTotal > 0) {
-                $stripeDeposit = $depositPaidTotal;
-                $stripeExtra   = 0.0;
+            $depositPaid = min($stripeDeposit, $depositDue > 0 ? $depositDue : $stripeDeposit);
+            // If metadata/purpose is missing in older rows, fall back to session hint.
+            if ($depositPaid <= 0 && ($fallbackDeposit = (float) data_get($fallback, 'deposit_paid_session', 0)) > 0) {
+                $depositPaid = min($fallbackDeposit, $depositDue);
+                $stripeExtra = max(0, $stripeTotal - $depositPaid);
             }
+        } else {
+            $depositPaid = max(0, $depositPaidStored ?? 0.0);
+            $stripeExtra = 0.0;
         }
 
-        $manualPaid  = self::manualPaid($reservation);
-        $paidTotal   = round($depositPaidTotal + $manualPaid, 2);
-
-        if ($stripeDeposit > 0) {
-            $depositDisplay = $stripeDeposit;
-        } else {
-            $fallbackDeposit = $depositPaidTotal;
-            if ($depositDue > 0) {
-                $fallbackDeposit = min($depositPaidTotal, $depositDue);
+        $manualPaid = self::manualPaid($reservation);
+        $paidTotalStored = self::value($reservation?->amount_paid_total, data_get($fallback, 'amount_paid_total'));
+        $depositOverflow = max(0, round($stripeDeposit - $depositPaid, 2));
+        $paidTotalComputed = round($depositPaid + $depositOverflow + max(0, $stripeExtra) + $manualPaid, 2);
+        $paidTotal = $paidTotalComputed;
+        if ($paidTotalStored !== null) {
+            $stored = max(0, (float) $paidTotalStored);
+            if ($stripeTotal <= 0 && $manualPaid <= 0) {
+                // Legacy rows may only have cached totals in reservations table.
+                $paidTotal = $stored;
+            } elseif (abs($stored - $paidTotalComputed) < 0.01) {
+                $paidTotal = $stored;
             }
-            $depositDisplay = $fallbackDeposit;
         }
-        $additionalPaid = max(0, round($paidTotal - $depositDisplay, 2));
+        if ($paidTotal < 0) {
+            $paidTotal = 0.0;
+        }
+
+        $depositDisplay = max(0, min((float) $depositPaid, (float) $total));
 
         $balanceStored = self::value($reservation?->balance, data_get($fallback, 'balance'));
         $balance = $balanceStored !== null ? (float) $balanceStored : max(0, round($total - $paidTotal, 2));
@@ -141,13 +145,11 @@ class ReservationTotals
             'adjustments_sum'=> round($adjSum, 2),
             'total'          => $total,
             'deposit_due'    => round($depositDue, 2),
-            'deposit_paid'   => round($depositPaidTotal, 2),
+            'deposit_paid'   => round($depositPaid, 2),
             'stripe_deposit' => round($stripeDeposit, 2),
-            'stripe_balance' => round($stripeExtra, 2),
             'deposit_display'=> round($depositDisplay, 2),
-            'additional_paid'=> round($additionalPaid, 2),
             'manual_paid'    => round($manualPaid, 2),
-            'paid_total'     => $paidTotal,
+            'paid_total'     => round($paidTotal, 2),
             'balance'        => $balance,
         ];
     }
@@ -159,25 +161,41 @@ class ReservationTotals
         }
 
         try {
+            $columns = ['amount', 'payload_json'];
+            if (Schema::hasColumn('payments', 'type')) {
+                $columns[] = 'type';
+            }
             $payments = $reservation->payments()
                 ->where('status', 'succeeded')
-                ->get(['amount', 'payload_json']);
+                ->get($columns);
         } catch (\Throwable $e) {
             return [0.0, 0.0, 0.0];
         }
 
         $deposit = 0.0;
         $extra   = 0.0;
+        $depositDue = (float) ($reservation->deposit_due ?? 0);
         foreach ($payments as $p) {
+            $type = strtolower((string) ($p->type ?? ''));
             $payload = null;
             try {
                 $payload = $p->payload_json ? json_decode($p->payload_json, true, 512, JSON_THROW_ON_ERROR) : null;
             } catch (\Throwable $e) {
                 $payload = json_decode($p->payload_json ?? '', true);
             }
-            $purpose = strtolower((string) data_get($payload, 'metadata.purpose', 'deposit'));
+            $purpose = $type !== '' ? $type : strtolower((string) data_get($payload, 'metadata.purpose', data_get($payload, 'metadata.payment_type', '')));
             $amount  = (float) ($p->amount ?? 0);
-            if ($purpose === 'balance') {
+
+            if ($purpose === '') {
+                // Legacy rows without metadata: treat only the exact expected deposit as deposit.
+                if ($deposit <= 0 && $depositDue > 0 && abs($amount - $depositDue) < 0.01) {
+                    $purpose = 'deposit';
+                } else {
+                    $purpose = 'full';
+                }
+            }
+
+            if (in_array($purpose, ['balance', 'full'], true)) {
                 $extra += $amount;
             } else {
                 $deposit += $amount;

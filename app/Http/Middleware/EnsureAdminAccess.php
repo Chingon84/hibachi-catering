@@ -4,24 +4,32 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAdminAccess
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
-            // Remember target and redirect to login
-            session(['intended' => $request->fullUrl()]);
-            return redirect()->route('login');
+        $user = Auth::guard('web')->user();
+
+        if (!$user) {
+            return redirect()->guest(route('login'));
         }
 
-        $user = auth()->user();
-        if (!$user->is_active || !$user->can_access_admin) {
+        $isActive = (int) ($user->is_active ?? 1) === 1;
+        $canAccessByFlag = (int) ($user->can_access_admin ?? 0) === 1;
+        $role = strtolower((string) ($user->role ?? ''));
+        $canAccessByRole = in_array($role, ['owner', 'admin'], true);
+
+        if (!$isActive) {
+            abort(403, 'Your account is inactive.');
+        }
+
+        if (!$canAccessByFlag && !$canAccessByRole) {
             abort(403, 'You do not have access to the admin area.');
         }
 
         return $next($request);
     }
 }
-

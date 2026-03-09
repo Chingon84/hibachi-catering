@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ReportRevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -11,6 +12,10 @@ use Carbon\Carbon;
 
 class ReportsController extends Controller
 {
+    public function __construct(private readonly ReportRevenueService $revenueService)
+    {
+    }
+
     public function index(Request $req)
     {
         $preset = (string) $req->query('preset', 'month'); // day, week, month, year, custom
@@ -49,83 +54,9 @@ class ReportsController extends Controller
                 break;
         }
 
-        // Base query (exclude soft deleted by default)
-        $base = Reservation::query()->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
-        if ($agent !== 'all') {
-            $base->whereRaw('LOWER(booked_by) = ?', [strtolower($agent)]);
-        }
-
-        // Summary totals
-        $summary = (clone $base)
-            ->selectRaw('COALESCE(SUM(total),0) as total_sum')
-            ->selectRaw('COALESCE(SUM(deposit_paid),0) as deposit_sum')
-            ->selectRaw('COALESCE(SUM(gratuity),0) as gratuity_sum')
-            ->selectRaw('COALESCE(SUM(tax),0) as tax_sum')
-            ->selectRaw('COUNT(*) as count_res')
-            ->first();
-
-        // Aggregation for charts
-        if ($gran === 'month') {
-            $groupRows = (clone $base)
-                ->selectRaw("DATE_FORMAT(`date`, '%Y-%m') as period")
-                ->selectRaw('COALESCE(SUM(total),0) as total_sum')
-                ->selectRaw('COALESCE(SUM(deposit_paid),0) as deposit_sum')
-                ->selectRaw('COALESCE(SUM(gratuity),0) as gratuity_sum')
-                ->selectRaw('COALESCE(SUM(tax),0) as tax_sum')
-                ->groupBy('period')
-                ->orderBy('period')
-                ->get();
-            // Build full list of months between start and end
-            $labels = [];
-            $totals = [];
-            $depos  = [];
-            $grats  = [];
-            $cursor = $start->copy()->startOfMonth();
-            $endMon = $end->copy()->startOfMonth();
-            $byKey = $groupRows->keyBy('period');
-            $taxes = [];
-            while ($cursor <= $endMon) {
-                $key = $cursor->format('Y-m');
-                $labels[] = $cursor->format('M Y');
-                $row = $byKey->get($key);
-                $totals[] = $row->total_sum ?? 0;
-                $depos[]  = $row->deposit_sum ?? 0;
-                $grats[]  = $row->gratuity_sum ?? 0;
-                $taxes[]  = $row->tax_sum ?? 0;
-                $cursor->addMonth();
-            }
-        } else { // day granularity
-            $groupRows = (clone $base)
-                ->selectRaw('DATE(`date`) as period')
-                ->selectRaw('COALESCE(SUM(total),0) as total_sum')
-                ->selectRaw('COALESCE(SUM(deposit_paid),0) as deposit_sum')
-                ->selectRaw('COALESCE(SUM(gratuity),0) as gratuity_sum')
-                ->selectRaw('COALESCE(SUM(tax),0) as tax_sum')
-                ->groupBy('period')
-                ->orderBy('period')
-                ->get();
-            // Build full list of days between start and end
-            $labels = [];
-            $totals = [];
-            $depos  = [];
-            $grats  = [];
-            $cursor = $start->copy();
-            $byKey = $groupRows->keyBy('period');
-            $taxes = [];
-            while ($cursor <= $end) {
-                $key = $cursor->toDateString();
-                $labels[] = $cursor->format('m/d');
-                $row = $byKey->get($key);
-                $totals[] = $row->total_sum ?? 0;
-                $depos[]  = $row->deposit_sum ?? 0;
-                $grats[]  = $row->gratuity_sum ?? 0;
-                $taxes[]  = $row->tax_sum ?? 0;
-                $cursor->addDay();
-            }
-        }
-
-        // Recent reservations table (limit for performance)
-        $rows = (clone $base)->orderByDesc('date')->orderByDesc('time')->limit(200)->get();
+        $summary = $this->revenueService->summary($start, $end, $agent);
+        [$labels, $totals, $depos, $grats, $taxes] = $this->revenueService->series($start, $end, $gran, $agent);
+        $rows = $this->revenueService->rows($start, $end, $agent);
 
         // Build agent options (case-insensitive unique, normalize "Online")
         try {

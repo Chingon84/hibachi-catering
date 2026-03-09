@@ -6,6 +6,9 @@
   <title>Admin – Reports</title>
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
+    .subnav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+    .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
+    .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
     .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
     @media (max-width: 1100px){.cards{grid-template-columns:repeat(2,1fr)}}
     @media (max-width: 640px){.cards{grid-template-columns:1fr}}
@@ -21,6 +24,11 @@
     <div class="header">
       <h1 class="title" style="margin-right:auto">Reports</h1>
       <a href="{{ route('admin.reservations') }}" class="btn secondary">Back</a>
+    </div>
+
+    <div class="subnav">
+      <a href="{{ route('admin.reports') }}" class="active">Reports Dashboard</a>
+      <a href="{{ route('admin.reports.financial') }}">Financial Overview</a>
     </div>
 
     <div class="card"><div class="card-body">

@@ -423,6 +423,13 @@ return array (
       'desc' => '',
       'price' => 600.0,
     ),
+    14 => 
+    array (
+      'key' => 'dessert',
+      'name' => 'Dessert',
+      'desc' => '',
+      'price' => 7.0,
+    ),
   ),
   'PACKAGES' => 
   array (

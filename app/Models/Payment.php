@@ -12,6 +12,7 @@ class Payment extends Model
     protected $fillable = [
         'reservation_id','provider','amount','currency',
         'status','transaction_id','payload_json',
+        'type','stripe_session_id','stripe_payment_intent_id',
         'card_brand','card_last4',
     ];
 

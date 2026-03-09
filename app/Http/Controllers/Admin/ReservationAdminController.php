@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Client;
+use App\Models\ClientReservation;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
+use App\Services\ClientSyncService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Support\MenuLabel;
 use App\Models\OrderPortionRow;
+use Illuminate\Support\Collection;
 
 class ReservationAdminController extends Controller
 {
@@ -50,8 +55,12 @@ class ReservationAdminController extends Controller
         if ($d) {
             $query->whereDate('date', $d);
         }
-        if ($status && in_array($status, ['draft','pending_payment','confirmed','canceled'], true)) {
-            $query->where('status', $status);
+        if ($status && in_array($status, ['pending','confirmed','canceled'], true)) {
+            if ($status === 'pending') {
+                $query->whereIn('status', ['pending', 'pending_payment', 'draft']);
+            } else {
+                $query->where('status', $status);
+            }
         }
         if ($q !== '') {
             $query->where(function($w) use ($q){
@@ -65,6 +74,7 @@ class ReservationAdminController extends Controller
         }
 
         $rows = $query->limit(100)->get();
+        $this->markClientSyncAvailability($rows);
 
         return view('admin.reservations', [
             'd' => $d,
@@ -109,6 +119,7 @@ class ReservationAdminController extends Controller
             'date'          => 'required|date',
             'time'          => 'required',
             'guests'        => 'required|integer|min:1',
+            'status'        => 'nullable|string|in:confirmed,pending,pending_payment,canceled',
         ]);
 
         // Normalize time to H:i:s
@@ -117,6 +128,9 @@ class ReservationAdminController extends Controller
         } catch (\Throwable $e) {
             $t = $r->time; // fallback
         }
+
+        $statusInput = strtolower((string) ($data['status'] ?? ''));
+        $statusValue = $statusInput === 'pending' ? 'pending_payment' : $statusInput;
 
         $r->fill([
             'customer_name' => $data['customer_name'] ?? $r->customer_name,
@@ -134,6 +148,7 @@ class ReservationAdminController extends Controller
             'date'          => \Carbon\Carbon::parse($data['date'])->toDateString(),
             'time'          => $t,
             'guests'        => (int)$data['guests'],
+            'status'        => $statusValue !== '' ? $statusValue : $r->status,
         ])->save();
 
         $back = $req->input('back');
@@ -141,6 +156,36 @@ class ReservationAdminController extends Controller
             return redirect($back)->with('ok', 'Reservation updated');
         }
         return redirect()->route('admin.reservations.show', ['id'=>$r->id])->with('ok', 'Reservation updated');
+    }
+
+    public function addToClients(Request $request, int $id, ClientSyncService $clientSyncService)
+    {
+        $reservation = Reservation::findOrFail($id);
+        $result = $clientSyncService->addClientFromReservationIfNotExists($reservation);
+
+        if (($result['status'] ?? '') === 'exists') {
+            $message = 'This client already exists and cannot be added again.';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => 'exists',
+                    'message' => $message,
+                    'client_id' => $result['client']->id ?? null,
+                ], 409);
+            }
+
+            return back()->withErrors(['clients' => $message]);
+        }
+
+        $message = 'Client added successfully.';
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'created',
+                'message' => $message,
+                'client_id' => $result['client']->id ?? null,
+            ], 201);
+        }
+
+        return back()->with('ok', $message);
     }
 
     public function updateItems(Request $req, int $id)
@@ -405,13 +450,15 @@ class ReservationAdminController extends Controller
     public function searchOrdersBreakdown(Request $request)
     {
         $term = trim((string) $request->query('q', ''));
-        if (strlen($term) < 2) {
+        $date = trim((string) $request->query('date', ''));
+
+        if ($date === '' && strlen($term) < 2) {
             return response()->json([]);
         }
 
         $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
 
-        $results = Reservation::query()
+        $query = Reservation::query()
             ->with(['items' => function ($query) {
                 $query->select(['id', 'reservation_id', 'name_snapshot', 'description', 'qty', 'menu_id']);
             }])
@@ -419,14 +466,24 @@ class ReservationAdminController extends Controller
             ->where(function ($query) {
                 $query->where('status', 'confirmed')
                       ->orWhereRaw('COALESCE(deposit_paid, 0) > 0');
-            })
-            ->where(function ($query) use ($escaped) {
+            });
+
+        if ($date !== '') {
+            $query->whereDate('date', $date);
+        }
+
+        if ($term !== '') {
+            $query->where(function ($query) use ($escaped) {
                 $query->where('customer_name', 'like', "%{$escaped}%")
                       ->orWhere('email', 'like', "%{$escaped}%")
                       ->orWhere('phone', 'like', "%{$escaped}%");
-            })
-            ->orderByDesc('date')
-            ->limit(15)
+            });
+        }
+
+        $results = $query
+            ->orderBy('date')
+            ->orderBy('time')
+            ->limit($date !== '' ? 200 : 50)
             ->get()
             ->map(function (Reservation $res) {
                 return [
@@ -678,6 +735,103 @@ class ReservationAdminController extends Controller
         }
         $r->save();
         return response()->json(['ok'=>true,'color'=>$r->color]);
+    }
+
+    private function markClientSyncAvailability(Collection $rows): void
+    {
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $reservationIds = $rows->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $emails = $rows->pluck('email')
+            ->map(fn ($email) => strtolower(trim((string) $email)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $phones = $rows->pluck('phone')
+            ->map(fn ($phone) => trim((string) $phone))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $linkedByPivot = [];
+        if (Schema::hasTable('client_reservations')) {
+            $linkedByPivot = ClientReservation::query()
+                ->whereIn('reservation_id', $reservationIds)
+                ->pluck('reservation_id')
+                ->map(fn ($id) => (int) $id)
+                ->flip()
+                ->all();
+        }
+
+        $existingClients = Client::query()
+            ->select(['id', 'email_primary', 'email_alt', 'phone_primary', 'phone_alt', 'created_from_reservation_id'])
+            ->where(function ($q) use ($reservationIds, $emails, $phones) {
+                $q->whereIn('created_from_reservation_id', $reservationIds);
+                if (!empty($emails)) {
+                    $q->orWhereIn('email_primary', $emails)->orWhereIn('email_alt', $emails);
+                }
+                if (!empty($phones)) {
+                    $q->orWhereIn('phone_primary', $phones)->orWhereIn('phone_alt', $phones);
+                }
+            })
+            ->get();
+
+        foreach ($rows as $row) {
+            $status = strtolower((string) ($row->status ?? ''));
+            $canSyncByStatus = in_array($status, ['draft', 'pending_payment', 'pending'], true);
+
+            $reservationId = (int) $row->id;
+            $email = strtolower(trim((string) ($row->email ?? '')));
+            $phone = trim((string) ($row->phone ?? ''));
+
+            $alreadyLinked = isset($linkedByPivot[$reservationId]);
+            if (!$alreadyLinked) {
+                $alreadyLinked = $existingClients->contains(function (Client $client) use ($reservationId, $email, $phone) {
+                    if ((int) ($client->created_from_reservation_id ?? 0) === $reservationId) {
+                        return true;
+                    }
+
+                    if ($email !== '') {
+                        if (strtolower((string) $client->email_primary) === $email) {
+                            return true;
+                        }
+                        if (strtolower((string) $client->email_alt) === $email) {
+                            return true;
+                        }
+                    }
+
+                    if ($phone !== '') {
+                        if ((string) $client->phone_primary === $phone) {
+                            return true;
+                        }
+                        if ((string) $client->phone_alt === $phone) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+            }
+
+            $row->can_add_to_clients = $canSyncByStatus && !$alreadyLinked;
+        }
+    }
+
+    private function clientSyncResponse(Request $request, bool $ok, string $message)
+    {
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['ok' => $ok, 'message' => $message], $ok ? 200 : 422);
+        }
+
+        if ($ok) {
+            return back()->with('ok', $message);
+        }
+
+        return back()->withErrors(['clients' => $message]);
     }
 
 }

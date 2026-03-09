@@ -5,6 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Models\ClientActivity;
+use App\Models\Reservation;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 
 class ClientController extends Controller
 {
@@ -15,8 +23,19 @@ class ClientController extends Controller
         $status = $req->query('status');
         $city = trim((string) $req->query('city', ''));
         $date = trim((string) $req->query('date', ''));
+        $eventsInput = $req->query('events');
+        $events = null;
+        if ($eventsInput !== null && $eventsInput !== '') {
+            $parsed = (int) $eventsInput;
+            if ($parsed >= 1 && $parsed <= 50) {
+                $events = $parsed;
+            }
+        }
 
-        $query = Client::query()->orderBy('last_name')->orderBy('first_name');
+        $query = Client::query()
+            ->orderByDesc('last_event_at')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         if ($q !== '') {
             $query->where(function($w) use ($q){
@@ -40,8 +59,11 @@ class ClientController extends Controller
             // filter by last_event_date exact date
             $query->whereDate('last_event_date', $date);
         }
+        if (!is_null($events)) {
+            $query->where('events_count', '=', $events);
+        }
 
-        $list = $query->paginate(25)->withQueryString();
+        $list = $query->paginate(50)->withQueryString();
 
         // Build unique city options from both address lines
         $c1 = Client::whereNotNull('address1_city')->where('address1_city','<>','')
@@ -59,12 +81,144 @@ class ClientController extends Controller
             'city' => $city,
             'cityOptions' => $cityOptions,
             'date' => $date,
+            'events' => $events,
         ]);
     }
 
     public function create()
     {
         return view('admin.client_form', ['client' => new Client(['status'=>'regular']), 'mode' => 'create', 'statusOptions' => self::STATUS]);
+    }
+
+    public function show(Request $req, int $id)
+    {
+        $query = Client::query();
+        if (Schema::hasTable('client_photos')) {
+            $query->with('photos');
+        }
+        $client = $query->findOrFail($id);
+
+        $tab = strtolower((string) $req->query('tab', 'overview'));
+        if (!in_array($tab, ['overview', 'activities'], true)) {
+            $tab = 'overview';
+        }
+        $activityTab = strtoupper((string) $req->query('activity_tab', 'ACTIVITY'));
+        if (!in_array($activityTab, ['ACTIVITY', 'NOTES', 'TASKS', 'EVENTS'], true)) {
+            $activityTab = 'ACTIVITY';
+        }
+
+        $search = trim((string) $req->query('search', ''));
+        $filterType = strtoupper((string) $req->query('filter_type', 'ALL'));
+        if (!in_array($filterType, ['ALL', 'NOTE', 'TASK', 'EVENT'], true)) {
+            $filterType = 'ALL';
+        }
+
+        $filterUser = (int) $req->query('filter_user', 0);
+        $from = trim((string) $req->query('from', ''));
+        $to = trim((string) $req->query('to', ''));
+
+        $activities = $this->buildActivitiesPaginator(
+            client: $client,
+            req: $req,
+            activityTab: $activityTab,
+            search: $search,
+            filterType: $filterType,
+            filterUser: $filterUser,
+            from: $from,
+            to: $to
+        );
+
+        $lastEventAt = $client->last_event_at();
+        $nextEventAt = $client->next_event_at();
+
+        return view('admin.client_show', [
+            'client' => $client,
+            'tab' => $tab,
+            'activityTab' => $activityTab,
+            'activities' => $activities,
+            'activityFilters' => [
+                'search' => $search,
+                'filter_type' => $filterType,
+                'filter_user' => $filterUser,
+                'from' => $from,
+                'to' => $to,
+            ],
+            'activityCounts' => [
+                'notes' => (int) $client->activities()->where('type', 'NOTE')->count(),
+                'tasks' => (int) $client->activities()->where('type', 'TASK')->count(),
+                'events' => $client->total_events(),
+            ],
+            'activityUsers' => User::query()->orderBy('name')->get(['id', 'name']),
+            'overview' => [
+                'total_events' => $client->total_events(),
+                'total_events_booked' => $client->total_events_booked(),
+                'cancelled_events' => $client->cancelled_events_count(),
+                'total_spent' => $client->total_spent(),
+                'outstanding_balance' => $client->outstanding_balance(),
+                'last_event_at' => $lastEventAt,
+                'next_event_at' => $nextEventAt,
+                'client_since' => $client->created_at,
+                'days_since_client' => $client->created_at ? $client->created_at->startOfDay()->diffInDays(now()->startOfDay()) : null,
+                'days_since_last_event' => $client->days_since_last_event(),
+            ],
+        ]);
+    }
+
+    public function storeNote(Request $req, int $id)
+    {
+        $client = Client::findOrFail($id);
+        $data = $req->validate([
+            'body' => ['required', 'string', 'max:10000'],
+            'create_followup' => ['nullable', 'boolean'],
+        ]);
+
+        ClientActivity::create([
+            'client_id' => $client->id,
+            'type' => 'NOTE',
+            'title' => 'Note',
+            'body' => trim((string) $data['body']),
+            'meta' => [
+                'create_followup' => (bool) ($data['create_followup'] ?? false),
+            ],
+            'created_by' => Auth::id(),
+            'occurred_at' => now(),
+        ]);
+
+        return redirect()->route('admin.clients.show', [
+            'id' => $client->id,
+            'tab' => 'activities',
+            'activity_tab' => 'NOTES',
+        ])->with('ok', 'Note created.');
+    }
+
+    public function storeTask(Request $req, int $id)
+    {
+        $client = Client::findOrFail($id);
+        $data = $req->validate([
+            'title' => ['required', 'string', 'max:160'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'due_at' => ['nullable', 'date'],
+        ]);
+
+        $dueAt = !empty($data['due_at']) ? Carbon::parse($data['due_at']) : null;
+
+        ClientActivity::create([
+            'client_id' => $client->id,
+            'type' => 'TASK',
+            'title' => trim((string) $data['title']),
+            'body' => trim((string) ($data['description'] ?? '')),
+            'created_by' => Auth::id(),
+            'assigned_to' => $data['assigned_to'] ?? null,
+            'due_at' => $dueAt,
+            'occurred_at' => $dueAt ?? now(),
+        ]);
+
+        return redirect()->route('admin.clients.show', [
+            'id' => $client->id,
+            'tab' => 'activities',
+            'activity_tab' => 'TASKS',
+        ])->with('ok', 'Task created.');
     }
 
     public function store(Request $req)
@@ -106,6 +260,210 @@ class ClientController extends Controller
         $client->status = $status;
         $client->save();
         return back()->with('ok','Status updated');
+    }
+
+    private function buildActivitiesPaginator(
+        Client $client,
+        Request $req,
+        string $activityTab,
+        string $search,
+        string $filterType,
+        int $filterUser,
+        string $from,
+        string $to
+    ): LengthAwarePaginator {
+        $allowedTypes = $this->resolveAllowedActivityTypes($activityTab, $filterType);
+
+        $stored = $this->buildStoredActivities($client, $allowedTypes, $search, $filterUser, $from, $to);
+        $events = $this->buildEventActivities($client, $allowedTypes, $search, $filterUser, $from, $to);
+
+        $feed = $stored->concat($events)->sortByDesc(function ($row) {
+            return optional($row->occurred_at)->timestamp ?? 0;
+        })->values();
+
+        $page = max(1, (int) $req->query('page', 1));
+        $perPage = 20;
+        $items = $feed->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            items: $items,
+            total: $feed->count(),
+            perPage: $perPage,
+            currentPage: $page,
+            options: [
+                'path' => $req->url(),
+                'query' => $req->query(),
+            ]
+        );
+    }
+
+    private function resolveAllowedActivityTypes(string $activityTab, string $filterType): array
+    {
+        $base = match ($activityTab) {
+            'NOTES' => ['NOTE'],
+            'TASKS' => ['TASK'],
+            'EVENTS' => ['EVENT'],
+            default => ['NOTE', 'TASK', 'EVENT'],
+        };
+
+        if ($filterType !== 'ALL') {
+            return in_array($filterType, $base, true) ? [$filterType] : [];
+        }
+
+        return $base;
+    }
+
+    private function buildStoredActivities(
+        Client $client,
+        array $allowedTypes,
+        string $search,
+        int $filterUser,
+        string $from,
+        string $to
+    ): Collection {
+        $dbTypes = array_values(array_intersect($allowedTypes, ['NOTE', 'TASK']));
+        if (empty($dbTypes)) {
+            return collect();
+        }
+
+        $query = ClientActivity::query()
+            ->with(['creator:id,name', 'assignee:id,name'])
+            ->where('client_id', $client->id)
+            ->whereIn('type', $dbTypes);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('body', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filterUser > 0) {
+            $query->where(function ($q) use ($filterUser) {
+                $q->where('created_by', $filterUser)
+                    ->orWhere('assigned_to', $filterUser);
+            });
+        }
+
+        if ($from !== '') {
+            $query->whereDate('occurred_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('occurred_at', '<=', $to);
+        }
+
+        return $query->get()->map(function (ClientActivity $a) {
+            return (object) [
+                'feed_key' => "client_activity_{$a->id}",
+                'source' => 'client_activity',
+                'type' => $a->type,
+                'title' => $a->title ?: ($a->type === 'TASK' ? 'Task' : 'Note'),
+                'body' => $a->body,
+                'status' => null,
+                'status_key' => null,
+                'occurred_at' => $a->occurred_at,
+                'created_by' => $a->created_by,
+                'created_by_name' => optional($a->creator)->name,
+                'assigned_to' => $a->assigned_to,
+                'assigned_to_name' => optional($a->assignee)->name,
+                'due_at' => $a->due_at,
+                'event_id' => null,
+                'invoice_number' => null,
+                'event_code' => null,
+                'guests' => null,
+                'total' => null,
+                'paid' => null,
+                'balance' => null,
+            ];
+        });
+    }
+
+    private function buildEventActivities(
+        Client $client,
+        array $allowedTypes,
+        string $search,
+        int $filterUser,
+        string $from,
+        string $to
+    ): Collection {
+        if (!in_array('EVENT', $allowedTypes, true)) {
+            return collect();
+        }
+
+        $query = $client->reservationsQuery()
+            ->select([
+                'id', 'invoice_number', 'code', 'date', 'time', 'status', 'invoice_status',
+                'guests', 'total', 'deposit_paid', 'balance', 'notes', 'booked_by',
+            ]);
+
+        if ($from !== '') {
+            $query->whereDate('date', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('date', '<=', $to);
+        }
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%");
+            });
+        }
+
+        $rows = $query->get();
+
+        return $rows->map(function (Reservation $r) use ($filterUser) {
+            $occurredAt = $r->date ? Carbon::parse($r->date->toDateString().' '.($r->time ?: '00:00:00')) : now();
+            $paid = (float) ($r->deposit_paid ?? 0);
+            foreach ((array)($r->manual_payments ?? []) as $row) {
+                if (strtolower((string)($row['status'] ?? '')) === 'succeeded') {
+                    $paid += (float)($row['amount'] ?? 0);
+                }
+            }
+            $balance = max(0, (float)($r->total ?? 0) - $paid);
+
+            $statusKey = strtolower((string)($r->status ?? 'draft'));
+            if (strtolower((string)($r->invoice_status ?? '')) === 'paid') {
+                $statusKey = 'paid';
+            }
+
+            $status = match ($statusKey) {
+                'pending_payment' => 'Pending payment',
+                'canceled' => 'Cancelled',
+                'paid' => 'Paid',
+                default => ucfirst($statusKey),
+            };
+
+            $bookedBy = trim((string)($r->booked_by ?? ''));
+
+            return (object) [
+                'feed_key' => "reservation_{$r->id}",
+                'source' => 'reservation',
+                'type' => 'EVENT',
+                'title' => $r->invoice_number ? "Event #INV-{$r->invoice_number}" : "Reservation #{$r->id}",
+                'body' => $r->notes,
+                'status' => $status,
+                'status_key' => $statusKey,
+                'occurred_at' => $occurredAt,
+                'created_by' => ctype_digit($bookedBy) ? (int) $bookedBy : null,
+                'created_by_name' => $bookedBy !== '' ? $bookedBy : null,
+                'assigned_to' => null,
+                'assigned_to_name' => null,
+                'due_at' => null,
+                'event_id' => $r->id,
+                'invoice_number' => $r->invoice_number,
+                'event_code' => $r->code,
+                'guests' => (int)($r->guests ?? 0),
+                'total' => (float)($r->total ?? 0),
+                'paid' => $paid,
+                'balance' => $balance,
+            ];
+        })->filter(function ($row) use ($filterUser) {
+            if ($filterUser <= 0) {
+                return true;
+            }
+            return (int)($row->created_by ?? 0) === $filterUser;
+        })->values();
     }
 
     private function validateData(Request $req): array

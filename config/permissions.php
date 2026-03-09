@@ -26,6 +26,18 @@ return [
         'trash.manage',
     ],
 
+    // Minimal view permissions granted to admin principals
+    // (role owner/admin or can_access_admin=1).
+    'admin_base_view_permissions' => [
+        'reservations.view',
+        'clients.view',
+        'reports.view',
+        'timeslots.view',
+        'calendar.view',
+        'menu.view',
+        'orders.view',
+    ],
+
     // Map roles to permissions
     'roles' => [
         'owner' => ['*'], // everything

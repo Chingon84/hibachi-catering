@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Models\Timeslot;
 use App\Models\ReservationItem;
 use App\Support\MenuLabel;
+use App\Support\ReservationTotals;
 
 class ReservationController extends Controller
 {
@@ -59,6 +61,34 @@ class ReservationController extends Controller
         $menuPlano = $this->menu();                     // <- tu menú PLANO tal como ya lo tienes
         $data['menuCategories'] = $this->menuToCategories($menuPlano);
         $data['constants'] = ['TAX' => 0.1025, 'GRATUITY' => 0.18];
+    }
+
+    if ($step === 4 && $reservation) {
+        $total = (float) ($reservation->total ?? data_get($data, 'state.estimate.total', 0));
+        $depositPercent = 0.20;
+        $depositDue = round($total * $depositPercent, 2);
+        $this->debugStripe('step4.payment_page', [
+            'reservation_id' => $reservation->id,
+            'total' => $total,
+            'deposit_due' => $depositDue,
+            'deposit_percent' => $depositPercent,
+        ]);
+    }
+
+    if ($step === 5 && $reservation) {
+        $estimate = (array) data_get($data, 'state.estimate', []);
+        if (!empty(data_get($data, 'state.deposit_amount'))) {
+            $estimate['deposit_due'] = (float) data_get($data, 'state.deposit_amount');
+            $estimate['deposit_paid_session'] = (float) data_get($data, 'state.deposit_amount');
+        }
+        $totals = ReservationTotals::compute($reservation, $estimate);
+        $this->debugStripe('step5.render', [
+            'reservation_id' => $reservation->id,
+            'total' => (float) ($totals['total'] ?? 0),
+            'deposit_paid' => (float) ($totals['deposit_display'] ?? 0),
+            'balance' => (float) ($totals['balance'] ?? 0),
+            'amount_paid_total' => (float) ($totals['paid_total'] ?? 0),
+        ]);
     }
 
     return view("reservations.step{$step}", $data);
@@ -616,5 +646,14 @@ private function menuToCategories(array $menu): array
         // escala arbitraria para tener rangos razonables 0-140mi
         $miles = min(140, max(5, $d / 100));
         return round($miles, 1);
+    }
+
+    private function debugStripe(string $event, array $context = []): void
+    {
+        if (!filter_var((string) env('STRIPE_PAY_DEBUG', 'false'), FILTER_VALIDATE_BOOL)) {
+            return;
+        }
+
+        Log::info($event, $context);
     }
 }

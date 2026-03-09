@@ -8,7 +8,7 @@
   <style>
     :root{ --warn:#d97706; }
     .title{font-size:22px;margin:0}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.04)}
     .card-body{padding:16px}
     .card + .card{margin-top:14px}
 
@@ -45,59 +45,81 @@
 
     /* Table */
     .table{width:100%;border-collapse:separate;border-spacing:0}
-    .table th, .table td{padding:10px 12px;text-align:left;font-size:14px}
-    .table thead th{background:#f3f4f6;color:#374151;border-bottom:1px solid var(--border);font-weight:700}
+    .table th, .table td{padding:8px 10px;text-align:left;font-size:13px}
+    .table thead th{background:#f8fafc;color:#475569;border-bottom:1px solid var(--border);font-weight:700}
     .table tbody tr{background:#fff}
     .table tbody tr + tr td{border-top:1px solid var(--border)}
+    .table tbody tr{transition:background-color .14s ease}
+    .table tbody tr:hover{background:#f8fafc}
+    #slotsBody tr.slot-row--reserved td{background:#fff6e5}
+    #slotsBody tr.slot-row--reserved:hover td{background:#ffefcc}
+    #slotsBody tr.slot-row--reserved td:first-child{box-shadow:inset 3px 0 0 #f59e0b}
     .actions a{color:#b91c1c;text-decoration:none}
     .actions a:hover{text-decoration:underline}
 
     /* Time & metrics columns */
-    .time-cell{font-size:12px;font-weight:500;white-space:nowrap}
+    .time-cell{font-size:12px;font-weight:600;white-space:nowrap;color:#0f172a}
     .col-time{width:80px}
     .col-per{width:100px}
     .metric-cell{white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
     .col-cap{width:90px}
+    .table td.col-cap, .table th.col-cap{text-align:center}
 
     .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:600}
     .badge.open{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
     .badge.closed{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 
     /* Capacity coloring */
-    .cap-remaining{font-weight:700}
+    .cap-remaining{font-weight:700;font-variant-numeric:tabular-nums;color:#0f172a}
     .cap-remaining.zero{color:#991b1b}
+    .actions{display:flex;align-items:center;gap:8px;white-space:nowrap}
+    .actions .input[type=number]{width:72px !important;min-width:72px;padding:4px 6px !important;height:28px;border-radius:8px;font-size:12px}
+    .actions .action-delete{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 8px;border:1px solid #fecaca;border-radius:8px;background:#fff5f5;color:#b91c1c;font-size:12px;font-weight:600;text-decoration:none}
+    .actions .action-delete:hover{background:#fef2f2;text-decoration:none}
+    .slots-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;gap:10px}
+    .slots-head-actions{display:flex;align-items:center;gap:8px}
 
     .subtle{color:var(--muted);font-size:13px}
     .spacer{height:8px}
 
     /* Calendar */
     #calendar{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-    .cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f3f4f6;border-bottom:1px solid var(--border)}
+    .cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border-bottom:1px solid var(--border)}
     .cal-month{font-weight:700;color:#111827}
     .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);background:#065f46;color:#fff;font-weight:700}
     .cal-weekdays > div{padding:8px 10px;text-align:center;border-right:1px solid rgba(255,255,255,.2)}
     .cal-weekdays > div:last-child{border-right:0}
     .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
-    .cal-cell{min-height:64px;display:flex;align-items:flex-start;justify-content:flex-end;padding:8px 10px;border:1px solid #e5e7eb;background:#fff;font-weight:600;color:#111827}
+    .cal-cell{min-height:64px;display:flex;align-items:flex-start;justify-content:flex-end;padding:8px 10px;border:1px solid #e5e7eb;background:#fff;font-weight:600;color:#111827;transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
     .cal-cell.blank{background:#fcfcfd}
-    .cal-cell.day{cursor:pointer}
-    .cal-cell.day:hover{background:#eef2ff}
-    .cal-cell.day.today{outline:2px solid #2563eb}
-    .cal-cell.day.selected{background:#d1fae5}
+    .cal-cell.day{cursor:pointer;position:relative}
+    .cal-cell.day:hover{background:#f8fafc;cursor:pointer}
+    .cal-cell.day.today{outline:2px solid #2563eb;outline-offset:-2px}
+    .cal-cell.day.selected,
+    .cal-cell.day.selected:hover{background:#f1f5f9;border-color:#86efac;box-shadow:inset 0 0 0 1px #86efac;color:#14532d}
+    .cal-cell.day .day-num{position:absolute;top:8px;right:10px;font-size:12px;font-weight:700;line-height:1}
+    .cal-cell.day .day-load{position:absolute;left:8px;bottom:8px;font-size:11px;line-height:1.1;color:#9ca3af;font-weight:500;font-variant-numeric:tabular-nums}
+    .cal-cell.day .day-load.has-bookings{font-weight:700;color:#15803d}
+    .cal-cell.day.occ-low{background:#ecfdf5;border-color:#a7f3d0}
+    .cal-cell.day.occ-mid{background:#fff7ed;border-color:#fed7aa}
+    .cal-cell.day.occ-high{background:#ede9fe;border-color:#ddd6fe}
+    .cal-cell.day.occ-full{background:#fee2e2;border-color:#fecaca}
     .cal-cell.day.full{background:#fee2e2;border-color:#fecaca}
     /* Ensure selected state is visibly green even if the day is marked full */
-    .cal-cell.day.full.selected{background:#d1fae5;border-color:#a7f3d0}
+    .cal-cell.day.full.selected,
+    .cal-cell.day.full.selected:hover{background:#f1f5f9;border-color:#86efac}
 
     /* Status select (single control) */
     .select.status-select{
-      padding:1px 8px; /* more compact */
-      font-size:10px;
-      width:70px;
-      min-width:70px;
-      max-width:70px;
+      padding:2px 8px; /* compact */
+      font-size:11px;
+      font-weight:600;
+      width:78px;
+      min-width:78px;
+      max-width:78px;
       border-radius:999px;
       line-height:1;
-      height:20px;
+      height:24px;
     }
     .select.status-select.open{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
     .select.status-select.closed{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
@@ -165,7 +187,7 @@
             const cell = document.createElement('button');
             cell.type = 'button';
             cell.className = 'cal-cell day';
-            cell.textContent = String(day);
+            cell.innerHTML = `<span class="day-num">${day}</span><span class="day-load">0</span>`;
             cell.dataset.ymd = fmtYmd(d);
             if (fmtYmd(d) === fmtYmd(selected)) cell.classList.add('selected');
             if (fmtYmd(d) === fmtYmd(today)) cell.classList.add('today');
@@ -180,17 +202,27 @@
             gridEl.appendChild(cell);
           }
 
-          // Fetch month full-booked statuses and mark days
+          // Fetch month occupancy and slot/event counts per day
           try {
             const y = current.getFullYear();
             const m = String(current.getMonth()+1).padStart(2,'0');
             const r = await fetch(`/admin/timeslots/month-status?y=${y}&m=${m}`);
             if (r.ok) {
               const data = await r.json();
-              const full = data.full || {};
+              const days = data.days || {};
               gridEl.querySelectorAll('.cal-cell.day').forEach(btn => {
                 const ymd = btn.dataset.ymd;
-                btn.classList.toggle('full', !!full[ymd]);
+                const dayData = days[ymd] || {};
+                const booked = Number(dayData.booked_events || 0);
+                const total = Number(dayData.total_slots || 0);
+                const occupancyClass = String(dayData.occupancy_class || '');
+                const infoEl = btn.querySelector('.day-load');
+                if (infoEl) {
+                  infoEl.textContent = `${booked}`;
+                  infoEl.classList.toggle('has-bookings', booked > 0);
+                }
+                btn.classList.remove('occ-low','occ-mid','occ-high','occ-full');
+                if (occupancyClass && occupancyClass !== 'occ-none') btn.classList.add(occupancyClass);
               });
             }
           } catch (e) {}
@@ -203,8 +235,10 @@
             const r = await fetch(`/admin/timeslots/json?d=${encodeURIComponent(ymd)}`);
             if (!r.ok) throw new Error('Request failed');
             const data = await r.json();
+            const totalSlots = Array.isArray(data.slots) ? data.slots.length : 0;
+            slotsTitle.textContent = `Slots for ${p[1]}/${p[2]}/${p[0]} — ${totalSlots}`;
             const rows = (data.slots||[]).map(s => `
-              <tr>
+              <tr class="${(() => { const g=(data.guest_sums && data.guest_sums[s.time+':00']) ? data.guest_sums[s.time+':00'] : 0; const rem=Math.max(0, (s.capacity||0) - (g||0)); return rem < (s.capacity||0) ? 'slot-row--reserved' : ''; })()}">
                 <td class="time-cell">${s.time_label}</td>
                 <td>
                   <form method=\"post\" action=\"/admin/timeslots/${s.id}/status\" style=\"display:inline\">
@@ -225,7 +259,7 @@
                     <input class=\"input\" type=\"number\" name=\"capacity\" value=\"${s.capacity}\" min=\"0\" style=\"width:70px;padding:4px 6px\">
                     <button class=\"btn secondary xs\" type=\"submit\">Save<\/button>
                   <\/form>
-                  <a class=\"icon-btn danger\" href=\"/admin/timeslots/delete/${s.id}?d=${encodeURIComponent(data.date)}\" onclick=\"return confirm('Delete this slot?')\" style=\"margin-left:8px\" title=\"Delete\" aria-label=\"Delete\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9z\"/><\/svg><\/a>
+                  <a class=\"action-delete\" href=\"/admin/timeslots/delete/${s.id}?d=${encodeURIComponent(data.date)}\" onclick=\"return confirm('Delete this slot?')\" title=\"Delete\" aria-label=\"Delete\">Delete<\/a>
                 </td>
               </tr>`).join('');
             slotsBody.innerHTML = rows || '<tr><td colspan="4" class="subtle">No slots for this date.</td></tr>';
@@ -239,7 +273,7 @@
                 const m = (form.getAttribute('action')||'').match(/\/admin\/timeslots\/(\d+)\/update/);
                 const id = m ? m[1] : '';
                 const capVal = cap ? cap.value : '';
-                const del = href ? `<a class=\"icon-btn danger\" href=\"${href.getAttribute('href')}\" onclick=\"return confirm('Delete this slot?')\" style=\"margin-left:8px\" title=\"Delete\" aria-label=\"Delete\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9z\"/><\/svg><\/a>` : '';
+                const del = href ? `<a class=\"action-delete\" href=\"${href.getAttribute('href')}\" onclick=\"return confirm('Delete this slot?')\" title=\"Delete\" aria-label=\"Delete\">Delete<\/a>` : '';
                 td.innerHTML = `<input class=\"input\" type=\"number\" name=\"cap[${id}]\" value=\"${capVal}\" min=\"0\" style=\"width:70px;padding:4px 6px\"> ${del}`;
               });
             } catch (e) {}
@@ -249,15 +283,7 @@
                 inp.addEventListener('input', markDirty);
               });
             } catch (e) {}
-            // Mark calendar date in red if fully closed (no open slots for the day)
-            try {
-              const all = data.slots || [];
-              const fullyClosed = (all.length === 0) || all.every(s => !s.is_open);
-              const btn = document.querySelector(`[data-ymd="${ymd}"]`);
-              if (btn) {
-                btn.classList.toggle('full', fullyClosed);
-              }
-            } catch (e) {}
+            // Occupancy colors and booked/slot counters are refreshed from month-status payload
             // Also refresh bookings panel for current date/time selection
             if (slotFormDate && slotFormTime) {
               // ensure date aligns with calendar selection
@@ -464,10 +490,12 @@
               </form>
             </div>
             
-            <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 8px">
-              <h2 id="slotsTitle" style="margin:0;font-size:18px">Slots for {{ \Carbon\Carbon::parse($d)->format('m/d/Y') }}</h2>
-              <!-- Submit the bulk form that actually holds cap[] inputs -->
-              <button class="btn xs" type="button" onclick="document.getElementById('bulkCapForm') && document.getElementById('bulkCapForm').requestSubmit()">Save Changes</button>
+            <div class="slots-head">
+              <h2 id="slotsTitle" style="margin:0;font-size:18px">Slots for {{ \Carbon\Carbon::parse($d)->format('m/d/Y') }} — {{ $list->count() }}</h2>
+              <div class="slots-head-actions">
+                <!-- Submit the bulk form that actually holds cap[] inputs -->
+                <button class="btn xs" type="button" onclick="document.getElementById('bulkCapForm') && document.getElementById('bulkCapForm').requestSubmit()">Save Changes</button>
+              </div>
             </div>
             <form id="bulkCapForm" method="post" action="{{ route('admin.timeslots.bulk_update') }}">
               @csrf
@@ -483,7 +511,8 @@
               </thead>
               <tbody id="slotsBody">
                 @forelse($list as $r)
-                  <tr>
+                  @php $gsum = (int) ($guestSums[$r->time] ?? 0); $rem = max(0, (int)$r->capacity - $gsum); $isReserved = $rem < (int)$r->capacity; @endphp
+                  <tr class="{{ $isReserved ? 'slot-row--reserved' : '' }}">
                     <td class="time-cell">{{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}</td>
                     <td>
                       <form method="post" action="{{ route('admin.timeslots.status', ['id'=>$r->id]) }}" style="display:inline">
@@ -496,12 +525,11 @@
                       </form>
                     </td>
                     <td class="col-cap">
-                      @php $gsum = (int) ($guestSums[$r->time] ?? 0); $rem = max(0, (int)$r->capacity - $gsum); @endphp
                       <span class="cap-remaining {{ $rem <= 0 ? 'zero' : '' }}">{{ $rem }}</span>
                     </td>
                     <td class="actions">
                       <input class="input" type="number" name="cap[{{ $r->id }}]" value="{{ (int)$r->capacity }}" min="0" style="width:70px;padding:4px 6px">
-                      <a href="{{ route('admin.timeslots.delete', ['id'=>$r->id, 'd'=>$d]) }}" onclick="return confirm('Delete this slot?')" style="margin-left:8px">Delete</a>
+                      <a class="action-delete" href="{{ route('admin.timeslots.delete', ['id'=>$r->id, 'd'=>$d]) }}" onclick="return confirm('Delete this slot?')">Delete</a>
                     </td>
                   </tr>
                 @empty

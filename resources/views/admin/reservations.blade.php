@@ -14,6 +14,11 @@
     .inv.overdue{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
     .inv.cancelled{background:#fef2f2;color:#991b1b;border-color:#fecaca}
     .inv.refunded{background:#f3f4f6;color:#6b7280;border-color:#e5e7eb}
+    .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+    .toast{padding:10px 12px;border-radius:10px;border:1px solid;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.12);background:#fff}
+    .toast.success{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
+    .toast.warn{color:#92400e;border-color:#fcd34d;background:#fffbeb}
+    .toast.error{color:#991b1b;border-color:#fecaca;background:#fef2f2}
   </style>
   @php $fmt = fn($n)=>'$'.number_format((float)$n,2); @endphp
 </head>
@@ -24,8 +29,8 @@
         <input class="input" type="date" name="d" value="{{ $d }}">
         <select name="status" class="select">
           <option value="">All statuses</option>
-          @foreach(['draft','pending_payment','confirmed','canceled'] as $st)
-            <option value="{{ $st }}" {{ $status===$st ? 'selected':'' }}>{{ ucfirst(str_replace('_',' ',$st)) }}</option>
+          @foreach(['pending','confirmed','canceled'] as $st)
+            <option value="{{ $st }}" {{ $status===$st ? 'selected':'' }}>{{ ucfirst($st) }}</option>
           @endforeach
         </select>
         <select name="sort" class="select">
@@ -84,7 +89,13 @@
                     {{ $fmt($bal) }}
                   @endif
                 </td>
-                <td><span class="status {{ $r->status }}">{{ ucfirst(str_replace('_',' ',$r->status)) }}</span></td>
+                @php
+                  $statusKey = strtolower((string) ($r->status ?? 'pending'));
+                  if (in_array($statusKey, ['draft', 'pending_payment'], true)) {
+                    $statusKey = 'pending';
+                  }
+                @endphp
+                <td><span class="status {{ $statusKey }}">{{ ucfirst($statusKey) }}</span></td>
                 <td>{{ $r->booked_by ?? '—' }}</td>
                 <td>
                   <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" title="View invoice" style="text-decoration:none;color:#b21e27">
@@ -122,13 +133,13 @@
                     <div class="menu" style="display:none;position:absolute;right:0;z-index:10;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);min-width:160px;overflow:hidden">
                       <a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">Edit</a>
                       <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">View invoice</a>
+                      <button
+                        type="button"
+                        class="menu-item"
+                        style="display:block;width:100%;text-align:left;padding:8px 12px;color:#111;background:#fff;border:0;cursor:pointer"
+                        onclick="addToClients({{ (int) $r->id }}, this)"
+                      >Add to Clients</button>
                       <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none" onclick="setTimeout(()=>window.print(),400)">Print</a>
-                      @php
-                        try { $payUrl = $r->code ? URL::signedRoute('invoice.pay', ['code'=>$r->code]) : ''; } catch (\Throwable $e) { $payUrl = ''; }
-                      @endphp
-                      @if(!empty($payUrl))
-                        <button type="button" class="menu-item" style="display:block;width:100%;text-align:left;padding:8px 12px;color:#111;background:#fff;border:0;cursor:pointer" onclick="copyPayLink('{{ $payUrl }}', this)">Copy pay link</button>
-                      @endif
                       <form method="post" action="{{ route('admin.reservations.delete',['id'=>$r->id]) }}" onsubmit="return confirm('Are you sure you want to delete this reservation?');">
                         @csrf
                         <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
@@ -146,16 +157,55 @@
       </div>
     </div>
   </div>
+  <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
   <script>
-    function copyPayLink(url, btn){
-      if (!navigator.clipboard){
-        const ta = document.createElement('textarea');
-        ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-      } else {
-        navigator.clipboard.writeText(url).catch(()=>{});
-      }
-      btn.textContent = 'Copied!'; setTimeout(()=>{ btn.textContent='Copy pay link'; }, 1200);
+    const csrfToken = @json(csrf_token());
+    const toastWrap = document.getElementById('toastWrap');
+
+    function showToast(message, type = 'success'){
+      if (!toastWrap) return;
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = message;
+      toastWrap.appendChild(el);
+      setTimeout(() => { el.remove(); }, 2800);
     }
+
+    async function addToClients(reservationId, btn){
+      const previousText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
+
+      try {
+        const resp = await fetch(`/admin/reservations/${reservationId}/add-to-clients`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+          },
+        });
+
+        let payload = {};
+        try { payload = await resp.json(); } catch (e) {}
+        if (resp.status === 409 || payload.status === 'exists') {
+          showToast(payload.message || 'This client already exists and cannot be added again.', 'warn');
+          return;
+        }
+        if (resp.status === 201 || payload.status === 'created') {
+          showToast(payload.message || 'Client added successfully.', 'success');
+          return;
+        }
+        if (!resp.ok) {
+          throw new Error(payload.message || `HTTP ${resp.status}`);
+        }
+      } catch (e) {
+        showToast(e.message || 'Could not add client', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = previousText;
+      }
+    }
+
     function closeAllMenus(){
       document.querySelectorAll('.actions-menu .menu').forEach(m => m.style.display = 'none');
       document.querySelectorAll('.actions-menu button[aria-expanded]')

@@ -14,11 +14,9 @@
       $total    = $totals['total'];
       $adjustments = $totals['adjustments'];
       $paidDeposit = $totals['deposit_display'];
-      $paidOther   = $totals['additional_paid'];
       $paid        = round($totals['paid_total'], 2);
       $balance  = $totals['balance'];
       $invoiceNo = $r->invoice_number ?? ($r->code ?? ('#'.$r->id));
-      $payUrl = $pay_url ?? '';
     @endphp
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f7f7fb">
@@ -117,12 +115,6 @@
                     <td style="padding:8px 12px;color:#374151">Deposit paid</td>
                     <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidDeposit,2) }}</td>
                   </tr>
-                  @if ($paidOther > 0)
-                    <tr>
-                      <td style="padding:8px 12px;color:#374151">Additional paid</td>
-                      <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paidOther,2) }}</td>
-                    </tr>
-                  @endif
                   <tr>
                     <td style="padding:8px 12px;color:#16a34a">Total paid</td>
                     <td align="right" style="padding:8px 12px;color:#16a34a">-${{ number_format($paid,2) }}</td>
@@ -132,16 +124,6 @@
                     <td align="right" style="padding:10px 12px;border-top:1px solid #e5e7eb;font-weight:700;color:#111">${{ number_format($balance,2) }}</td>
                   </tr>
                 </table>
-
-                @if ($payUrl && $balance > 0)
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="left" style="margin:8px 0 0">
-                    <tr>
-                      <td align="center" bgcolor="#b21e27" style="border-radius:10px">
-                        <a href="{{ $payUrl }}" target="_blank" rel="noopener" style="display:inline-block;padding:10px 14px;color:#ffffff;text-decoration:none;font-weight:700;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif">Pay Balance</a>
-                      </td>
-                    </tr>
-                  </table>
-                @endif
 
                 @if($items && $items->count())
                   <h3 style="margin:18px 0 6px;font-size:16px">Items</h3>
