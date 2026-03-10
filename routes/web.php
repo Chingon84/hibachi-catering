@@ -18,6 +18,11 @@ use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\ClientPhotoController;
 use App\Http\Controllers\Admin\FeedbackCenterController;
 use App\Http\Controllers\Admin\FinancialOverviewController;
+use App\Http\Controllers\Admin\InventoryAlertController;
+use App\Http\Controllers\Admin\InventoryDashboardController;
+use App\Http\Controllers\Admin\InventoryItemController;
+use App\Http\Controllers\Admin\InventoryMovementController;
+use App\Http\Controllers\Admin\VanInventoryController;
 
 // Auth
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -125,6 +130,31 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/admin/orders-breakdown/portions', [ReservationAdminController::class, 'saveOrderPortions'])
         ->middleware('perm:orders.manage')
         ->name('admin.orders.breakdown.portions.save');
+
+    // Inventory
+    Route::get('/admin/inventory', [InventoryDashboardController::class, 'index'])->middleware('perm:inventory.view')->name('admin.inventory.dashboard');
+    Route::get('/admin/inventory/items', [InventoryItemController::class, 'index'])->middleware('perm:inventory.view')->name('admin.inventory.items.index');
+    Route::get('/admin/inventory/items/create', [InventoryItemController::class, 'create'])->middleware('perm:inventory.manage')->name('admin.inventory.items.create');
+    Route::post('/admin/inventory/items', [InventoryItemController::class, 'store'])->middleware('perm:inventory.manage')->name('admin.inventory.items.store');
+    Route::get('/admin/inventory/items/{id}', [InventoryItemController::class, 'show'])->middleware('perm:inventory.view')->name('admin.inventory.items.show');
+    Route::get('/admin/inventory/items/{id}/edit', [InventoryItemController::class, 'edit'])->middleware('perm:inventory.manage')->name('admin.inventory.items.edit');
+    Route::post('/admin/inventory/items/{id}', [InventoryItemController::class, 'update'])->middleware('perm:inventory.manage')->name('admin.inventory.items.update');
+    Route::post('/admin/inventory/items/{id}/delete', [InventoryItemController::class, 'destroy'])->middleware('perm:inventory.manage')->name('admin.inventory.items.delete');
+
+    Route::get('/admin/inventory/vans', [VanInventoryController::class, 'index'])->middleware('perm:inventory.view')->name('admin.inventory.vans.index');
+    Route::get('/admin/inventory/vans/create', [VanInventoryController::class, 'createVan'])->middleware('perm:inventory.manage')->name('admin.inventory.vans.create');
+    Route::post('/admin/inventory/vans', [VanInventoryController::class, 'storeVan'])->middleware('perm:inventory.manage')->name('admin.inventory.vans.store');
+    Route::post('/admin/inventory/vans/loadout', [VanInventoryController::class, 'storeLoadout'])->middleware('perm:inventory.manage')->name('admin.inventory.vans.loadout.store');
+    Route::get('/admin/inventory/vans/{id}', [VanInventoryController::class, 'show'])->middleware('perm:inventory.view')->name('admin.inventory.vans.show');
+    Route::get('/admin/inventory/vans/{id}/edit', [VanInventoryController::class, 'editVan'])->middleware('perm:inventory.manage')->name('admin.inventory.vans.edit');
+    Route::post('/admin/inventory/vans/{id}', [VanInventoryController::class, 'updateVan'])->middleware('perm:inventory.manage')->name('admin.inventory.vans.update');
+
+    Route::get('/admin/inventory/movements', [InventoryMovementController::class, 'index'])->middleware('perm:inventory.view')->name('admin.inventory.movements.index');
+    Route::get('/admin/inventory/movements/create', [InventoryMovementController::class, 'create'])->middleware('perm:inventory.manage')->name('admin.inventory.movements.create');
+    Route::post('/admin/inventory/movements', [InventoryMovementController::class, 'store'])->middleware('perm:inventory.manage')->name('admin.inventory.movements.store');
+
+    Route::get('/admin/inventory/alerts', [InventoryAlertController::class, 'index'])->middleware('perm:inventory.view')->name('admin.inventory.alerts.index');
+
     // Event JSON (for popover)
     Route::get('/events/{id}', [CalendarController::class, 'eventJson'])->middleware('perm:calendar.view')->name('events.show.json');
 

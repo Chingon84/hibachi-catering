@@ -106,6 +106,15 @@
           </div>
         </a>
         @endif
+        @if($u && $u->hasPermission('inventory.view'))
+        <a href="{{ route('admin.inventory.dashboard') }}" target="pane" class="nav-item" data-url="{{ route('admin.inventory.dashboard') }}">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9zm9-2.28L6 8.22l6 3 6-3-6-3zm-7 4.55v5.53l6 3v-5.53l-6-3zm8 8.53 6-3V9.77l-6 3v5.53z"/></svg>
+          <div>
+            <div class="nav-label">Inventory</div>
+            <div class="nav-sub">Warehouse and vans</div>
+          </div>
+        </a>
+        @endif
         @if($u && $u->hasPermission('orders.view'))
         <a href="{{ route('admin.orders.breakdown') }}" target="pane" class="nav-item" data-url="{{ route('admin.orders.breakdown') }}">
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h8v8H3zm0 10h8v6H3zm10-10h8v5h-8zm0 7h8v9h-8z"/></svg>
@@ -180,6 +189,7 @@
         'Menu':'Menu',
         'Reports':'Reports',
         'Financial Overview':'Financial Overview',
+        'Inventory':'Inventory',
         'Orders Breakdown':'Orders Breakdown',
         'Team':'Team',
         'Settings':'Settings',

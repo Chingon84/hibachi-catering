@@ -24,6 +24,8 @@ return [
         'settings.view',
         'trash.view',
         'trash.manage',
+        'inventory.view',
+        'inventory.manage',
     ],
 
     // Minimal view permissions granted to admin principals
@@ -36,6 +38,7 @@ return [
         'calendar.view',
         'menu.view',
         'orders.view',
+        'inventory.view',
     ],
 
     // Map roles to permissions
@@ -51,6 +54,7 @@ return [
             'team.view','team.manage',
             'settings.view',
             'trash.view','trash.manage',
+            'inventory.view','inventory.manage',
         ],
         'manager' => [
             'reservations.view','reservations.manage',
@@ -60,6 +64,7 @@ return [
             'reports.view',
             'orders.view',
             'team.view',
+            'inventory.view','inventory.manage',
         ],
         'staff' => [
             'reservations.view',
@@ -68,7 +73,7 @@ return [
             'menu.view',
         ],
         'readonly' => [
-            'reservations.view','clients.view','reports.view','orders.view'
+            'reservations.view','clients.view','reports.view','orders.view','inventory.view'
         ],
         // New role: office
         'office' => [
@@ -85,7 +90,7 @@ return [
             // Menu
             'menu.view','menu.manage',
             // Reports & dashboards
-            'reports.view','orders.view',
+            'reports.view','orders.view','inventory.view','inventory.manage',
             // Complains
             'complains.view','complains.manage',
             // Team (view only)
