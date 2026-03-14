@@ -182,6 +182,11 @@ Route::middleware(['admin'])->group(function () {
             $activeTab = 'all-cases';
         }
 
+        $viewMode = request('view', 'cases');
+        if (!in_array($viewMode, ['cases', 'analytics'], true)) {
+            $viewMode = 'cases';
+        }
+
         $filters = [
             'q' => trim((string) request('q', '')),
             'status' => trim((string) request('status', '')),
@@ -553,6 +558,88 @@ Route::middleware(['admin'])->group(function () {
             $monthlyTrends = $monthlyTrends->filter(fn ($row) => $row['month'] === $monthPrefix)->values();
         }
 
+        $teamMemberAnalytics = $allCases
+            ->groupBy('chef')
+            ->map(fn ($rows, $chef) => [
+                'label' => $chef,
+                'value' => $rows->count(),
+            ])
+            ->sortByDesc('value')
+            ->take(10)
+            ->values();
+
+        $casesByMonth = $allCases
+            ->groupBy(fn ($row) => substr($row['date'], 0, 7))
+            ->map(function ($rows, $month) {
+                return [
+                    'month' => $month,
+                    'label' => \Carbon\Carbon::createFromFormat('Y-m', $month)->format('M Y'),
+                    'value' => $rows->count(),
+                ];
+            })
+            ->sortBy('month')
+            ->values();
+
+        $typeDistribution = collect([
+            ['label' => 'Complaints', 'value' => $complaintsFiltered->count()],
+            ['label' => 'Good Feedback', 'value' => $goodFeedbackFiltered->count()],
+            ['label' => 'Van Issues', 'value' => $vanFeedbackFiltered->count()],
+            ['label' => 'Attendance', 'value' => $attendanceFiltered->count()],
+            ['label' => 'Alerts', 'value' => $alertsFiltered->count()],
+        ]);
+
+        $staffTypeBreakdown = $allCases
+            ->filter(fn ($row) => !empty($row['staff_type']))
+            ->groupBy('staff_type')
+            ->map(fn ($rows, $staffType) => [
+                'label' => $staffType,
+                'value' => $rows->count(),
+            ])
+            ->sortByDesc('value')
+            ->values();
+
+        $netScoreTrend = $months
+            ->sort()
+            ->values()
+            ->map(function ($month) use ($goodFeedbackFiltered, $complaintsFiltered) {
+                $goodCount = $goodFeedbackFiltered->filter(fn ($row) => str_starts_with($row['date_received'], $month))->count();
+                $complaintCount = $complaintsFiltered->filter(fn ($row) => str_starts_with($row['date_received'], $month))->count();
+
+                return [
+                    'month' => $month,
+                    'label' => \Carbon\Carbon::createFromFormat('Y-m', $month)->format('M Y'),
+                    'value' => $goodCount - $complaintCount,
+                ];
+            });
+
+        $analytics = [
+            'cases_by_team_member' => [
+                'labels' => $teamMemberAnalytics->pluck('label')->all(),
+                'values' => $teamMemberAnalytics->pluck('value')->all(),
+            ],
+            'monthly_trend' => [
+                'labels' => $casesByMonth->pluck('label')->all(),
+                'values' => $casesByMonth->pluck('value')->all(),
+            ],
+            'type_distribution' => [
+                'labels' => $typeDistribution->pluck('label')->all(),
+                'values' => $typeDistribution->pluck('value')->all(),
+            ],
+            'staff_type_breakdown' => [
+                'labels' => $staffTypeBreakdown->pluck('label')->all(),
+                'values' => $staffTypeBreakdown->pluck('value')->all(),
+            ],
+            'net_score_trend' => [
+                'labels' => $netScoreTrend->pluck('label')->all(),
+                'values' => $netScoreTrend->pluck('value')->all(),
+            ],
+            'highlights' => [
+                'top_team_member' => $teamMemberAnalytics->sortByDesc('value')->first(),
+                'peak_month' => $casesByMonth->sortByDesc('value')->first(),
+                'net_score' => $netScoreTrend->pluck('value')->last() ?? 0,
+            ],
+        ];
+
         $statusOptions = collect([
             $complaints->pluck('resolution_status'),
             $goodFeedback->pluck('status'),
@@ -720,6 +807,7 @@ Route::middleware(['admin'])->group(function () {
         }
 
         return view('admin.feedback_center', [
+            'viewMode' => $viewMode,
             'activeTab' => $activeTab,
             'filters' => $filters,
             'stats' => $stats,
@@ -737,6 +825,7 @@ Route::middleware(['admin'])->group(function () {
             'alerts' => $alertsFiltered,
             'chefSummaries' => $chefSummaries,
             'monthlyTrends' => $monthlyTrends,
+            'analytics' => $analytics,
             'preview' => $preview,
         ]);
     };
