@@ -13,6 +13,7 @@ class Complaint extends Model
         'event_date',
         'date_received',
         'chef',
+        'team_members',
         'category',
         'description',
         'resolution_status',
@@ -23,6 +24,7 @@ class Complaint extends Model
     protected $casts = [
         'event_date' => 'date',
         'date_received' => 'date',
+        'team_members' => 'array',
     ];
 
     public function getComplaintIdAttribute(): string

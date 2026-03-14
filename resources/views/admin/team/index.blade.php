@@ -37,7 +37,14 @@
     .muted{color:var(--muted)}
     .cell-title{font-weight:700}
     .cell-sub{margin-top:4px;font-size:12px;color:var(--muted)}
-    .action-row{display:flex;gap:6px;align-items:center}
+    .action-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+    .row-action-btn{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:0 10px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:600;line-height:1;text-decoration:none;white-space:nowrap}
+    .row-action-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .row-action-btn.button{appearance:none;-webkit-appearance:none;cursor:pointer}
+    .row-action-badge{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:12px;font-weight:700;line-height:1;white-space:nowrap}
+    .row-action-delete{width:30px;height:30px;border-radius:8px;border:1px solid #fecaca;background:#fff;color:#dc2626;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .row-action-delete:hover{background:#fef2f2;border-color:#fca5a5}
+    .row-action-delete svg{width:14px;height:14px}
     @media (max-width: 1100px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}}
     @media (max-width: 760px){.head{flex-direction:column}.summary-grid,.filters{grid-template-columns:1fr}.table{min-width:920px}}
   </style>
@@ -51,7 +58,7 @@
           <p class="subtitle">Central staff directory for chefs, assistants, managers, office staff, and admin operators. Permissions remain intact while the directory now supports operational workflows.</p>
         </div>
         <div class="actions">
-          <a class="btn secondary" href="{{ route('admin.team.permissions') }}">Permissions Matrix</a>
+          <a class="btn secondary" href="{{ route('admin.team.permissions') }}">Access Control</a>
           <a class="btn" href="{{ route('admin.team.create') }}">Add Member</a>
         </div>
       </div>
@@ -147,21 +154,21 @@
                 <td><span class="badge {{ $u->is_active ? 'status-active' : 'status-inactive' }}">{{ $u->is_active ? 'Active' : 'Inactive' }}</span></td>
                 <td>
                   <div class="action-row">
-                    <a class="btn secondary" href="{{ route('admin.team.show', $u->id) }}">Profile</a>
-                    <a class="btn secondary" href="{{ route('admin.team.edit', $u->id) }}">Edit</a>
+                    <a class="row-action-btn" href="{{ route('admin.team.show', $u->id) }}">Profile</a>
+                    <a class="row-action-btn" href="{{ route('admin.team.edit', $u->id) }}">Edit</a>
                     @if($u->role !== 'owner')
                       <form method="post" action="{{ route('admin.team.toggle', $u->id) }}" onsubmit="return confirm('Toggle admin access?')">
                         @csrf
-                        <button class="btn secondary" type="submit">Update Access</button>
+                        <button class="row-action-btn button" type="submit">Access</button>
                       </form>
                       <form method="post" action="{{ route('admin.team.delete', $u->id) }}" onsubmit="return confirm('Delete this user?')">
                         @csrf
-                        <button class="icon-btn danger" type="submit" title="Delete user" aria-label="Delete user">
+                        <button class="row-action-delete" type="submit" title="Delete user" aria-label="Delete user">
                           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9z"/></svg>
                         </button>
                       </form>
                     @else
-                      <button class="btn secondary" disabled title="Owner cannot be deleted or restricted">Protected</button>
+                      <span class="row-action-badge" title="Owner cannot be deleted or restricted">Protected</span>
                     @endif
                   </div>
                 </td>

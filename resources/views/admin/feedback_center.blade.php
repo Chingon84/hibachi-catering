@@ -8,150 +8,119 @@
   @vite(['resources/css/app.css', 'resources/js/app.js'])
   <style>
     :root{
-      --panel-border:#e7ebf3;
-      --panel-shadow:0 18px 40px rgba(15,23,42,.06);
-      --surface-soft:#fbfcfe;
+      --panel-border:#e2e8f0;
+      --panel-shadow:0 10px 30px rgba(15,23,42,.06);
       --text-strong:#0f172a;
-      --tone-open-bg:#fef2f2;
-      --tone-open-bd:#fecaca;
-      --tone-open-tx:#b91c1c;
-      --tone-review-bg:#fff7ed;
-      --tone-review-bd:#fed7aa;
-      --tone-review-tx:#b45309;
-      --tone-resolved-bg:#ecfdf5;
-      --tone-resolved-bd:#a7f3d0;
-      --tone-resolved-tx:#047857;
-      --tone-escalated-bg:#f5f3ff;
-      --tone-escalated-bd:#ddd6fe;
-      --tone-escalated-tx:#7c3aed;
-      --tone-positive-bg:#eff6ff;
-      --tone-positive-bd:#bfdbfe;
-      --tone-positive-tx:#1d4ed8;
-      --tone-neutral-bg:#f8fafc;
-      --tone-neutral-bd:#e2e8f0;
-      --tone-neutral-tx:#475569;
+      --surface:#ffffff;
+      --surface-soft:#f8fafc;
+      --accent:#0f172a;
+      --accent-soft:#eef2ff;
+      --accent-blue:#2563eb;
+      --accent-green:#059669;
+      --accent-amber:#d97706;
+      --accent-red:#dc2626;
+      --accent-violet:#7c3aed;
     }
-    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#f8fafc;color:#0f172a;line-height:1.5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
     .container{width:calc(100vw - 24px);max-width:none;margin:20px 12px;padding:0 12px}
-    .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+    .dashboard-stack{display:grid;gap:24px}
+    .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:0}
     .page-copy{max-width:760px}
-    .view-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-    .view-tab{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #d8deea;background:#fff;color:#334155;font-size:13px;font-weight:800;text-decoration:none;line-height:1}
-    .view-tab.active{background:#0f172a;border-color:#0f172a;color:#fff;box-shadow:0 12px 24px rgba(15,23,42,.14)}
-    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #e6e9f2;background:#fff;color:#475569;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-    .title{margin:12px 0 6px;font-size:28px;line-height:1.08;letter-spacing:-.03em;color:var(--text-strong)}
-    .subtitle{margin:0;color:#64748b;font-size:14px;max-width:640px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 16px;border-radius:12px;text-decoration:none;box-shadow:0 10px 24px rgba(178,30,39,.18)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .title{margin:12px 0 4px;font-size:30px;line-height:1.05;letter-spacing:-.04em;color:var(--text-strong)}
+    .subtitle{margin:0;color:#64748b;font-size:14px;line-height:1.55;max-width:700px}
+    .surface-card{background:#fff;border:1px solid var(--panel-border);border-radius:20px;box-shadow:var(--panel-shadow)}
+    .surface-body{padding:20px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:12px;text-decoration:none;box-shadow:0 10px 24px rgba(178,30,39,.18);font-family:inherit;font-size:14px;line-height:1.2;-webkit-appearance:none;appearance:none}
     .btn.secondary{box-shadow:none}
-    .stats-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:14px}
-    .stat-card{position:relative;overflow:hidden;padding:16px;border:1px solid var(--panel-border);border-radius:18px;background:linear-gradient(180deg,#fff 0%,#fbfcff 100%);box-shadow:var(--panel-shadow)}
-    .stat-card::after{content:"";position:absolute;right:-18px;top:-18px;width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,0) 70%)}
-    .stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+    .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .header-slot{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:12px;border:1px dashed #cbd5e1;background:#fff;color:#64748b;font-size:12px;font-weight:700}
+    .module-switch{display:inline-flex;gap:6px;padding:6px;border-radius:999px;background:#eef3fa;border:1px solid #d9e2ef}
+    .module-switch a{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:999px;color:#475569;font-size:13px;font-weight:800;text-decoration:none}
+    .module-switch a.active{background:#0f172a;color:#fff;box-shadow:0 10px 20px rgba(15,23,42,.16)}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+    .kpi-card{padding:16px 20px;border-radius:16px;border:1px solid #e2e8f0;background:#fff}
+    .kpi-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#64748b}
+    .kpi-value{margin-top:6px;font-size:24px;font-weight:600;letter-spacing:-.03em;color:#0f172a;line-height:1}
+    .kpi-copy{margin-top:4px;font-size:12px;color:#64748b}
+    .filter-shell{display:grid;gap:16px}
+    .filter-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .filter-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#0f172a}
+    .filter-bar{display:grid;grid-template-columns:minmax(220px,1.7fr) repeat(7,minmax(118px,1fr)) auto auto;gap:12px;align-items:end}
+    .quick-date-row{grid-column:1 / -1;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .quick-date-strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .quick-date-chip{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-size:12px;font-weight:700;line-height:1;text-decoration:none;transition:background-color .16s ease,color .16s ease,border-color .16s ease}
+    .quick-date-chip:hover{background:#f8fafc}
+    .quick-date-chip.active{background:#0f172a;border-color:#0f172a;color:#fff}
+    .field-label{display:block;margin:0 0 6px;font-size:11px;font-weight:800;color:#64748b;letter-spacing:.07em;text-transform:uppercase}
+    .input,.select{width:100%;height:40px;padding:0 12px;border:1px solid #d8deea;border-radius:12px;background:#fff;color:#0f172a;font-family:inherit;font-size:14px;line-height:1.4;-webkit-appearance:none;appearance:none}
+    .input:focus,.select:focus{outline:none;border-color:#c6d1e3;box-shadow:0 0 0 4px rgba(148,163,184,.14)}
+    .select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2394a3b8' stroke-width='1.7'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:14px 14px;padding-right:38px}
+    .icon-field{position:relative}
+    .icon-field .input,.icon-field .select{padding-left:38px}
+    .field-icon{position:absolute;left:12px;bottom:11px;width:18px;height:18px;color:#94a3b8;pointer-events:none}
+    .filter-actions{display:flex;align-items:flex-end;gap:8px}
+    .filter-actions .action-link{min-height:40px}
+    .section-shell{display:grid;gap:16px}
+    .segmented-strip{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:0}
+    .segmented-link{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:#334155;font-size:14px;font-weight:500;text-decoration:none;transition:background-color .16s ease,color .16s ease,border-color .16s ease}
+    .segmented-link:hover{background:#f8fafc}
+    .segmented-link.active{background:#0f172a;border-color:#0f172a;color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+    .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:0}
+    .section-title{margin:0;font-size:18px;font-weight:800;color:#0f172a}
+    .section-subtitle{margin:4px 0 0;color:#64748b;font-size:13px;line-height:1.55;max-width:720px}
+    .count-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:#f8fafc;border:1px solid #e2e8f0;font-size:12px;font-weight:800;color:#475569}
+    .stats-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+    .stat-card{position:relative;overflow:hidden;padding:12px 16px;border:1px solid var(--panel-border);border-radius:20px;background:linear-gradient(180deg,#fff 0%,#fbfcff 100%);box-shadow:var(--panel-shadow)}
+    .stat-card::after{content:"";position:absolute;right:-18px;top:-18px;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,0) 70%)}
+    .stat-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
     .stat-label{font-size:12px;font-weight:800;color:#475569;letter-spacing:.03em;text-transform:uppercase}
-    .stat-value{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.04em;color:var(--text-strong)}
-    .stat-note{margin-top:8px;font-size:12px;color:#94a3b8}
-    .stat-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
-    .trend-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
+    .stat-value{font-size:24px;font-weight:800;line-height:1;letter-spacing:-.04em;color:#0f172a}
+    .stat-note{margin-top:6px;font-size:12px;color:#94a3b8}
+    .trend-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}
     .trend-chip.up{background:#ecfdf5;color:#047857}
     .trend-chip.down{background:#fff7ed;color:#c2410c}
     .trend-chip.flat{background:#f8fafc;color:#475569}
-    .trend-spark{display:flex;align-items:flex-end;gap:3px;height:18px}
-    .trend-spark span{display:block;width:5px;border-radius:999px;background:#cbd5e1}
-    .tone-open .trend-spark span{background:linear-gradient(180deg,#f87171 0%,#dc2626 100%)}
-    .tone-positive .trend-spark span{background:linear-gradient(180deg,#60a5fa 0%,#2563eb 100%)}
-    .tone-review .trend-spark span{background:linear-gradient(180deg,#fbbf24 0%,#d97706 100%)}
-    .tone-neutral .trend-spark span{background:linear-gradient(180deg,#94a3b8 0%,#475569 100%)}
-    .tone-escalated .trend-spark span{background:linear-gradient(180deg,#fb923c 0%,#ea580c 100%)}
-    .tone-resolved .trend-spark span{background:linear-gradient(180deg,#4ade80 0%,#16a34a 100%)}
     .stat-icon{width:42px;height:42px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent}
     .stat-icon svg{width:18px;height:18px}
-    .tone-open .stat-icon{background:var(--tone-open-bg);border-color:var(--tone-open-bd);color:var(--tone-open-tx)}
-    .tone-review .stat-icon{background:var(--tone-review-bg);border-color:var(--tone-review-bd);color:var(--tone-review-tx)}
-    .tone-resolved .stat-icon{background:var(--tone-resolved-bg);border-color:var(--tone-resolved-bd);color:var(--tone-resolved-tx)}
-    .tone-escalated .stat-icon{background:var(--tone-escalated-bg);border-color:var(--tone-escalated-bd);color:var(--tone-escalated-tx)}
-    .tone-positive .stat-icon{background:var(--tone-positive-bg);border-color:var(--tone-positive-bd);color:var(--tone-positive-tx)}
-    .tone-neutral .stat-icon{background:var(--tone-neutral-bg);border-color:var(--tone-neutral-bd);color:var(--tone-neutral-tx)}
-    .surface-card{background:linear-gradient(180deg,#fff 0%,#fcfdff 100%);border:1px solid var(--panel-border);border-radius:18px;box-shadow:var(--panel-shadow)}
-    .surface-body{padding:16px}
-    .filter-card .surface-body{padding:14px 16px}
-    .filter-bar{display:grid;grid-template-columns:minmax(280px,1.8fr) repeat(6,minmax(118px,.7fr)) auto;gap:10px;align-items:end}
-    .field-label{display:block;margin:0 0 6px;font-size:11px;font-weight:800;color:#64748b;letter-spacing:.07em;text-transform:uppercase}
-    .input,.select{width:100%;min-height:42px;border:1px solid #d8deea;border-radius:12px;background:#fff}
-    .input:focus,.select:focus{outline:none;border-color:#c6d1e3;box-shadow:0 0 0 4px rgba(148,163,184,.14)}
-    .filter-field.search-field{min-width:0}
-    .filter-field.search-field .input{background:linear-gradient(180deg,#fff 0%,#fcfdff 100%)}
-    .filter-actions{display:flex;align-items:end;gap:10px;justify-content:flex-end}
-    .layout-grid{display:block;margin-top:12px}
-    .toolbar-card{margin-top:10px}
-    .toolbar-card .surface-body{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px}
-    .quick-pills{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
-    .toolbar-meta{display:flex;align-items:center;gap:10px;flex:0 0 auto;color:#64748b;font-size:12px;font-weight:700;white-space:nowrap}
-    .toolbar-meta .meta-dot{width:4px;height:4px;border-radius:999px;background:#cbd5e1}
-    .tab-strip{display:flex;flex-wrap:wrap;gap:8px}
-    .tab-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid #d8deea;background:#fff;color:#334155;font-size:12px;font-weight:800;text-decoration:none;line-height:1}
-    .tab-chip.active{background:#0f172a;border-color:#0f172a;color:#fff;box-shadow:0 10px 20px rgba(15,23,42,.14)}
-    .content-card{overflow:hidden;border-top:1px solid #eef2f7}
-    .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #edf2f7}
-    .section-title{margin:0;font-size:18px;font-weight:800;color:var(--text-strong)}
-    .section-subtitle{margin:4px 0 0;color:#64748b;font-size:13px}
-    .muted-kicker{font-size:12px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em}
-    .table-wrap{overflow:auto;border:1px solid #e8edf4;border-radius:16px;background:#fff}
-    .data-table{width:100%;border-collapse:separate;border-spacing:0;min-width:860px}
-    .queue-table{min-width:0;table-layout:fixed}
-    .queue-table col.case{width:132px}
-    .queue-table col.received{width:110px}
-    .queue-table col.event-date{width:110px}
-    .queue-table col.team-member{width:150px}
-    .queue-table col.source{width:110px}
-    .queue-table col.summary{width:auto}
-    .queue-table col.status{width:112px}
-    .queue-table col.owner{width:128px}
-    .queue-table col.actions{width:220px}
-    .data-table th,.data-table td{padding:13px 14px;text-align:left;vertical-align:top}
-    .data-table thead th{background:#f8fafc;border-bottom:1px solid #e8edf4;color:#475569;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+    .tone-open .stat-icon{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+    .tone-review .stat-icon{background:#fff7ed;border-color:#fed7aa;color:#b45309}
+    .tone-resolved .stat-icon{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+    .tone-escalated .stat-icon{background:#f5f3ff;border-color:#ddd6fe;color:#7c3aed}
+    .tone-positive .stat-icon{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+    .tone-neutral .stat-icon{background:#f8fafc;border-color:#e2e8f0;color:#475569}
+    .analytics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
+    .chart-card{padding:18px;border-radius:20px;border:1px solid var(--panel-border);background:linear-gradient(180deg,#fff 0%,#fcfdff 100%);box-shadow:var(--panel-shadow)}
+    .chart-card.wide{grid-column:span 2}
+    .chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .chart-title{margin:0;font-size:17px;font-weight:800;color:#0f172a}
+    .chart-copy{margin:4px 0 0;font-size:13px;color:#64748b;line-height:1.6}
+    .chart-note{font-size:12px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
+    .chart-canvas{position:relative;min-height:260px}
+    .chart-canvas.compact{min-height:220px}
+    .queue-layout{margin-top:0;min-width:0}
+    .table-wrap{width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;border:1px solid #e8edf4;border-radius:16px;background:#fff}
+    .data-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:0}
+    .data-table th,.data-table td{padding:12px;text-align:left;vertical-align:top}
+    .data-table thead th{background:#f8fafc;border-bottom:1px solid #e8edf4;color:#6b7280;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
     .data-table tbody tr{background:#fff;transition:background-color .16s ease}
-    .data-table tbody tr:hover{background:#fafcff}
+    .data-table tbody tr:hover{background:#f9fafb}
     .data-table tbody tr + tr td{border-top:1px solid #edf1f6}
     .data-table tbody tr.is-clickable{cursor:pointer}
-    .cell-strong{font-weight:800;color:var(--text-strong)}
-    .cell-copy{max-width:340px;color:#475569;line-height:1.55}
-    .queue-table .cell-copy{max-width:none;white-space:normal;word-break:break-word}
-    .cell-meta{display:block;color:#64748b;font-size:12px;margin-top:4px}
-    .analytics-shell{display:grid;gap:16px}
-    .analytics-header-card,.analytics-filter-card,.analytics-summary-card,.analytics-chart-card,.analytics-kpi-card{border:1px solid var(--panel-border);border-radius:16px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04)}
-    .analytics-header-card{padding:24px;background:linear-gradient(180deg,#ffffff 0%,#fbfcff 100%)}
-    .analytics-header-title{margin:0;font-size:28px;font-weight:800;letter-spacing:-.03em;color:var(--text-strong)}
-    .analytics-header-copy{margin:8px 0 0;max-width:860px;color:#64748b;font-size:14px;line-height:1.6}
-    .analytics-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-    .analytics-kpi-card{padding:20px}
-    .analytics-kpi-label{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#64748b}
-    .analytics-kpi-value{margin-top:10px;font-size:30px;font-weight:700;letter-spacing:-.03em;color:var(--text-strong)}
-    .analytics-kpi-note{margin-top:8px;color:#94a3b8;font-size:12px;line-height:1.5}
-    .analytics-filter-card{padding:16px}
-    .analytics-filter-grid{display:grid;grid-template-columns:minmax(240px,1.4fr) repeat(7,minmax(120px,.7fr)) auto;gap:12px;align-items:end}
-    .analytics-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
-    .analytics-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-    .analytics-summary-card{padding:18px}
-    .analytics-summary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .analytics-summary-label{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#64748b}
-    .analytics-summary-icon{width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;background:#f8fafc;border:1px solid #e2e8f0;color:#475569}
-    .analytics-summary-icon svg{width:16px;height:16px}
-    .analytics-summary-value{margin-top:12px;font-size:28px;font-weight:700;letter-spacing:-.03em;color:var(--text-strong)}
-    .analytics-summary-copy{margin-top:6px;color:#94a3b8;font-size:12px;line-height:1.5}
-    .analytics-charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-    .analytics-chart-card{padding:24px}
-    .analytics-chart-title{margin:0;font-size:18px;font-weight:700;color:var(--text-strong)}
-    .analytics-chart-copy{margin:6px 0 0;color:#64748b;font-size:13px;line-height:1.5}
-    .chart-wrap{position:relative;height:300px;margin-top:18px}
-    .chart-wrap.compact{height:280px}
-    .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;line-height:1;border:1px solid transparent;white-space:nowrap;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
-    .badge.open,.badge.denied{background:#fff1f2;border-color:#fda4af;color:#be123c}
-    .badge.unauthorized{background:#fee2e2;border-color:#f87171;color:#991b1b}
-    .badge.escalated,.badge.urgent,.badge.watch{background:#fff7ed;border-color:#fdba74;color:#c2410c}
-    .badge.in-review,.badge.pending,.badge.operational,.badge.medium{background:#fef3c7;border-color:#fbbf24;color:#92400e}
-    .badge.logged,.badge.shared,.badge.neutral,.badge.alert{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
-    .badge.resolved,.badge.approved,.badge.authorized,.badge.healthy,.badge.worked{background:#ecfdf5;border-color:#86efac;color:#166534}
-    .badge.positive,.badge.low,.badge.reviewed,.badge.trend,.badge.cancelled{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
+    .cell-strong{font-weight:800;color:#0f172a}
+    .cell-copy{max-width:none;color:#475569;line-height:1.45;white-space:normal;word-break:break-word}
+    .cell-meta{display:block;color:#64748b;font-size:12px;margin-top:3px}
+    .cell-muted{color:#64748b;font-size:12px}
+    .badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.2;border:1px solid transparent;white-space:nowrap}
+    .badge.open,.badge.pending,.badge.scheduled,.badge.medium{background:#fef3c7;border-color:#fde68a;color:#92400e}
+    .badge.in-review,.badge.reviewed{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+    .badge.escalated,.badge.urgent,.badge.watch,.badge.flagged,.badge.operational{background:#fff7ed;border-color:#fdba74;color:#c2410c}
+    .badge.approved,.badge.resolved,.badge.authorized,.badge.healthy{background:#dcfce7;border-color:#86efac;color:#166534}
+    .badge.rejected,.badge.denied,.badge.unauthorized{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+    .badge.closed,.badge.logged,.badge.shared,.badge.neutral,.badge.alert,.badge.cancelled{background:#f1f5f9;border-color:#cbd5e1;color:#475569}
+    .badge.positive,.badge.low{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
     .row-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap}
     .action-link{display:inline-flex;align-items:center;justify-content:center;padding:7px 10px;border-radius:10px;border:1px solid #d8deea;background:#fff;color:#334155;font-size:12px;font-weight:700;text-decoration:none}
     .action-link:hover{background:#f8fafc}
@@ -170,97 +139,106 @@
     .detail-card.drawer{height:100%;overflow:auto;border-top-left-radius:22px;border-bottom-left-radius:22px;border-top-right-radius:18px;border-bottom-right-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.18)}
     .drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
     .drawer-close{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;border:1px solid #d8deea;background:#fff;color:#334155;text-decoration:none;font-size:18px;line-height:1}
-    .drawer-close:hover{background:#f8fafc}
     .detail-tag{display:inline-flex;align-items:center;gap:8px;margin-bottom:12px;padding:6px 10px;border-radius:999px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:12px;font-weight:700}
-    .detail-title{margin:0 0 8px;font-size:18px;line-height:1.3;color:var(--text-strong)}
+    .detail-title{margin:0 0 8px;font-size:18px;line-height:1.3;color:#0f172a}
     .detail-copy{margin:0;color:#64748b;font-size:14px;line-height:1.6}
     .fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
     .fact-card{padding:12px;border-radius:14px;background:#f8fafc;border:1px solid #e6ecf3}
     .fact-label{display:block;font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-    .fact-value{font-size:13px;font-weight:800;color:var(--text-strong)}
+    .fact-value{font-size:13px;font-weight:800;color:#0f172a}
     .detail-block + .detail-block{margin-top:12px;padding-top:12px;border-top:1px solid #edf1f6}
     .detail-list{display:grid;gap:0;margin:0;padding:4px 0 0;list-style:none}
     .detail-list li{position:relative;display:grid;grid-template-columns:26px 1fr;gap:12px;padding:0 0 16px}
-    .detail-list li:last-child{padding-bottom:0}
     .timeline-rail{position:relative;display:flex;justify-content:center}
     .timeline-rail::after{content:"";position:absolute;top:14px;bottom:-18px;left:50%;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,#dbe4ee 0%,#eef2f7 100%)}
     .detail-list li:last-child .timeline-rail::after{display:none}
     .timeline-dot{width:12px;height:12px;border-radius:999px;background:#0f172a;box-shadow:0 0 0 4px #f8fafc;margin-top:2px;position:relative;z-index:1}
     .timeline-copy{font-size:13px;color:#475569;line-height:1.5;padding-bottom:2px}
     .timeline-date{display:block;margin-bottom:4px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
-    .preview-empty{padding:20px;border:1px dashed #d6dce8;border-radius:16px;background:linear-gradient(180deg,#fbfcff 0%,#f8fafc 100%)}
-    .preview-skeleton{display:grid;gap:10px;margin-top:12px}
-    .preview-skeleton span{display:block;height:10px;border-radius:999px;background:linear-gradient(90deg,#eef2f7 0%,#f8fafc 50%,#eef2f7 100%)}
-    .preview-skeleton span:nth-child(1){width:68%}
-    .preview-skeleton span:nth-child(2){width:92%}
-    .preview-skeleton span:nth-child(3){width:76%}
-    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 20px;min-height:220px;border:1px dashed #d6dce8;border-radius:18px;background:linear-gradient(180deg,#fbfcff 0%,#f8fafc 100%)}
-    .empty-state.compact{min-height:196px;padding:24px 18px}
-    .empty-icon{width:52px;height:52px;border-radius:16px;background:#fff;border:1px solid #e2e8f0;display:inline-flex;align-items:center;justify-content:center;color:#64748b;box-shadow:0 10px 24px rgba(15,23,42,.06)}
-    .empty-icon svg{width:24px;height:24px}
-    .empty-title{margin:14px 0 6px;font-size:18px;line-height:1.2;color:var(--text-strong)}
-    .empty-copy{margin:0 0 14px;max-width:420px;color:#64748b;font-size:13px;line-height:1.6}
-    .compact-empty-action{display:inline-flex;align-items:center;justify-content:center}
-    .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
-    .summary-mini{padding:12px;border-radius:16px;background:#fff;border:1px solid #e8edf4}
-    .summary-mini .value{font-size:22px;font-weight:800;color:var(--text-strong)}
-    .summary-mini .label{font-size:12px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
-    .trend-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
-    .trend-card{padding:14px;border-radius:16px;background:#fff;border:1px solid #e8edf4}
-    .trend-card h4{margin:0 0 8px;font-size:14px;color:var(--text-strong)}
-    .trend-bars{display:grid;gap:8px}
-    .trend-bar-row{display:grid;grid-template-columns:100px 1fr 34px;gap:10px;align-items:center;font-size:12px;color:#475569}
-    .trend-bar{height:8px;border-radius:999px;background:#e2e8f0;overflow:hidden}
-    .trend-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#b21e27 0%,#ef4444 100%)}
-    .alert-list{display:grid;gap:10px}
-    .alert-card{padding:14px;border-radius:16px;border:1px solid #f3d2d7;background:linear-gradient(180deg,#fff 0%,#fff7f8 100%)}
-    .alert-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-    .helper-list{display:grid;gap:8px;margin:0;padding-left:18px;color:#64748b}
-    @media (max-width: 1280px){.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.queue-table col.actions{width:180px}.filter-bar{grid-template-columns:minmax(220px,1.4fr) repeat(3,minmax(140px,.8fr)) repeat(3,minmax(128px,.7fr)) auto}.analytics-kpi-grid,.analytics-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-filter-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.analytics-charts-grid{grid-template-columns:1fr 1fr}}
-    @media (max-width: 980px){.filter-bar{grid-template-columns:1fr 1fr 1fr}.trend-grid,.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.queue-table{min-width:980px}.toolbar-card .surface-body{flex-direction:column;align-items:flex-start}.toolbar-meta{width:100%;justify-content:flex-start}.analytics-filter-grid,.analytics-charts-grid{grid-template-columns:1fr 1fr}.analytics-actions{justify-content:flex-start}}
-    @media (max-width: 720px){.page-head{flex-direction:column;align-items:stretch}.filter-bar,.stats-grid,.trend-grid,.summary-grid,.analytics-kpi-grid,.analytics-summary-grid,.analytics-filter-grid,.analytics-charts-grid{grid-template-columns:1fr}.fact-grid{grid-template-columns:1fr}.container{padding:0 10px}.detail-panel{top:10px;right:10px;bottom:10px;width:calc(100vw - 20px)}.filter-actions{justify-content:flex-start}.toolbar-card .surface-body{padding:12px 14px}.chart-wrap,.chart-wrap.compact{height:240px}.analytics-chart-card,.analytics-header-card,.analytics-filter-card,.analytics-summary-card,.analytics-kpi-card{padding:18px}}
+    .workflow-summary{margin:14px 0 0;padding:14px;border-radius:16px;border:1px solid #e6ecf3;background:#f8fafc}
+    .workflow-kicker{display:inline-flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+    .workflow-meta{display:grid;gap:6px;margin-top:12px}
+    .workflow-meta-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:#64748b}
+    .workflow-meta-row strong{color:#0f172a;font-weight:700}
+    .workflow-form{display:grid;gap:12px;margin-top:14px}
+    .workflow-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .workflow-field label{display:block;margin:0 0 6px;font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase}
+    .workflow-field input,.workflow-field select,.workflow-field textarea{width:100%;border:1px solid #d8deea;border-radius:12px;background:#fff;color:#0f172a}
+    .workflow-field input,.workflow-field select{height:40px;padding:0 12px}
+    .workflow-field textarea{min-height:96px;padding:10px 12px;resize:vertical;line-height:1.5}
+    .workflow-field input:focus,.workflow-field select:focus,.workflow-field textarea:focus{outline:none;border-color:#c6d1e3;box-shadow:0 0 0 4px rgba(148,163,184,.14)}
+    .workflow-field [data-team-member-option]{display:flex !important;align-items:center !important;gap:12px;margin:0 !important;font-size:14px !important;font-weight:400 !important;letter-spacing:0 !important;text-transform:none !important}
+    .workflow-field [data-team-member-checkbox]{width:16px !important;height:16px !important;min-width:16px;flex:0 0 16px;display:inline-block !important;margin:0 !important;padding:0 !important;border-radius:4px;background:#fff;vertical-align:middle;align-self:center;border:1px solid #cbd5e1;box-shadow:none}
+    .workflow-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .workflow-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid #d8deea;border-radius:10px;background:#fff;color:#334155;font-size:12px;font-weight:700}
+    .workflow-btn:hover{background:#f8fafc}
+    .workflow-btn.primary{background:#0f172a;border-color:#0f172a;color:#fff}
+    .workflow-btn.primary:hover{background:#1e293b}
+    .workflow-btn.resolve{background:#ecfdf5;border-color:#86efac;color:#166534}
+    .workflow-btn.escalate{background:#fff7ed;border-color:#fdba74;color:#c2410c}
+    .workflow-details-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .workflow-empty{font-size:13px;color:#94a3b8}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:42px 20px;border:1px dashed #d6dce8;border-radius:18px;background:linear-gradient(180deg,#fbfcff 0%,#f8fafc 100%)}
+    .empty-title{margin:16px 0 6px;font-size:20px;line-height:1.2;color:#0f172a}
+    .empty-copy{margin:0 0 18px;max-width:420px;color:#64748b;font-size:14px;line-height:1.6}
+    @media (max-width: 1380px){
+      .filter-bar{grid-template-columns:minmax(220px,1.4fr) repeat(4,minmax(140px,1fr)) auto auto}
+      .analytics-grid{grid-template-columns:1fr}
+      .chart-card.wide{grid-column:auto}
+      .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    }
+    @media (max-width: 980px){
+      .page-head,.filter-head{flex-direction:column;align-items:stretch}
+      .header-actions{justify-content:flex-start}
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .filter-bar{grid-template-columns:1fr 1fr}
+      .filter-actions{grid-column:span 2}
+    }
+    @media (max-width: 720px){
+      .container{padding:0 10px}
+      .dashboard-stack{gap:18px}
+      .kpi-grid,.filter-bar,.fact-grid{grid-template-columns:1fr}
+      .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .quick-date-row{align-items:flex-start}
+      .workflow-grid,.workflow-details-grid{grid-template-columns:1fr}
+      .filter-actions{grid-column:auto}
+      .module-switch{width:100%}
+      .module-switch a{flex:1}
+      .data-table{min-width:860px}
+      .detail-panel{top:10px;right:10px;bottom:10px;width:calc(100vw - 20px)}
+    }
+    @media (max-width: 540px){
+      .surface-body{padding:16px}
+      .title{font-size:26px}
+      .page-head{gap:12px}
+      .header-actions>*{width:100%}
+    }
   </style>
 </head>
 <body>
   @php
     $queryBase = array_filter([
+      'view' => $activeView,
+      'tab' => $activeTab,
       'q' => $filters['q'] ?? '',
       'status' => $filters['status'] ?? '',
       'type' => $filters['type'] ?? '',
       'date' => $filters['date'] ?? '',
+      'from' => $filters['from'] ?? '',
+      'to' => $filters['to'] ?? '',
       'chef' => $filters['chef'] ?? '',
       'staff_type' => $filters['staff_type'] ?? '',
       'source' => $filters['source'] ?? '',
     ], fn ($value) => $value !== '');
-    $viewQueryBase = array_filter([
-      'view' => $viewMode ?? 'cases',
-      'q' => $filters['q'] ?? '',
-      'status' => $filters['status'] ?? '',
-      'type' => $filters['type'] ?? '',
-      'date' => $filters['date'] ?? '',
-      'chef' => $filters['chef'] ?? '',
-      'staff_type' => $filters['staff_type'] ?? '',
-      'source' => $filters['source'] ?? '',
-    ], fn ($value) => $value !== '');
-    $quickTabs = [
-      'all-cases' => 'All Cases',
+    $viewBase = array_filter($queryBase, fn ($value, $key) => $key !== 'item', ARRAY_FILTER_USE_BOTH);
+    $caseTabs = [
       'complaints' => 'Complaints',
       'good-feedback' => 'Good Feedback',
       'van-feedback' => 'Van Issues',
       'attendance' => 'Attendance',
       'days-off' => 'Days Off',
       'alerts' => 'Alerts',
-    ];
-    $tabMeta = [
-      'all-cases' => ['title' => 'Unified Operations Queue', 'subtitle' => 'The full team queue for complaints, positive feedback, van issues, attendance incidents, and follow-up ownership.', 'count' => $allCases->count()],
-      'complaints' => ['title' => 'Complaints log', 'subtitle' => 'Workbook-aligned complaint queue with category, assistant, action, and resolution status.', 'count' => $complaints->count()],
-      'good-feedback' => ['title' => 'Good feedback log', 'subtitle' => 'Positive service recognition captured by event date, source, and assistant.', 'count' => $goodFeedback->count()],
-      'van-feedback' => ['title' => 'Van issues log', 'subtitle' => 'Fleet and equipment issues tied to operations, accountability, and action taken.', 'count' => $vanFeedback->count()],
-      'attendance' => ['title' => 'Attendance log', 'subtitle' => 'Incident tracking with units, authorization state, manager, and notes.', 'count' => $attendance->count()],
-      'days-off' => ['title' => 'Days off log', 'subtitle' => 'Request tracking for approvals, denied days, unauthorized time, and notes.', 'count' => $daysOff->count()],
-      'alerts' => ['title' => 'Alerts and escalations', 'subtitle' => 'Unauthorized patterns, escalations, and urgent operational alerts.', 'count' => $alerts->count()],
-      'chef-summary' => ['title' => 'Team performance summary', 'subtitle' => 'Per-team-member rollup across requests, feedback, complaints, van issues, and attendance.', 'count' => $chefSummaries->count()],
-      'monthly-trends' => ['title' => 'Monthly trends', 'subtitle' => 'Month-over-month totals for days off, unauthorized time, good feedback, and complaints.', 'count' => $monthlyTrends->count()],
     ];
     $icons = [
       'open' => '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/>',
@@ -270,35 +248,52 @@
       'escalated' => '<path d="M13 3 4 14h6l-1 7 9-11h-6l1-7z"/>',
       'resolved' => '<path d="m9.55 16.6-3.9-3.9 1.4-1.4 2.5 2.5 7.4-7.4 1.4 1.4z"/>',
     ];
-    $previewStatusClass = strtolower(str_replace(' ', '-', $preview['status'] ?? 'neutral'));
     $createBackUrl = request()->fullUrl();
     $quickCreateGroups = [
       'Feedback' => [
         ['label' => 'Complaint', 'icon' => 'alert-triangle', 'icon_class' => 'text-red-500', 'href' => route('admin.feedback.create', ['type' => 'complaint', 'back' => $createBackUrl])],
         ['label' => 'Good Feedback', 'icon' => 'thumb-up', 'icon_class' => 'text-green-500', 'href' => route('admin.feedback.create', ['type' => 'good-feedback', 'back' => $createBackUrl])],
-        ['label' => 'Recognition', 'icon' => 'award', 'icon_class' => 'text-yellow-500', 'href' => route('admin.feedback.create', ['type' => 'good-feedback', 'back' => $createBackUrl])],
       ],
       'Operations' => [
         ['label' => 'Van Feedback', 'icon' => 'truck', 'icon_class' => 'text-orange-500', 'href' => route('admin.feedback.create', ['type' => 'van-feedback', 'back' => $createBackUrl])],
         ['label' => 'Attendance Incident', 'icon' => 'clock', 'icon_class' => 'text-blue-500', 'href' => route('admin.feedback.create', ['type' => 'attendance', 'back' => $createBackUrl])],
-        ['label' => 'Fleet', 'icon' => 'car', 'icon_class' => 'text-indigo-500', 'href' => route('admin.feedback.create', ['type' => 'van-feedback', 'back' => $createBackUrl])],
-      ],
-      'Management' => [
-        ['label' => 'Manager Note', 'icon' => 'clipboard-document-list', 'icon_class' => 'text-purple-500', 'href' => route('admin.feedback.create', ['type' => 'attendance', 'back' => $createBackUrl])],
       ],
     ];
-    $panelBaseQuery = array_filter([
-      'view' => $viewMode ?? 'cases',
-      'tab' => $activeTab,
-      'q' => $filters['q'] ?? '',
-      'status' => $filters['status'] ?? '',
-      'type' => $filters['type'] ?? '',
-      'date' => $filters['date'] ?? '',
-      'chef' => $filters['chef'] ?? '',
-      'staff_type' => $filters['staff_type'] ?? '',
-      'source' => $filters['source'] ?? '',
-    ], fn ($value) => $value !== '');
-    $isPreviewOpen = !empty($filters['item']) && (!empty($preview['facts']) || !empty($preview['sections']) || !empty($preview['history']));
+    $panelBaseQuery = array_filter($queryBase, fn ($value, $key) => $key !== 'item', ARRAY_FILTER_USE_BOTH);
+    $previewStatusClass = strtolower(str_replace(' ', '-', $preview['status'] ?? 'neutral'));
+    $isPreviewOpen = $activeView === 'cases' && !empty($filters['item']) && (!empty($preview['facts']) || !empty($preview['sections']) || !empty($preview['history']));
+    $avgNetScore = $teamSummaries->count() ? round($teamSummaries->avg('net_score'), 1) : 0;
+    $complaintsPendingCount = $complaints->where('resolution_status', 'Pending')->count();
+    $complaintsInReviewCount = $complaints->where('resolution_status', 'In Review')->count();
+    $complaintsEscalatedCount = $complaints->where('resolution_status', 'Escalated')->count();
+    $complaintsResolvedCount = $complaints->whereIn('resolution_status', ['Resolved', 'Closed'])->count();
+    $activeComplaintsCount = $complaintsPendingCount + $complaintsInReviewCount + $complaintsEscalatedCount;
+    $daysOffPendingCount = $daysOff->where('status', 'Pending')->count();
+    $daysOffApprovedCount = $daysOff->where('status', 'Approved')->count();
+    $daysOffUnauthorizedCount = $daysOff->where('unauthorized_days', '>', 0)->count();
+    $daysOffSort = $filters['sort'] ?? '';
+    $daysOffDirection = $filters['direction'] ?? 'desc';
+    $daysOffSortIcon = function (string $column) use ($daysOffSort, $daysOffDirection) {
+      if ($daysOffSort !== $column) {
+        return '<svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true" style="opacity:.45"><path d="M10 5 6.5 8.5h7L10 5Zm0 10 3.5-3.5h-7L10 15Z"/></svg>';
+      }
+
+      return $daysOffDirection === 'asc'
+        ? '<svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M10 5 6.5 8.5h7L10 5Z"/></svg>'
+        : '<svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="m10 15 3.5-3.5h-7L10 15Z"/></svg>';
+    };
+    $daysOffSortLink = function (string $column) use ($viewBase, $daysOffSort, $daysOffDirection) {
+      $direction = $daysOffSort === $column && $daysOffDirection === 'asc' ? 'desc' : 'asc';
+
+      return route('admin.feedback', array_merge($viewBase, [
+        'view' => 'cases',
+        'tab' => 'days-off',
+        'sort' => $column,
+        'direction' => $direction,
+      ]));
+    };
+    $workflowBackUrl = request()->fullUrl();
+    $workflowUpdateRoute = route('admin.feedback.workflow.update');
   @endphp
   <div class="container">
     @if (session('ok'))
@@ -309,531 +304,749 @@
       </div>
     @endif
 
-    <div class="page-head">
-      <div class="page-copy">
-        <div class="eyebrow">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5h10v2H7V9zm0 4h7v2H7v-2z"/></svg>
-          Operations module
+    <div class="dashboard-stack">
+      <div class="page-head">
+        <div class="page-copy">
+          <div class="eyebrow">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5h10v2H7V9zm0 4h7v2H7v-2z"/></svg>
+            Operations module
+          </div>
+          <h1 class="title">Feedback Center</h1>
+          <p class="subtitle">Operations case management and performance analytics.</p>
         </div>
-        <h1 class="title">Feedback Center</h1>
-        <p class="subtitle">Track customer complaints, staff/service feedback, van issues, attendance incidents, and resolution trends from one internal operations center.</p>
+        <div class="header-actions">
+          <div class="module-switch">
+            <a href="{{ route('admin.feedback', array_merge($viewBase, ['view' => 'cases'])) }}" class="{{ $activeView === 'cases' ? 'active' : '' }}">Cases</a>
+            <a href="{{ route('admin.feedback', array_merge($viewBase, ['view' => 'analytics'])) }}" class="{{ $activeView === 'analytics' ? 'active' : '' }}">Analytics</a>
+          </div>
+          <div class="header-slot">Export / Reports</div>
+          <a
+            href="{{ route('admin.feedback.create', ['type' => 'days-off', 'back' => request()->fullUrl()]) }}"
+            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+            </svg>
+            New Days Off Request
+          </a>
+          <x-admin.new-feedback-menu :groups="$quickCreateGroups" />
+        </div>
       </div>
-      <x-admin.new-feedback-menu :groups="$quickCreateGroups" button-label="New Feedback" />
-    </div>
 
-    <div class="view-tabs">
-      <a class="view-tab {{ ($viewMode ?? 'cases') === 'cases' ? 'active' : '' }}" href="{{ route('admin.feedback', array_merge($viewQueryBase, ['view' => 'cases'])) }}">Cases</a>
-      <a class="view-tab {{ ($viewMode ?? 'cases') === 'analytics' ? 'active' : '' }}" href="{{ route('admin.feedback', array_merge($viewQueryBase, ['view' => 'analytics'])) }}">Analytics</a>
-    </div>
-
-    @if(($viewMode ?? 'cases') === 'cases')
-    <div class="stats-grid">
-      @foreach($stats as $stat)
-        <div class="stat-card tone-{{ $stat['tone'] }}">
-          <div class="stat-top">
-            <div class="stat-label">{{ $stat['label'] }}</div>
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24" fill="currentColor">{!! $icons[$stat['tone']] ?? $icons['neutral'] !!}</svg>
+      @if($activeView === 'cases' && $complaintsEscalatedCount > 0)
+        <div class="surface-card" style="margin-top:12px;border-color:#fed7aa;background:#fff7ed">
+          <div class="surface-body" style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;color:#9a3412">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M13 3 4 14h6l-1 7 9-11h-6l1-7Z"/></svg>
+              <span style="font-size:13px;font-weight:700">Escalated complaints require attention.</span>
             </div>
-          </div>
-          <div class="stat-value">{{ number_format($stat['value']) }}</div>
-          <div class="stat-note">{{ $stat['note'] }}</div>
-          <div class="stat-footer">
-            <span class="trend-chip {{ $stat['trend_direction'] ?? 'flat' }}">{{ $stat['trend'] ?? 'No change' }}</span>
-            <div class="trend-spark" aria-hidden="true">
-              @foreach(($stat['spark'] ?? [1,1,1,1,1,1]) as $point)
-                <span style="height: {{ max(6, (int) $point * 4) }}px"></span>
-              @endforeach
-            </div>
+            <span style="font-size:12px;font-weight:700;color:#c2410c">{{ number_format($complaintsEscalatedCount) }} active</span>
           </div>
         </div>
-      @endforeach
-    </div>
+      @endif
 
-    <div class="surface-card filter-card">
-      <div class="surface-body">
-        <form class="filter-bar" method="get" action="{{ route('admin.feedback') }}">
-          <input type="hidden" name="view" value="cases">
-          <input type="hidden" name="tab" value="{{ $activeTab }}">
-          <div class="filter-field search-field">
-            <label class="field-label" for="feedback-search">Search</label>
-            <input class="input" id="feedback-search" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search IDs, staff member, category, summary, or owner">
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-status">Status</label>
-            <select class="select" id="feedback-status" name="status">
-              <option value="">All statuses</option>
-              @foreach($statusOptions as $statusOpt)
-                <option value="{{ $statusOpt }}" {{ ($filters['status'] ?? '') === $statusOpt ? 'selected' : '' }}>{{ $statusOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-type">Type</label>
-            <select class="select" id="feedback-type" name="type">
-              <option value="">All record types</option>
-              @foreach($typeOptions as $typeOpt)
-                <option value="{{ $typeOpt }}" {{ ($filters['type'] ?? '') === $typeOpt ? 'selected' : '' }}>{{ $typeOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-date">Date</label>
-            <input class="input" id="feedback-date" type="date" name="date" value="{{ $filters['date'] ?? '' }}">
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-chef">Team Member</label>
-            <select class="select" id="feedback-chef" name="chef">
-              <option value="">All staff</option>
-              @foreach($chefOptions as $chefOpt)
-                <option value="{{ $chefOpt }}" {{ ($filters['chef'] ?? '') === $chefOpt ? 'selected' : '' }}>{{ $chefOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-staff-type">Staff Type</label>
-            <select class="select" id="feedback-staff-type" name="staff_type">
-              <option value="">All staff types</option>
-              @foreach($staffTypeOptions as $staffTypeOpt)
-                <option value="{{ $staffTypeOpt }}" {{ ($filters['staff_type'] ?? '') === $staffTypeOpt ? 'selected' : '' }}>{{ $staffTypeOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="feedback-source">Source</label>
-            <select class="select" id="feedback-source" name="source">
-              <option value="">All sources</option>
-              @foreach($sourceOptions as $sourceOpt)
-                <option value="{{ $sourceOpt }}" {{ ($filters['source'] ?? '') === $sourceOpt ? 'selected' : '' }}>{{ $sourceOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-actions">
-            <button class="btn secondary" type="submit">Apply</button>
-            <a href="{{ route('admin.feedback', ['view' => 'cases', 'tab' => $activeTab]) }}" class="btn secondary">Reset</a>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <div class="surface-card toolbar-card">
-      <div class="surface-body">
-        <div class="quick-pills">
-          @foreach($quickTabs as $tabKey => $tabLabel)
-            <a class="tab-chip {{ $activeTab === $tabKey ? 'active' : '' }}" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => $tabKey])) }}">{{ $tabLabel }}</a>
-          @endforeach
-        </div>
-        <div class="toolbar-meta">
-          <span>{{ number_format($tabMeta[$activeTab]['count']) }} visible</span>
-          <span class="meta-dot" aria-hidden="true"></span>
-          <span>{{ $tabMeta[$activeTab]['title'] }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="layout-grid">
-      <div class="surface-card content-card">
+      <div class="surface-card">
         <div class="surface-body">
-          <div class="section-head">
-            <div>
-              <h2 class="section-title">{{ $tabMeta[$activeTab]['title'] }}</h2>
-              <p class="section-subtitle">{{ $tabMeta[$activeTab]['subtitle'] }}</p>
+          <div class="filter-shell">
+            <div class="filter-head">
+              <div class="filter-title">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5.25h18M6.75 12h10.5M10.5 18.75h3"/></svg>
+                Filters
+              </div>
+              <div class="cell-muted">Use the same filters across case queues and analytics.</div>
             </div>
-            <div class="muted-kicker">{{ number_format($tabMeta[$activeTab]['count']) }} records</div>
+            <form class="filter-bar" method="get" action="{{ route('admin.feedback') }}" data-quick-date-form>
+              <input type="hidden" name="view" value="{{ $activeView }}">
+              <input type="hidden" name="tab" value="{{ $activeTab }}">
+              <div class="quick-date-row">
+                <div class="quick-date-strip">
+                  <button class="quick-date-chip" type="button" data-quick-range="today">Today</button>
+                  <button class="quick-date-chip" type="button" data-quick-range="this-week">This Week</button>
+                  <button class="quick-date-chip" type="button" data-quick-range="last-week">Last Week</button>
+                  <button class="quick-date-chip" type="button" data-quick-range="this-month">This Month</button>
+                  <button class="quick-date-chip" type="button" data-quick-range="last-month">Last Month</button>
+                  <button class="quick-date-chip" type="button" data-quick-range="custom">Custom</button>
+                </div>
+                <div class="cell-muted">Operational weeks run Tuesday through Monday.</div>
+              </div>
+              <div class="icon-field">
+                <label class="field-label" for="feedback-search">Search</label>
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35m1.85-5.15a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                <input class="input" id="feedback-search" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search IDs, team member, summary, or owner">
+              </div>
+              <div class="icon-field">
+                <label class="field-label" for="feedback-from">Date From</label>
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+                <input class="input" id="feedback-from" type="date" name="from" value="{{ $filters['from'] ?? '' }}">
+              </div>
+              <div class="icon-field">
+                <label class="field-label" for="feedback-to">Date To</label>
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M3 10h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+                <input class="input" id="feedback-to" type="date" name="to" value="{{ $filters['to'] ?? '' }}">
+              </div>
+              <div>
+                <label class="field-label" for="feedback-chef">Team Member</label>
+                <select class="select pl-3 pr-10" id="feedback-chef" name="chef">
+                  <option value="">All team members</option>
+                  @foreach($chefOptions as $chefOpt)
+                    <option value="{{ $chefOpt }}" {{ ($filters['chef'] ?? '') === $chefOpt ? 'selected' : '' }}>{{ $chefOpt }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="feedback-staff-type">Staff Type</label>
+                <select class="select" id="feedback-staff-type" name="staff_type">
+                  <option value="">All staff types</option>
+                  @foreach($staffTypeOptions as $staffType)
+                    <option value="{{ $staffType }}" {{ ($filters['staff_type'] ?? '') === $staffType ? 'selected' : '' }}>{{ $staffType }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="feedback-source">Source</label>
+                <select class="select" id="feedback-source" name="source">
+                  <option value="">All sources</option>
+                  @foreach($sourceOptions as $sourceOpt)
+                    <option value="{{ $sourceOpt }}" {{ ($filters['source'] ?? '') === $sourceOpt ? 'selected' : '' }}>{{ $sourceOpt }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="feedback-status">Status</label>
+                <select class="select" id="feedback-status" name="status">
+                  <option value="">All statuses</option>
+                  @foreach($statusOptions as $statusOpt)
+                    <option value="{{ $statusOpt }}" {{ ($filters['status'] ?? '') === $statusOpt ? 'selected' : '' }}>{{ $statusOpt }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div class="filter-actions">
+                <button class="action-link primary" type="submit">Apply</button>
+              </div>
+              <div class="filter-actions">
+                <a class="action-link" href="{{ route('admin.feedback', ['view' => $activeView, 'tab' => $activeTab]) }}">Reset</a>
+              </div>
+            </form>
           </div>
+        </div>
+      </div>
 
-          @if($activeTab === 'all-cases')
-            @if($allCases->isEmpty())
-              <div class="empty-state compact">
-                <div class="empty-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5h10v2H7V9zm0 4h7v2H7v-2z"/></svg></div>
-                <h3 class="empty-title">No feedback cases yet</h3>
-                <p class="empty-copy">Customer issues, service feedback, and complaints will appear here.</p>
-                <div class="compact-empty-action">
-                  <x-admin.new-feedback-menu :groups="$quickCreateGroups" button-label="Create First Case" />
+    @if($activeView === 'cases')
+      <div class="surface-card">
+        <div class="surface-body">
+          <div class="section-shell">
+            <div class="segmented-strip">
+              @foreach($caseTabs as $tabKey => $tabLabel)
+                <a class="segmented-link {{ $activeTab === $tabKey ? 'active' : '' }}" href="{{ route('admin.feedback', array_merge($viewBase, ['view' => 'cases', 'tab' => $tabKey])) }}">
+                  {{ $tabLabel }}
+                  <span style="opacity:.72">{{ $tabMeta[$tabKey]['count'] ?? 0 }}</span>
+                </a>
+              @endforeach
+            </div>
+
+            @if($activeTab === 'complaints')
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <h2 class="text-[18px] font-semibold tracking-[-0.02em] text-slate-900">Complaints Management</h2>
+                  <p class="mt-1 text-sm leading-6 text-slate-500">Track customer issues, ownership, escalation, and resolution status in one operational queue.</p>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                  <div class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-400">
+                    {{ number_format($tabMeta[$activeTab]['count'] ?? 0) }} visible
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Total Complaints</div>
+                  <div class="mt-1 text-xl font-semibold text-slate-900">{{ number_format($complaints->count()) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">In Review</div>
+                  <div class="mt-1 text-xl font-semibold text-amber-700">{{ number_format($complaintsInReviewCount) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Escalated</div>
+                  <div class="mt-1 text-xl font-semibold text-rose-700">{{ number_format($complaintsEscalatedCount) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Resolved</div>
+                  <div class="mt-1 text-xl font-semibold text-emerald-700">{{ number_format($complaintsResolvedCount) }}</div>
+                </div>
+              </div>
+            @elseif($activeTab === 'days-off')
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <h2 class="text-[18px] font-semibold tracking-[-0.02em] text-slate-900">Days Off Management</h2>
+                  <p class="mt-1 text-sm leading-6 text-slate-500">Track approvals, pending requests, denied time off, and unauthorized absences.</p>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                  <div class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-400">
+                    {{ number_format($tabMeta[$activeTab]['count'] ?? 0) }} visible
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Total Requests</div>
+                  <div class="mt-1 text-xl font-semibold text-slate-900">{{ number_format($daysOff->count()) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Pending</div>
+                  <div class="mt-1 text-xl font-semibold text-amber-700">{{ number_format($daysOffPendingCount) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Approved</div>
+                  <div class="mt-1 text-xl font-semibold text-emerald-700">{{ number_format($daysOffApprovedCount) }}</div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Unauthorized Flags</div>
+                  <div class="mt-1 text-xl font-semibold text-rose-700">{{ number_format($daysOffUnauthorizedCount) }}</div>
                 </div>
               </div>
             @else
-              <div class="table-wrap">
-                <table class="data-table queue-table">
-                  <colgroup>
-                    <col class="case">
-                    <col class="received">
-                    <col class="event-date">
-                    <col class="team-member">
-                    <col class="source">
-                    <col class="summary">
-                    <col class="status">
-                    <col class="owner">
-                    <col class="actions">
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>Case</th>
-                      <th>Received</th>
-                      <th>Event Date</th>
-                      <th>Team Member</th>
-                      <th>Source</th>
-                      <th>Summary</th>
-                      <th>Status</th>
-                      <th>Owner</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @foreach($allCases as $row)
-                      <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'all-cases', 'item' => $row['id']])) }}">
-                        <td><span class="cell-strong">{{ $row['id'] }}</span><span class="cell-meta">{{ $row['type'] }}</span></td>
-                        <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
-                        <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
-                        <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
-                        <td>{{ $row['source'] }}</td>
-                        <td class="cell-copy">{{ $row['summary'] }}</td>
-                        <td><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></td>
-                        <td>{{ $row['owner'] }}</td>
-                        <td>
-                          <div class="row-actions">
-                            <a class="action-link primary" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'all-cases', 'item' => $row['id']])) }}">Preview</a>
-                            <a class="action-link assign" href="#">Assign</a>
-                            <a class="action-link resolve" href="#">Resolve</a>
-                            <a class="action-link escalate" href="#">Escalate</a>
-                          </div>
-                        </td>
-                      </tr>
-                    @endforeach
-                  </tbody>
-                </table>
+              <div class="section-head">
+                <div>
+                  <h2 class="section-title">{{ $tabMeta[$activeTab]['title'] ?? 'Cases' }}</h2>
+                  <p class="section-subtitle">{{ $tabMeta[$activeTab]['subtitle'] ?? 'Operational case management across the team.' }}</p>
+                </div>
+                <div class="count-pill">{{ number_format($tabMeta[$activeTab]['count'] ?? 0) }} visible</div>
               </div>
             @endif
-          @elseif($activeTab === 'complaints')
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Complaint ID</th>
-                    <th>Event Date</th>
-                    <th>Date Received</th>
-                    <th>Staff Member</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Resolution Status</th>
-                    <th>Assistant</th>
-                    <th>Action Taken</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    @forelse($complaints as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'complaints', 'item' => $row['complaint_id']])) }}">
-                      <td><span class="cell-strong">{{ $row['complaint_id'] }}</span><span class="cell-meta">Priority {{ $row['priority'] }}</span></td>
-                      <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($row['date_received'])->format('M d, Y') }}</td>
-                      <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
-                      <td>{{ $row['category'] }}</td>
-                      <td class="cell-copy">{{ $row['description'] }}</td>
-                      <td><span class="badge {{ strtolower(str_replace(' ', '-', $row['resolution_status'])) }}">{{ $row['resolution_status'] }}</span></td>
-                      <td>{{ $row['assistant'] }}</td>
-                      <td class="cell-copy">
-                        {{ $row['action_taken'] }}
-                        <span class="cell-meta">
-                          <span class="row-actions" style="margin-top:8px">
-                            <a class="action-link primary" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'complaints', 'item' => $row['complaint_id']])) }}">Preview</a>
-                            <a class="action-link assign" href="#">Assign</a>
-                            <a class="action-link resolve" href="#">Resolve</a>
-                            <a class="action-link escalate" href="#">Escalate</a>
-                          </span>
-                        </span>
-                      </td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="9" class="cell-copy">No complaints match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'good-feedback')
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Feedback ID</th>
-                    <th>Event Date</th>
-                    <th>Date Received</th>
-                    <th>Staff Member</th>
-                    <th>Source</th>
-                    <th>Compliment</th>
-                    <th>Assistant</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    @forelse($goodFeedback as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'good-feedback', 'item' => $row['feedback_id']])) }}">
-                      <td><span class="cell-strong">{{ $row['feedback_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
-                      <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($row['date_received'])->format('M d, Y') }}</td>
-                      <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
-                      <td>{{ $row['source'] }}</td>
-                      <td class="cell-copy">{{ $row['compliment'] }}</td>
-                      <td>{{ $row['assistant'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'good-feedback', 'item' => $row['feedback_id']])) }}">Preview</a></span></td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="7" class="cell-copy">No positive feedback records match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'van-feedback')
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>VanFB ID</th>
-                    <th>Event Date</th>
-                    <th>Date Received</th>
-                    <th>Staff Member</th>
-                    <th>Van</th>
-                    <th>Description</th>
-                    <th>Action Taken</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    @forelse($vanFeedback as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'van-feedback', 'item' => $row['vanfb_id']])) }}">
-                      <td><span class="cell-strong">{{ $row['vanfb_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
-                      <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($row['date_received'])->format('M d, Y') }}</td>
-                      <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
-                      <td>{{ $row['van'] }}</td>
-                      <td class="cell-copy">{{ $row['description'] }}</td>
-                      <td class="cell-copy">{{ $row['action_taken'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'van-feedback', 'item' => $row['vanfb_id']])) }}">Preview</a></span></td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="7" class="cell-copy">No van feedback records match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'attendance')
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Incident ID</th>
-                    <th>Date</th>
-                    <th>Staff Member</th>
-                    <th>Incident Type</th>
-                    <th>Units</th>
-                    <th>Authorized</th>
-                    <th>Manager</th>
-                    <th>Notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    @forelse($attendance as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'attendance', 'item' => $row['incident_id']])) }}">
-                      <td><span class="cell-strong">{{ $row['incident_id'] }}</span></td>
-                      <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
-                      <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
-                      <td>{{ $row['incident_type'] }}</td>
-                      <td>{{ $row['units'] }}</td>
-                      <td><span class="badge {{ $row['authorized'] ? 'authorized' : 'unauthorized' }}">{{ $row['authorized'] ? 'Yes' : 'No' }}</span></td>
-                      <td>{{ $row['manager'] }}</td>
-                      <td class="cell-copy">{{ $row['notes'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'attendance', 'item' => $row['incident_id']])) }}">Preview</a></span></td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="8" class="cell-copy">No attendance incidents match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'days-off')
-            <div class="summary-grid">
-              <div class="summary-mini"><div class="label">Total Requests</div><div class="value">{{ $daysOff->count() }}</div></div>
-              <div class="summary-mini"><div class="label">Total Days</div><div class="value">{{ $daysOff->sum('days') }}</div></div>
-              <div class="summary-mini"><div class="label">Approved Days</div><div class="value">{{ $daysOff->where('status', 'Approved')->sum('days') }}</div></div>
-              <div class="summary-mini"><div class="label">Denied / Unapproved</div><div class="value">{{ $daysOff->where('status', 'Denied')->sum('days') + $daysOff->sum('unauthorized_days') }}</div></div>
-            </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Staff Member</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
-                    <th>Days</th>
-                    <th>Approved By</th>
-                    <th>Notes</th>
-                    <th>Unauthorized Days</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    @forelse($daysOff as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'days-off', 'item' => $row['request_id']])) }}">
-                      <td><span class="cell-strong">{{ $row['request_id'] }}</span></td>
-                      <td class="cell-strong">{{ $row['chef'] }}</td>
-                      <td>{{ \Carbon\Carbon::parse($row['start_date'])->format('M d, Y') }}</td>
-                      <td>{{ \Carbon\Carbon::parse($row['end_date'])->format('M d, Y') }}</td>
-                      <td><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></td>
-                      <td>{{ $row['days'] }}</td>
-                      <td>{{ $row['approved_by'] }}</td>
-                      <td class="cell-copy">{{ $row['notes'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'days-off', 'item' => $row['request_id']])) }}">Preview</a></span></td>
-                      <td><span class="badge {{ $row['unauthorized_days'] > 0 ? 'unauthorized' : 'authorized' }}">{{ $row['unauthorized_days'] }}</span></td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="9" class="cell-copy">No days off requests match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'alerts')
-            <div class="alert-list">
-              @forelse($alerts as $row)
-                <div class="alert-card">
-                  <div class="alert-top">
-                    <div>
-                      <div class="cell-strong">{{ $row['type'] }}</div>
-                      <div class="cell-meta">{{ $row['chef'] }} • {{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</div>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                      <span class="badge {{ strtolower(str_replace(' ', '-', $row['severity'])) }}">{{ $row['severity'] }}</span>
-                      <span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span>
-                    </div>
+
+            <div class="queue-layout">
+              @if($activeTab === 'complaints')
+                <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div class="overflow-x-auto">
+                    <table class="min-w-[1240px] w-full table-fixed">
+                      <colgroup>
+                        <col class="w-28">
+                        <col class="w-52">
+                        <col class="w-28">
+                        <col class="w-32">
+                        <col class="w-20">
+                        <col class="w-24">
+                        <col class="w-32">
+                        <col class="min-w-[300px] w-full">
+                        <col class="w-20">
+                      </colgroup>
+                      <thead class="bg-slate-50/80">
+                        <tr>
+                          <th class="w-28 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Complaint ID</th>
+                          <th class="w-52 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Team Members</th>
+                          <th class="w-28 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Event Date</th>
+                          <th class="w-32 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Source</th>
+                          <th class="w-20 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Priority</th>
+                          <th class="w-24 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Status</th>
+                          <th class="w-32 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Owner</th>
+                          <th class="min-w-[300px] w-full whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Summary</th>
+                          <th class="w-20 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Edit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @forelse($complaints as $row)
+                          @php
+                            $complaintTeamMembers = collect($row['team_members'] ?? [])
+                                ->map(fn ($member) => is_array($member) ? (string) ($member['label'] ?? $member['name'] ?? $member['value'] ?? '') : (string) $member)
+                                ->map(fn ($member) => trim($member))
+                                ->filter()
+                                ->values();
+                            if ($complaintTeamMembers->isEmpty() && !empty($row['chef'])) {
+                                $complaintTeamMembers = collect([(string) $row['chef']]);
+                            }
+                            $visibleComplaintMembers = $complaintTeamMembers->take(3);
+                            $remainingComplaintMemberNames = $complaintTeamMembers->slice(3)->values();
+                            $remainingComplaintMembers = max($complaintTeamMembers->count() - 3, 0);
+                            $complaintStatusClass = match (strtolower($row['resolution_status'])) {
+                                'resolved' => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+                                'closed' => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                                'pending' => 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-200',
+                                'in review' => 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+                                'escalated' => 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200',
+                                default => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                            };
+                            $complaintPriorityClass = match (strtolower($row['priority'])) {
+                                'high' => 'text-rose-700 bg-rose-50 ring-1 ring-inset ring-rose-200',
+                                'low' => 'text-slate-700 bg-slate-100 ring-1 ring-inset ring-slate-200',
+                                default => 'text-amber-700 bg-amber-50 ring-1 ring-inset ring-amber-200',
+                            };
+                          @endphp
+                          <tr class="group is-clickable cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/70" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'complaints', 'item' => $row['complaint_id']])) }}">
+                            <td class="align-middle whitespace-nowrap px-4 py-3">
+                              <span class="text-sm font-semibold text-slate-900 transition-colors group-hover:text-slate-950">{{ $row['complaint_id'] }}</span>
+                            </td>
+                            <td class="align-middle px-4 py-3">
+                              @if($visibleComplaintMembers->isNotEmpty())
+                                <span class="text-sm font-semibold text-slate-900 transition-colors group-hover:text-slate-950">{{ $visibleComplaintMembers->implode(', ') }}</span>
+                                @if($remainingComplaintMembers > 0)
+                                  <span class="relative ml-1 inline-flex items-center group/overflow">
+                                    <span class="cursor-pointer text-sm font-medium text-slate-500">+{{ $remainingComplaintMembers }}</span>
+                                    <span class="pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-lg group-hover/overflow:block">
+                                      {!! $remainingComplaintMemberNames->map(fn ($member) => e($member))->implode('<br>') !!}
+                                    </span>
+                                  </span>
+                                @endif
+                              @else
+                                <span class="text-sm font-medium text-slate-400">—</span>
+                              @endif
+                            </td>
+                            <td class="align-middle whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
+                            <td class="align-middle whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ $row['category'] }}</td>
+                            <td class="align-middle px-4 py-3">
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium {{ $complaintPriorityClass }}">{{ $row['priority'] }}</span>
+                            </td>
+                            <td class="align-middle px-4 py-3">
+                              <span class="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium {{ $complaintStatusClass }}">{{ $row['resolution_status'] }}</span>
+                            </td>
+                            <td class="align-middle px-4 py-3 text-sm leading-5 text-slate-700">{{ $row['assistant'] ?: 'Unassigned' }}</td>
+                            <td class="align-top px-4 py-3">
+                              <div class="max-w-none">
+                                <p class="text-sm text-slate-600 leading-6 line-clamp-2">{{ $row['description'] }}</p>
+                              </div>
+                            </td>
+                            <td class="align-middle px-4 py-3 text-center">
+                              <a class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'complaints', 'item' => $row['complaint_id']])) }}">Edit</a>
+                            </td>
+                          </tr>
+                        @empty
+                          <tr>
+                            <td colspan="9" class="px-4 py-6 text-sm text-slate-500">No complaints match the current filters.</td>
+                          </tr>
+                        @endforelse
+                      </tbody>
+                    </table>
                   </div>
-                  <div class="cell-copy">{{ $row['details'] }}</div>
-                  <div style="margin-top:10px"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'alerts', 'item' => $row['alert_id']])) }}">Open alert context</a></div>
                 </div>
-              @empty
-                <div class="empty-state">
-                  <div class="empty-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3 4 14h6l-1 7 9-11h-6l1-7z"/></svg></div>
-                  <h3 class="empty-title">No active alerts</h3>
-                  <p class="empty-copy">Unauthorized patterns and escalations will surface here when thresholds are met.</p>
+              @elseif($activeTab === 'good-feedback')
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Feedback ID</th>
+                        <th>Event Date</th>
+                        <th>Date Received</th>
+                        <th>Team Member</th>
+                        <th>Source</th>
+                        <th>Recognition</th>
+                        <th>Assistant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($goodFeedback as $row)
+                        <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'good-feedback', 'item' => $row['feedback_id']])) }}">
+                          <td><span class="cell-strong">{{ $row['feedback_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
+                          <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
+                          <td>{{ \Carbon\Carbon::parse($row['date_received'])->format('M d, Y') }}</td>
+                          <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
+                          <td>{{ $row['source'] }}</td>
+                          <td class="cell-copy">{{ $row['compliment'] }}</td>
+                          <td>{{ $row['assistant'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'good-feedback', 'item' => $row['feedback_id']])) }}">Preview</a></span></td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" class="cell-copy">No good feedback records match the current filters.</td></tr>
+                      @endforelse
+                    </tbody>
+                  </table>
                 </div>
-              @endforelse
-            </div>
-          @elseif($activeTab === 'chef-summary')
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Chef</th>
-                    <th>Requests</th>
-                    <th>Total Days</th>
-                    <th>Approved Days</th>
-                    <th>Denied Days</th>
-                    <th>Pending Days</th>
-                    <th>Cancelled/Worked Days</th>
-                    <th>Unauthorized Days</th>
-                    <th>Good Feedback</th>
-                    <th>Complaints</th>
-                    <th>Van Issues</th>
-                    <th>Net</th>
-                    <th>Attendance Incidents</th>
-                    <th>Unexcused Incidents</th>
-                    <th>Unexcused Units</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @forelse($chefSummaries as $row)
-                    <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'chef-summary', 'item' => $row['chef']])) }}">
-                      <td class="cell-strong">{{ $row['chef'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'chef-summary', 'item' => $row['chef']])) }}">Preview</a></span></td>
-                      <td>{{ $row['requests'] }}</td>
-                      <td>{{ $row['total_days'] }}</td>
-                      <td>{{ $row['approved_days'] }}</td>
-                      <td>{{ $row['denied_days'] }}</td>
-                      <td>{{ $row['pending_days'] }}</td>
-                      <td>{{ $row['cancelled_worked_days'] }}</td>
-                      <td><span class="badge {{ $row['unauthorized_days'] > 0 ? 'unauthorized' : 'authorized' }}">{{ $row['unauthorized_days'] }}</span></td>
-                      <td>{{ $row['good_feedback'] }}</td>
-                      <td>{{ $row['complaints'] }}</td>
-                      <td>{{ $row['van_issues'] }}</td>
-                      <td><span class="badge {{ $row['net_score'] >= 0 ? 'healthy' : 'watch' }}">{{ $row['net_score'] }}</span></td>
-                      <td>{{ $row['attendance_incidents'] }}</td>
-                      <td>{{ $row['unexcused_incidents'] }}</td>
-                      <td>{{ $row['unexcused_units'] }}</td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="15" class="cell-copy">No chef summary rows match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @elseif($activeTab === 'monthly-trends')
-            <div class="trend-grid">
-              @foreach($monthlyTrends as $row)
-                <div class="trend-card">
-                  <h4>{{ $row['label'] }}</h4>
-                  <div class="trend-bars">
-                    @php
-                      $trendMetrics = [
-                        'Days Off' => [$row['days_off'], max(1, $monthlyTrends->max('days_off'))],
-                        'Unauthorized' => [$row['unauthorized_days'], max(1, $monthlyTrends->max('unauthorized_days'))],
-                        'Good Feedback' => [$row['good_feedback'], max(1, $monthlyTrends->max('good_feedback'))],
-                        'Complaints' => [$row['complaints'], max(1, $monthlyTrends->max('complaints'))],
-                      ];
-                    @endphp
-                    @foreach($trendMetrics as $label => [$value, $max])
-                      <div class="trend-bar-row">
-                        <span>{{ $label }}</span>
-                        <div class="trend-bar"><div class="trend-fill" style="width: {{ ($value / $max) * 100 }}%"></div></div>
-                        <strong>{{ $value }}</strong>
-                      </div>
-                    @endforeach
+              @elseif($activeTab === 'van-feedback')
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Van Issue ID</th>
+                        <th>Event Date</th>
+                        <th>Date Received</th>
+                        <th>Team Member</th>
+                        <th>Van</th>
+                        <th>Description</th>
+                        <th>Action Taken</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($vanFeedback as $row)
+                        <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'van-feedback', 'item' => $row['vanfb_id']])) }}">
+                          <td><span class="cell-strong">{{ $row['vanfb_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
+                          <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
+                          <td>{{ \Carbon\Carbon::parse($row['date_received'])->format('M d, Y') }}</td>
+                          <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
+                          <td>{{ $row['van'] }}</td>
+                          <td class="cell-copy">{{ $row['description'] }}</td>
+                          <td class="cell-copy">{{ $row['action_taken'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'van-feedback', 'item' => $row['vanfb_id']])) }}">Preview</a></span></td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" class="cell-copy">No van issues match the current filters.</td></tr>
+                      @endforelse
+                    </tbody>
+                  </table>
+                </div>
+              @elseif($activeTab === 'attendance')
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Incident ID</th>
+                        <th>Date</th>
+                        <th>Team Member</th>
+                        <th>Incident Type</th>
+                        <th>Units</th>
+                        <th>Authorized</th>
+                        <th>Manager</th>
+                        <th>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($attendance as $row)
+                        <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'attendance', 'item' => $row['incident_id']])) }}">
+                          <td><span class="cell-strong">{{ $row['incident_id'] }}</span></td>
+                          <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
+                          <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
+                          <td>{{ $row['incident_type'] }}</td>
+                          <td>{{ $row['units'] }}</td>
+                          <td><span class="badge {{ $row['authorized'] ? 'authorized' : 'unauthorized' }}">{{ $row['authorized'] ? 'Yes' : 'No' }}</span></td>
+                          <td>{{ $row['manager'] }}</td>
+                          <td class="cell-copy">{{ $row['notes'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'attendance', 'item' => $row['incident_id']])) }}">Preview</a></span></td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="8" class="cell-copy">No attendance incidents match the current filters.</td></tr>
+                      @endforelse
+                    </tbody>
+                  </table>
+                </div>
+              @elseif($activeTab === 'days-off')
+                <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div class="overflow-x-auto">
+                  <table class="min-w-[1260px] w-full table-fixed">
+                    <colgroup>
+                      <col class="w-28">
+                      <col class="w-44">
+                      <col class="w-32">
+                      <col class="w-32">
+                      <col class="w-24">
+                      <col class="w-16">
+                      <col class="w-36">
+                      <col class="min-w-[280px] w-full">
+                      <col class="w-20">
+                      <col class="w-16">
+                    </colgroup>
+                    <thead class="bg-slate-50/80">
+                        <tr>
+                          <th class="w-24 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Request ID</th>
+                          <th class="w-44 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left">
+                            <a class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] {{ $daysOffSort === 'chef' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700' }}" href="{{ $daysOffSortLink('chef') }}">
+                              Team Member
+                              {!! $daysOffSortIcon('chef') !!}
+                            </a>
+                          </th>
+                          <th class="w-32 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left">
+                            <a class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] {{ $daysOffSort === 'start_date' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700' }}" href="{{ $daysOffSortLink('start_date') }}">
+                              Start Date
+                              {!! $daysOffSortIcon('start_date') !!}
+                            </a>
+                          </th>
+                          <th class="w-32 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left">
+                            <a class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] {{ $daysOffSort === 'end_date' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700' }}" href="{{ $daysOffSortLink('end_date') }}">
+                              End Date
+                              {!! $daysOffSortIcon('end_date') !!}
+                            </a>
+                          </th>
+                          <th class="w-24 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left">
+                            <a class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] {{ $daysOffSort === 'status' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700' }}" href="{{ $daysOffSortLink('status') }}">
+                              Status
+                              {!! $daysOffSortIcon('status') !!}
+                            </a>
+                          </th>
+                          <th class="w-16 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Days</th>
+                          <th class="w-36 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Approved By</th>
+                          <th class="min-w-[280px] w-full whitespace-nowrap border-b border-slate-200 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Notes</th>
+                          <th class="w-20 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Edit</th>
+                          <th class="w-16 whitespace-nowrap border-b border-slate-200 px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Flags</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($daysOff as $row)
+                        @php
+                          $statusClass = match (strtolower($row['status'])) {
+                              'approved' => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+                              'pending' => 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
+                              'denied', 'rejected' => 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200',
+                              'cancelled', 'closed' => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                              default => 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200',
+                          };
+                          $unauthorizedClass = $row['unauthorized_days'] > 0
+                              ? 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200';
+                        @endphp
+                        <tr class="group is-clickable cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/70" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'days-off', 'item' => $row['request_id']])) }}">
+                          <td class="align-middle whitespace-nowrap px-4 py-3">
+                            <span class="whitespace-nowrap text-sm font-semibold text-slate-900 transition-colors group-hover:text-slate-950">{{ $row['request_id'] }}</span>
+                          </td>
+                          <td class="align-middle whitespace-nowrap px-4 py-3">
+                            <span class="text-sm font-semibold text-slate-900 transition-colors group-hover:text-slate-950">{{ $row['chef'] }}</span>
+                            @if(!empty($row['staff_type']))
+                              <span class="font-medium text-slate-500"> · {{ $row['staff_type'] }}</span>
+                            @endif
+                          </td>
+                          <td class="align-middle whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ \Carbon\Carbon::parse($row['start_date'])->format('M d, Y') }}</td>
+                          <td class="align-middle whitespace-nowrap px-4 py-3 text-sm text-slate-700">{{ \Carbon\Carbon::parse($row['end_date'])->format('M d, Y') }}</td>
+                          <td class="align-middle px-4 py-3">
+                            <span class="inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium {{ $statusClass }}">{{ $row['status'] }}</span>
+                          </td>
+                          <td class="align-middle px-4 py-3 text-center tabular-nums text-sm font-medium text-slate-800">{{ $row['days'] }}</td>
+                          <td class="align-middle px-4 py-3 text-sm leading-5 text-slate-700">{{ $row['approved_by'] }}</td>
+                          <td class="align-top px-4 py-3">
+                            <div class="max-w-none">
+                              <p class="text-sm text-slate-600 leading-6 line-clamp-2">{{ $row['notes'] }}</p>
+                            </div>
+                          </td>
+                          <td class="align-middle px-4 py-3 text-center">
+                            <a class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'days-off', 'item' => $row['request_id']])) }}">Edit</a>
+                          </td>
+                          <td class="align-top px-4 py-3 text-center">
+                            <span class="inline-flex min-w-[28px] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums {{ $unauthorizedClass }}">{{ $row['unauthorized_days'] }}</span>
+                          </td>
+                        </tr>
+                      @empty
+                        <tr>
+                          <td colspan="10" class="px-4 py-6 text-sm text-slate-500">No time-off records match the current filters.</td>
+                        </tr>
+                      @endforelse
+                    </tbody>
+                  </table>
                   </div>
-                  <div style="margin-top:10px"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['view' => 'cases', 'tab' => 'monthly-trends', 'item' => $row['month']])) }}">Inspect month</a></div>
                 </div>
-              @endforeach
+              @elseif($activeTab === 'alerts')
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Alert ID</th>
+                        <th>Date</th>
+                        <th>Team Member</th>
+                        <th>Alert Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @forelse($alerts as $row)
+                        <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'alerts', 'item' => $row['alert_id']])) }}">
+                          <td><span class="cell-strong">{{ $row['alert_id'] }}</span></td>
+                          <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
+                          <td class="cell-strong">{{ $row['chef'] }}@if(!empty($row['staff_type']))<span class="cell-meta">{{ $row['staff_type'] }}</span>@endif</td>
+                          <td>{{ $row['type'] }}</td>
+                          <td><span class="badge {{ strtolower(str_replace(' ', '-', $row['severity'])) }}">{{ $row['severity'] }}</span></td>
+                          <td><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></td>
+                          <td class="cell-copy">{{ $row['details'] }}<span class="cell-meta"><a class="action-link" href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'alerts', 'item' => $row['alert_id']])) }}">Preview</a></span></td>
+                        </tr>
+                      @empty
+                        <tr><td colspan="7" class="cell-copy">No alerts match the current filters.</td></tr>
+                      @endforelse
+                    </tbody>
+                  </table>
+                </div>
+              @endif
             </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Days Off</th>
-                    <th>Unauthorized Days</th>
-                    <th>Good Feedback</th>
-                    <th>Complaints</th>
-                    <th>Attendance Incidents</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @forelse($monthlyTrends as $row)
-                    <tr>
-                      <td class="cell-strong">{{ $row['label'] }}</td>
-                      <td>{{ $row['days_off'] }}</td>
-                      <td><span class="badge {{ $row['unauthorized_days'] > 0 ? 'unauthorized' : 'authorized' }}">{{ $row['unauthorized_days'] }}</span></td>
-                      <td>{{ $row['good_feedback'] }}</td>
-                      <td>{{ $row['complaints'] }}</td>
-                      <td>{{ $row['attendance_incidents'] }}</td>
-                    </tr>
-                  @empty
-                    <tr><td colspan="6" class="cell-copy">No monthly trend rows match the current filters.</td></tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          @endif
+          </div>
         </div>
       </div>
+    @else
+      <div class="surface-card">
+        <div class="surface-body">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Team Operations Dashboard</h2>
+              <p class="section-subtitle">Analytics reacts to the same search, date range, team member, staff type, source, and status filters used by the case queues.</p>
+            </div>
+            <div class="count-pill">{{ number_format($totalFilteredCases) }} total filtered cases</div>
+          </div>
 
-      <div class="detail-overlay {{ $isPreviewOpen ? 'open' : '' }}" data-preview-close></div>
-      <div class="detail-panel {{ $isPreviewOpen ? 'open' : '' }}" id="feedbackDetailPanel" aria-hidden="{{ $isPreviewOpen ? 'false' : 'true' }}">
-        <div class="detail-shell">
-        <div class="surface-card detail-card drawer">
-          @if(empty($preview['facts']) && empty($preview['sections']) && empty($preview['history']))
-            <div class="preview-empty">
-              <div class="drawer-head">
-                <div>
-                  <div class="detail-tag">{{ $preview['tag'] }}</div>
-                  <h3 class="detail-title">{{ $preview['title'] }}</h3>
-                  <p class="detail-copy">{{ $preview['subtitle'] }}</p>
+          <div class="stats-grid">
+            @foreach($stats as $stat)
+              <div class="stat-card tone-{{ $stat['tone'] }}">
+                <div class="stat-top">
+                  <div class="stat-label">{{ $stat['label'] }}</div>
+                  <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">{!! $icons[$stat['tone']] ?? $icons['neutral'] !!}</svg>
+                  </div>
                 </div>
-                <a class="drawer-close" href="{{ route('admin.feedback', $panelBaseQuery) }}" aria-label="Close preview">&times;</a>
+                <div class="stat-value">{{ is_numeric($stat['value']) ? number_format($stat['value']) : $stat['value'] }}</div>
+                <div class="stat-note">{{ $stat['note'] }}</div>
+                <div style="margin-top:10px">
+                  <span class="trend-chip {{ $stat['trend_direction'] ?? 'flat' }}">{{ $stat['trend'] ?? 'No change' }}</span>
+                </div>
               </div>
-              <div class="preview-skeleton" aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
+            @endforeach
+          </div>
+
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Team Performance by Member</h3>
+                  <p class="chart-copy">Highest-to-lowest team activity based on selected operational metric.</p>
+                </div>
+                <div class="chart-note">By metric</div>
               </div>
+              <div class="mt-3 flex flex-wrap gap-2" data-team-performance-switcher>
+                <button class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm" type="button" data-team-performance-tab="complaints">Complaints</button>
+                <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50" type="button" data-team-performance-tab="good-feedback">Good Feedback</button>
+                <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50" type="button" data-team-performance-tab="van-feedback">Van Issues</button>
+                <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50" type="button" data-team-performance-tab="attendance">Attendance</button>
+                <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50" type="button" data-team-performance-tab="days-off">Days Off</button>
+              </div>
+              <div class="chart-canvas compact" style="margin-top:12px"><canvas id="teamPerformanceByMemberChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Team Recognition & Alerts</h3>
+                  <p class="chart-copy">Top performers and the employees with the highest complaint volume.</p>
+                </div>
+                <div class="chart-note">Leaderboard</div>
+              </div>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Top Good Feedback</div>
+                  <p class="mt-1 text-sm text-slate-500">Employees receiving the most positive feedback.</p>
+                  <div class="mt-3 space-y-2">
+                    @forelse($topGoodFeedbackLeaderboard as $index => $entry)
+                      <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
+                        <div class="flex items-center gap-3 min-w-0">
+                          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700">{{ $index + 1 }}</span>
+                          <span class="truncate text-sm font-medium text-slate-900">{{ $entry['name'] }}</span>
+                        </div>
+                        <span class="shrink-0 text-sm font-semibold text-emerald-700">⭐ {{ $entry['count'] }}</span>
+                      </div>
+                    @empty
+                      <div class="rounded-lg bg-white px-3 py-2 text-sm text-slate-500">No good feedback matches the current filters.</div>
+                    @endforelse
+                  </div>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Top Complaints</div>
+                  <p class="mt-1 text-sm text-slate-500">Employees associated with the most complaints.</p>
+                  <div class="mt-3 space-y-2">
+                    @forelse($topComplaintsLeaderboard as $index => $entry)
+                      <div class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2">
+                        <div class="flex items-center gap-3 min-w-0">
+                          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-xs font-semibold text-rose-700">{{ $index + 1 }}</span>
+                          <span class="truncate text-sm font-medium text-slate-900">{{ $entry['name'] }}</span>
+                        </div>
+                        <span class="shrink-0 text-sm font-semibold text-rose-700">⚠ {{ $entry['count'] }}</span>
+                      </div>
+                    @empty
+                      <div class="rounded-lg bg-white px-3 py-2 text-sm text-slate-500">No complaints match the current filters.</div>
+                    @endforelse
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Cases by Type</h3>
+                  <p class="chart-copy">Current filtered mix across all supported Feedback Center record types.</p>
+                </div>
+                <div class="chart-note">Portfolio</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="casesByTypeChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Cases by Staff Type</h3>
+                  <p class="chart-copy">Which staff groups are associated with the most cases in the current filter set.</p>
+                </div>
+                <div class="chart-note">Coverage</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="staffTypeBreakdownChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Status Breakdown</h3>
+                  <p class="chart-copy">Workflow-oriented distribution across pending, in review, escalated, resolved, and closed states.</p>
+                </div>
+                <div class="chart-note">Workflow</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="statusBreakdownChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Monthly Trend</h3>
+                  <p class="chart-copy">Overall case volume trend by core workflow type over time.</p>
+                </div>
+                <div class="chart-note">Time series</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="monthlyTrendChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Complaint Categories</h3>
+                  <p class="chart-copy">Top complaint categories by frequency in the current filtered complaint set.</p>
+                </div>
+                <div class="chart-note">Root causes</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="complaintCategoriesChart"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Employee Performance Score</h3>
+                  <p class="chart-copy">Composite performance score based on feedback, complaints, and operational incidents.</p>
+                </div>
+                <div class="chart-note">Score</div>
+              </div>
+              <div class="chart-canvas compact"><canvas id="employeePerformanceScoreChart"></canvas></div>
+            </div>
+
+            <div class="chart-card wide">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Net Score Trend</h3>
+                  <p class="chart-copy">Good feedback minus complaints, trended over time for quality visibility.</p>
+                </div>
+                <div class="chart-note">Quality</div>
+              </div>
+              <div class="chart-canvas"><canvas id="netScoreTrendChart"></canvas></div>
+            </div>
+
+            <div class="chart-card wide">
+              <div class="chart-head">
+                <div>
+                  <h3 class="chart-title">Operational Risk Trend</h3>
+                  <p class="chart-copy">Attendance incidents, unauthorized days, and van issues in one risk view.</p>
+                </div>
+                <div class="chart-note">Risk signals</div>
+              </div>
+              <div class="chart-canvas"><canvas id="operationalIncidentsTrendChart"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    @endif
+
+  </div>
+
+  @if($activeView === 'cases')
+    <div class="detail-overlay {{ $isPreviewOpen ? 'open' : '' }}" data-preview-close></div>
+    <div class="detail-panel {{ $isPreviewOpen ? 'open' : '' }}" aria-hidden="{{ $isPreviewOpen ? 'false' : 'true' }}">
+      <div class="detail-shell">
+        <div class="surface-card detail-card drawer">
+        @if(empty($preview['facts']) && empty($preview['sections']) && empty($preview['history']))
+            <div class="empty-state" style="padding:28px 20px">
+              <h3 class="empty-title">Select a case</h3>
+              <p class="empty-copy">Open any row in the current queue to inspect context, handoff details, and case history without shrinking the queue.</p>
             </div>
           @else
             <div class="drawer-head">
@@ -849,28 +1062,160 @@
               </div>
               <a class="drawer-close" href="{{ route('admin.feedback', $panelBaseQuery) }}" aria-label="Close preview">&times;</a>
             </div>
+            @if(!empty($preview['editable']))
+              <div class="workflow-summary">
+                <div class="workflow-kicker">Case Summary</div>
+                <p class="detail-copy" style="color:#0f172a;font-weight:700">{{ $preview['title'] }}</p>
+                <div class="workflow-meta">
+                  <div class="workflow-meta-row"><span>Case Type</span><strong>{{ $preview['case_type'] ?? 'Case' }}</strong></div>
+                  <div class="workflow-meta-row"><span>{{ ($preview['item_group'] ?? '') === 'complaints' ? 'Team Members' : 'Team Member' }}</span><strong>{{ $preview['team_member'] ?? 'Unassigned' }}</strong></div>
+                  <div class="workflow-meta-row"><span>{{ ($preview['item_group'] ?? '') === 'complaints' ? 'Complaint ID' : 'Case ID' }}</span><strong>{{ $preview['item_id'] ?? 'N/A' }}</strong></div>
+                  @if(!empty($preview['priority']))
+                    <div class="workflow-meta-row"><span>Priority</span><strong>{{ $preview['priority'] }}</strong></div>
+                  @endif
+                </div>
+              </div>
 
-            @if(!empty($preview['facts']))
-              <div class="fact-grid">
-                @foreach($preview['facts'] as $label => $value)
-                  <div class="fact-card">
-                    <span class="fact-label">{{ $label }}</span>
-                    <span class="fact-value">{{ $value }}</span>
+              <form class="workflow-form" method="post" action="{{ $workflowUpdateRoute }}">
+                @csrf
+                <input type="hidden" name="item_id" value="{{ $preview['item_id'] ?? '' }}">
+                <input type="hidden" name="item_group" value="{{ $preview['item_group'] ?? '' }}">
+                <input type="hidden" name="back" value="{{ $workflowBackUrl }}">
+
+                <div class="workflow-actions">
+                  <button class="workflow-btn primary" type="submit" name="workflow_action" value="save">Save changes</button>
+                </div>
+
+                @if(($preview['item_group'] ?? '') === 'complaints')
+                  <div class="detail-block">
+                    <div class="fact-label" style="margin-bottom:8px">Complaint Details</div>
+                    <div class="workflow-grid">
+                      <div class="workflow-field" style="grid-column:1 / -1">
+                        @include('admin.partials.team-members-multiselect', [
+                          'fieldId' => 'complaint-team-members',
+                          'fieldName' => 'team_members',
+                          'fieldLabel' => 'Team Members',
+                          'options' => $preview['team_member_options'] ?? [],
+                          'selected' => $preview['team_members'] ?? [],
+                          'max' => 7,
+                          'placeholder' => 'Search active team members...',
+                        ])
+                      </div>
+                      <div class="workflow-field">
+                        <label for="complaint-status">Status</label>
+                        <select id="complaint-status" name="status">
+                          @foreach(($preview['status_options'] ?? []) as $option)
+                            <option value="{{ $option }}" {{ ($preview['status'] ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                          @endforeach
+                        </select>
+                      </div>
+                      <div class="workflow-field">
+                        <label for="complaint-owner">Owner</label>
+                        <input id="complaint-owner" list="complaint-owner-options" name="owner" value="{{ $preview['owner'] ?? '' }}">
+                        <datalist id="complaint-owner-options">
+                          @foreach(($preview['owner_options'] ?? []) as $option)
+                            <option value="{{ $option }}"></option>
+                          @endforeach
+                        </datalist>
+                      </div>
+                      <div class="workflow-field">
+                        <label for="complaint-source">Source</label>
+                        <input id="complaint-source" type="text" name="source" value="{{ $preview['source'] ?? '' }}">
+                      </div>
+                      <div class="workflow-field" style="grid-column:1 / -1">
+                        <label for="complaint-summary">Summary</label>
+                        <textarea id="complaint-summary" name="summary" placeholder="Summarize the complaint and customer impact...">{{ $preview['summary'] ?? '' }}</textarea>
+                      </div>
+                    </div>
+                  </div>
+                @elseif(($preview['item_group'] ?? '') === 'days-off')
+                  <div class="detail-block">
+                    <div class="fact-label" style="margin-bottom:8px">Days Off Details</div>
+                    <div class="workflow-grid">
+                      <div class="workflow-field">
+                        <label for="days-off-start-date">Start Date</label>
+                        <input id="days-off-start-date" type="date" name="start_date" value="{{ $preview['start_date'] ?? '' }}">
+                      </div>
+                      <div class="workflow-field">
+                        <label for="days-off-end-date">End Date</label>
+                        <input id="days-off-end-date" type="date" name="end_date" value="{{ $preview['end_date'] ?? '' }}">
+                      </div>
+                      <div class="workflow-field">
+                        <label for="days-off-status">Status</label>
+                        <select id="days-off-status" name="status">
+                          @foreach(($preview['status_options'] ?? []) as $option)
+                            <option value="{{ $option }}" {{ ($preview['status'] ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                          @endforeach
+                        </select>
+                      </div>
+                      <div class="workflow-field">
+                        <label for="days-off-days">Days</label>
+                        <input id="days-off-days" type="text" name="days" value="{{ $preview['days'] ?? '' }}" readonly>
+                      </div>
+                      <div class="workflow-field" style="grid-column:1 / -1">
+                        <label for="days-off-approved-by">Approved By</label>
+                        <input id="days-off-approved-by" list="days-off-approver-options" name="approved_by" value="{{ $preview['approved_by'] ?? '' }}">
+                        <datalist id="days-off-approver-options">
+                          @foreach(($preview['approved_by_options'] ?? []) as $option)
+                            <option value="{{ $option }}"></option>
+                          @endforeach
+                        </datalist>
+                      </div>
+                    </div>
+                  </div>
+                @endif
+
+                @if(!empty($preview['facts']))
+                  <div class="detail-block">
+                    <div class="fact-label" style="margin-bottom:8px">Details</div>
+                    <div class="workflow-details-grid">
+                      @foreach($preview['facts'] as $label => $value)
+                        <div class="fact-card">
+                          <span class="fact-label">{{ $label }}</span>
+                          <span class="fact-value">{{ $value }}</span>
+                        </div>
+                      @endforeach
+                    </div>
+                  </div>
+                @endif
+
+                @foreach($preview['sections'] as $section)
+                  <div class="detail-block">
+                    <div class="fact-label" style="margin-bottom:8px">{{ $section['label'] }}</div>
+                    <p class="detail-copy">{{ filled($section['value'] ?? '') ? $section['value'] : 'No action recorded yet.' }}</p>
                   </div>
                 @endforeach
-              </div>
+
+                <div class="detail-block">
+                  <div class="fact-label" style="margin-bottom:8px">{{ ($preview['item_group'] ?? '') === 'complaints' ? 'Internal Note / Action Taken' : 'Notes' }}</div>
+                  <div class="workflow-field">
+                    <textarea id="workflow-note" name="internal_note" placeholder="{{ ($preview['item_group'] ?? '') === 'complaints' ? 'Document follow-up actions, owner handoff, or resolution notes...' : 'Update request notes...' }}">{{ ($preview['item_group'] ?? '') === 'complaints' ? ($preview['internal_note'] ?? '') : ($preview['notes'] ?? '') }}</textarea>
+                  </div>
+                </div>
+              </form>
+            @else
+              @if(!empty($preview['facts']))
+                <div class="fact-grid">
+                  @foreach($preview['facts'] as $label => $value)
+                    <div class="fact-card">
+                      <span class="fact-label">{{ $label }}</span>
+                      <span class="fact-value">{{ $value }}</span>
+                    </div>
+                  @endforeach
+                </div>
+              @endif
+
+              @foreach($preview['sections'] as $section)
+                <div class="detail-block">
+                  <div class="fact-label" style="margin-bottom:8px">{{ $section['label'] }}</div>
+                  <p class="detail-copy">{{ filled($section['value'] ?? '') ? $section['value'] : 'No action recorded yet.' }}</p>
+                </div>
+              @endforeach
             @endif
 
-            @foreach($preview['sections'] as $section)
-              <div class="detail-block">
-                <div class="muted-kicker" style="margin-bottom:8px">{{ $section['label'] }}</div>
-                <p class="detail-copy">{{ $section['value'] }}</p>
-              </div>
-            @endforeach
-
-            @if(!empty($preview['history']))
-              <div class="detail-block">
-                <div class="muted-kicker" style="margin-bottom:8px">Follow-up History</div>
+            <div class="detail-block">
+              <div class="fact-label" style="margin-bottom:8px">Follow-up History</div>
+              @if(!empty($preview['history']))
                 <ul class="detail-list">
                   @foreach($preview['history'] as $item)
                     <li>
@@ -882,257 +1227,22 @@
                           <span class="timeline-date">{{ $item['date'] }}</span>
                         @endif
                         <strong style="display:block;color:#0f172a">{{ $item['title'] }}</strong>
-                        {{ $item['note'] }}
+                        {{ filled($item['note'] ?? '') ? $item['note'] : 'No action recorded yet.' }}
                       </div>
                     </li>
                   @endforeach
                 </ul>
-              </div>
-            @endif
+              @else
+                <p class="workflow-empty">No action recorded yet.</p>
+              @endif
+            </div>
           @endif
         </div>
-        </div>
       </div>
     </div>
-    @else
-    @php
-      $analyticsFromDate = request('analytics_from', $filters['date'] ?? '');
-      $analyticsToDate = request('analytics_to', $filters['date'] ?? '');
-      $normalizeStaffType = function ($type) {
-        $value = strtolower(trim((string) $type));
-        return match (true) {
-          str_contains($value, 'chef') => 'Chefs',
-          str_contains($value, 'office') => 'Office',
-          str_contains($value, 'driver') => 'Drivers',
-          str_contains($value, 'server') => 'Servers',
-          str_contains($value, 'manager') => 'Managers',
-          str_contains($value, 'fire') => 'Fire Show',
-          default => null,
-        };
-      };
-
-      $allPeople = collect([$complaints, $goodFeedback, $vanFeedback, $attendance, $daysOff, $alerts])
-        ->flatten(1)
-        ->pluck('chef')
-        ->filter()
-        ->unique()
-        ->values();
-
-      $typeChart = collect([
-        ['label' => 'Complaint', 'value' => $complaints->count()],
-        ['label' => 'Good Feedback', 'value' => $goodFeedback->count()],
-        ['label' => 'Van Issue', 'value' => $vanFeedback->count()],
-        ['label' => 'Attendance', 'value' => $attendance->count()],
-        ['label' => 'Alert', 'value' => $alerts->count()],
-        ['label' => 'Days Off', 'value' => $daysOff->count()],
-      ]);
-
-      $staffTypeOrder = ['Chefs', 'Office', 'Drivers', 'Servers', 'Managers', 'Fire Show'];
-      $staffTypeCounts = collect($staffTypeOrder)->mapWithKeys(fn ($label) => [$label => 0]);
-      $allCases->each(function ($row) use (&$staffTypeCounts, $normalizeStaffType) {
-        $label = $normalizeStaffType($row['staff_type'] ?? null);
-        if ($label) {
-          $staffTypeCounts[$label] = ($staffTypeCounts[$label] ?? 0) + 1;
-        }
-      });
-
-      $statusBreakdown = collect([
-        'Open' => $complaints->where('resolution_status', 'Open')->count()
-          + $vanFeedback->where('status', 'Open')->count()
-          + $alerts->where('status', 'Open')->count(),
-        'In Review' => $complaints->where('resolution_status', 'In Review')->count()
-          + $vanFeedback->where('status', 'In Review')->count(),
-        'Resolved' => $complaints->where('resolution_status', 'Resolved')->count()
-          + $vanFeedback->where('status', 'Resolved')->count(),
-        'Escalated' => $complaints->where('resolution_status', 'Escalated')->count()
-          + $alerts->where('status', 'Escalated')->count(),
-        'Unapproved' => $daysOff->where('status', 'Denied')->count()
-          + $daysOff->where('status', 'Pending')->count()
-          + $attendance->where('authorized', false)->count(),
-      ]);
-
-      $issueBreakdown = $complaints->pluck('category')
-        ->merge($attendance->pluck('incident_type'))
-        ->merge($alerts->pluck('type'))
-        ->merge($vanFeedback->map(fn () => 'Van Issue'))
-        ->merge($daysOff->map(fn () => 'Days Off Request'))
-        ->filter()
-        ->countBy()
-        ->sortDesc()
-        ->take(6);
-
-      $filteredCaseCount = $allCases->count() + $daysOff->count() + $alerts->count();
-      $averageNetScore = round((float) ($chefSummaries->avg('net_score') ?? 0), 1);
-      $openWorkflow = $complaints->whereIn('resolution_status', ['Open', 'In Review', 'Escalated'])->count()
-        + $vanFeedback->whereIn('status', ['Open', 'In Review'])->count()
-        + $alerts->whereIn('status', ['Open', 'Escalated'])->count()
-        + $daysOff->whereIn('status', ['Pending', 'Denied'])->count();
-      $unauthorizedAlertTotal = $daysOff->sum('unauthorized_days') + $alerts->count();
-      $resolvedCasesTotal = $complaints->where('resolution_status', 'Resolved')->count() + $vanFeedback->where('status', 'Resolved')->count();
-      $netScoreTotal = $goodFeedback->count() - $complaints->count();
-      $analyticsSummaryCards = [
-        ['label' => 'Open Complaints', 'value' => $complaints->whereIn('resolution_status', ['Open', 'In Review', 'Escalated'])->count(), 'copy' => 'Cases currently needing follow-up.'],
-        ['label' => 'Good Feedback', 'value' => $goodFeedback->count(), 'copy' => 'Positive customer and partner signals.'],
-        ['label' => 'Van Issues', 'value' => $vanFeedback->count(), 'copy' => 'Fleet and equipment risk items.'],
-        ['label' => 'Attendance Incidents', 'value' => $attendance->count(), 'copy' => 'Manager-reviewed attendance events.'],
-        ['label' => 'Unauthorized Days / Alerts', 'value' => $unauthorizedAlertTotal, 'copy' => 'Combined time-off exceptions and alerts.'],
-        ['label' => 'Resolved Cases', 'value' => $resolvedCasesTotal, 'copy' => 'Items closed with action recorded.'],
-        ['label' => 'Net Score', 'value' => $netScoreTotal, 'copy' => 'Good feedback minus complaints.'],
-        ['label' => 'Total Cases', 'value' => $filteredCaseCount, 'copy' => 'All filtered records across queues.'],
-      ];
-    @endphp
-
-    <div class="analytics-shell">
-      <div class="analytics-header-card">
-        <h2 class="analytics-header-title">Team Operations Dashboard</h2>
-        <p class="analytics-header-copy">Decision-support view for case volume, quality signals, operational risk, and team-wide trends using the same filters as the case queues.</p>
-      </div>
-
-      <div class="analytics-kpi-grid">
-        <div class="analytics-kpi-card">
-          <div class="analytics-kpi-label">Filtered Cases</div>
-          <div class="analytics-kpi-value">{{ number_format($filteredCaseCount) }}</div>
-          <div class="analytics-kpi-note">Records in the current operating window.</div>
-        </div>
-        <div class="analytics-kpi-card">
-          <div class="analytics-kpi-label">Open Workflow</div>
-          <div class="analytics-kpi-value">{{ number_format($openWorkflow) }}</div>
-          <div class="analytics-kpi-note">Cases and exceptions still requiring action.</div>
-        </div>
-        <div class="analytics-kpi-card">
-          <div class="analytics-kpi-label">Team Members</div>
-          <div class="analytics-kpi-value">{{ number_format($allPeople->count()) }}</div>
-          <div class="analytics-kpi-note">Unique people represented in the filtered records.</div>
-        </div>
-        <div class="analytics-kpi-card">
-          <div class="analytics-kpi-label">Average Net Score</div>
-          <div class="analytics-kpi-value">{{ number_format($averageNetScore, 1) }}</div>
-          <div class="analytics-kpi-note">Average good feedback minus complaints across team summaries.</div>
-        </div>
-      </div>
-
-      <div class="analytics-filter-card">
-        <form class="analytics-filter-grid" method="get" action="{{ route('admin.feedback') }}" id="analyticsFilterForm">
-          <input type="hidden" name="view" value="analytics">
-          <input type="hidden" name="tab" value="{{ $activeTab }}">
-          <input type="hidden" name="date" id="analytics-date-hidden" value="{{ $filters['date'] ?? '' }}">
-          <div class="filter-field search-field">
-            <label class="field-label" for="analytics-search">Search</label>
-            <input class="input" id="analytics-search" type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Search summaries, IDs, or team members">
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-from-date">From Date</label>
-            <input class="input" id="analytics-from-date" type="date" value="{{ $analyticsFromDate }}">
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-to-date">To Date</label>
-            <input class="input" id="analytics-to-date" type="date" value="{{ $analyticsToDate }}">
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-team-member">Team Member</label>
-            <select class="select" id="analytics-team-member" name="chef">
-              <option value="">All team members</option>
-              @foreach($chefOptions as $chefOpt)
-                <option value="{{ $chefOpt }}" {{ ($filters['chef'] ?? '') === $chefOpt ? 'selected' : '' }}>{{ $chefOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-staff-type">Staff Type</label>
-            <select class="select" id="analytics-staff-type" name="staff_type">
-              <option value="">All staff types</option>
-              @foreach($staffTypeOptions as $staffTypeOpt)
-                <option value="{{ $staffTypeOpt }}" {{ ($filters['staff_type'] ?? '') === $staffTypeOpt ? 'selected' : '' }}>{{ $staffTypeOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-source">Source</label>
-            <select class="select" id="analytics-source" name="source">
-              <option value="">All sources</option>
-              @foreach($sourceOptions as $sourceOpt)
-                <option value="{{ $sourceOpt }}" {{ ($filters['source'] ?? '') === $sourceOpt ? 'selected' : '' }}>{{ $sourceOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-status">Status</label>
-            <select class="select" id="analytics-status" name="status">
-              <option value="">All statuses</option>
-              @foreach($statusOptions as $statusOpt)
-                <option value="{{ $statusOpt }}" {{ ($filters['status'] ?? '') === $statusOpt ? 'selected' : '' }}>{{ $statusOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="filter-field">
-            <label class="field-label" for="analytics-case-type">Case Type</label>
-            <select class="select" id="analytics-case-type" name="type">
-              <option value="">All case types</option>
-              @foreach($typeOptions as $typeOpt)
-                <option value="{{ $typeOpt }}" {{ ($filters['type'] ?? '') === $typeOpt ? 'selected' : '' }}>{{ $typeOpt }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="analytics-actions">
-            <button class="btn secondary" type="submit">Apply</button>
-            <a href="{{ route('admin.feedback', ['view' => 'analytics']) }}" class="btn secondary">Reset</a>
-          </div>
-        </form>
-      </div>
-
-      <div class="analytics-summary-grid">
-        @foreach($analyticsSummaryCards as $summary)
-          <div class="analytics-summary-card">
-            <div class="analytics-summary-top">
-              <div class="analytics-summary-label">{{ $summary['label'] }}</div>
-              <div class="analytics-summary-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v2H4zm0 5h10v2H4zm0 5h7v2H4z"/></svg>
-              </div>
-            </div>
-            <div class="analytics-summary-value">{{ number_format($summary['value']) }}</div>
-            <div class="analytics-summary-copy">{{ $summary['copy'] }}</div>
-          </div>
-        @endforeach
-      </div>
-
-      <div class="analytics-charts-grid">
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Cases by Team Member</h3>
-          <p class="analytics-chart-copy">Cross-role workload and issue concentration by person.</p>
-          <div class="chart-wrap"><canvas id="casesByTeamMemberChart"></canvas></div>
-        </div>
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Monthly Trend</h3>
-          <p class="analytics-chart-copy">Total cases over time for the current filter set.</p>
-          <div class="chart-wrap"><canvas id="monthlyTrendChart"></canvas></div>
-        </div>
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Cases by Type</h3>
-          <p class="analytics-chart-copy">Distribution across the core feedback center record types.</p>
-          <div class="chart-wrap compact"><canvas id="caseTypeDistributionChart"></canvas></div>
-        </div>
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Staff Type Breakdown</h3>
-          <p class="analytics-chart-copy">Distribution across chefs, office, drivers, servers, managers, and fire show.</p>
-          <div class="chart-wrap"><canvas id="staffTypeBreakdownChart"></canvas></div>
-        </div>
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Status Breakdown</h3>
-          <p class="analytics-chart-copy">Where the current workflow sits across open, review, resolved, escalated, and unapproved states.</p>
-          <div class="chart-wrap compact"><canvas id="statusBreakdownChart"></canvas></div>
-        </div>
-        <div class="analytics-chart-card">
-          <h3 class="analytics-chart-title">Top Repeated Issues</h3>
-          <p class="analytics-chart-copy">Most common issue categories across complaints, attendance, fleet, alerts, and days off.</p>
-          <div class="chart-wrap"><canvas id="topRepeatedIssuesChart"></canvas></div>
-        </div>
-      </div>
-    </div>
-    @endif
-  </div>
-  @if(($viewMode ?? 'cases') === 'analytics')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   @endif
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('tr.is-clickable[data-href]').forEach((row) => {
@@ -1151,169 +1261,365 @@
         });
       });
 
-      if (typeof Chart !== 'undefined' && {{ ($viewMode ?? 'cases') === 'analytics' ? 'true' : 'false' }}) {
-        const analytics = @json($analytics ?? []);
-        const typeDistribution = @json(($typeChart ?? collect())->values()->all());
-        const staffTypeBreakdown = @json(($staffTypeCounts ?? collect())->all());
-        const statusBreakdown = @json(($statusBreakdown ?? collect())->all());
-        const repeatedIssues = @json(($issueBreakdown ?? collect())->all());
-        const baseGrid = '#e2e8f0';
-        const textColor = '#475569';
-        const strongColor = '#0f172a';
+      const syncDaysOffDays = () => {
+        const startInput = document.getElementById('days-off-start-date');
+        const endInput = document.getElementById('days-off-end-date');
+        const daysInput = document.getElementById('days-off-days');
+        if (!startInput || !endInput || !daysInput) return;
 
-        const analyticsForm = document.getElementById('analyticsFilterForm');
-        if (analyticsForm) {
-          analyticsForm.addEventListener('submit', () => {
-            const from = document.getElementById('analytics-from-date')?.value || '';
-            const to = document.getElementById('analytics-to-date')?.value || '';
-            const hidden = document.getElementById('analytics-date-hidden');
-            if (hidden) {
-              hidden.value = to || from;
-            }
-          });
+        const startValue = startInput.value;
+        const endValue = endInput.value;
+        if (!startValue || !endValue) {
+          daysInput.value = '';
+          return;
         }
 
-        const buildChart = (id, config) => {
-          const node = document.getElementById(id);
-          if (!node) return;
-          new Chart(node, config);
+        const toUtcTime = (value) => {
+          const parts = value.split('-').map(Number);
+          if (parts.length !== 3 || parts.some((part) => Number.isNaN(part))) {
+            return null;
+          }
+          return Date.UTC(parts[0], parts[1] - 1, parts[2]);
         };
 
-        buildChart('casesByTeamMemberChart', {
-          type: 'bar',
-          data: {
-            labels: analytics.cases_by_team_member?.labels ?? [],
-            datasets: [{
-              label: 'Cases',
-              data: analytics.cases_by_team_member?.values ?? [],
-              backgroundColor: '#0f172a',
-              borderRadius: 10,
-              maxBarThickness: 28,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: textColor }, grid: { display: false } },
-              y: { ticks: { color: textColor, precision: 0 }, grid: { color: baseGrid } }
-            }
+        const startTime = toUtcTime(startValue);
+        const endTime = toUtcTime(endValue);
+        if (startTime === null || endTime === null || endTime < startTime) {
+          daysInput.value = '';
+          return;
+        }
+
+        const diffDays = Math.floor((endTime - startTime) / 86400000) + 1;
+        daysInput.value = String(diffDays);
+      };
+
+      ['days-off-start-date', 'days-off-end-date'].forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.addEventListener('input', syncDaysOffDays);
+        input.addEventListener('change', syncDaysOffDays);
+      });
+      syncDaysOffDays();
+
+      document.querySelectorAll('[data-team-members-field]').forEach((field) => {
+        const searchInput = field.querySelector('.team-members-search');
+        const toggleButton = field.querySelector('[data-team-members-toggle]');
+        const panel = field.querySelector('[data-team-members-panel]');
+        const pills = field.querySelector('[data-selected-pills]');
+        const message = field.querySelector('[data-team-members-message]');
+        const checkboxes = Array.from(field.querySelectorAll('[data-team-member-checkbox]'));
+        const options = Array.from(field.querySelectorAll('[data-team-member-option]'));
+        const max = Number(field.dataset.max || 7);
+        let selected = [];
+
+        try {
+          selected = JSON.parse(field.dataset.selected || '[]');
+        } catch (error) {
+          selected = [];
+        }
+
+        selected = selected.filter(Boolean).slice(0, max);
+
+        const render = () => {
+          pills.innerHTML = '';
+          message.textContent = selected.length >= max ? `Maximum ${max} team members per complaint.` : '';
+
+          if (selected.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'text-sm text-slate-400';
+            empty.textContent = 'No team members selected yet.';
+            pills.appendChild(empty);
+          }
+
+          selected.forEach((name) => {
+            const pill = document.createElement('span');
+            pill.className = 'inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700';
+            pill.textContent = name;
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'text-slate-400 hover:text-slate-700';
+            remove.textContent = '×';
+            remove.addEventListener('click', () => {
+              selected = selected.filter((member) => member !== name);
+              syncFromState();
+            });
+            pill.appendChild(remove);
+            pills.appendChild(pill);
+          });
+        };
+
+        const syncFromState = () => {
+          checkboxes.forEach((checkbox) => {
+            checkbox.checked = selected.includes(checkbox.value);
+            checkbox.disabled = !checkbox.checked && selected.length >= max;
+          });
+          render();
+        };
+
+        toggleButton?.addEventListener('click', () => {
+          panel?.classList.toggle('hidden');
+          if (panel && !panel.classList.contains('hidden')) {
+            searchInput?.focus();
           }
         });
 
-        buildChart('monthlyTrendChart', {
-          type: 'line',
-          data: {
-            labels: analytics.monthly_trend?.labels ?? [],
-            datasets: [{
-              label: 'Cases',
-              data: analytics.monthly_trend?.values ?? [],
-              borderColor: '#2563eb',
-              backgroundColor: 'rgba(37,99,235,0.12)',
-              fill: true,
-              tension: 0.35,
-              pointRadius: 3,
-              pointBackgroundColor: '#2563eb',
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: textColor }, grid: { display: false } },
-              y: { ticks: { color: textColor, precision: 0 }, grid: { color: baseGrid } }
+        checkboxes.forEach((checkbox) => {
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+              if (selected.length >= max) {
+                checkbox.checked = false;
+                message.textContent = `Maximum ${max} team members per complaint.`;
+                return;
+              }
+              selected.push(checkbox.value);
+            } else {
+              selected = selected.filter((member) => member !== checkbox.value);
             }
+            selected = [...new Set(selected)];
+            syncFromState();
+          });
+        });
+
+        searchInput?.addEventListener('input', () => {
+          const query = searchInput.value.trim().toLowerCase();
+          options.forEach((option) => {
+            const name = option.dataset.memberName?.toLowerCase() || '';
+            option.classList.toggle('hidden', query !== '' && !name.includes(query));
+          });
+          if (panel?.classList.contains('hidden')) {
+            panel.classList.remove('hidden');
           }
         });
 
-        buildChart('caseTypeDistributionChart', {
-          type: 'doughnut',
-          data: {
-            labels: typeDistribution.map((item) => item.label),
-            datasets: [{
-              data: typeDistribution.map((item) => item.value),
-              backgroundColor: ['#be123c', '#2563eb', '#d97706', '#475569', '#7c3aed', '#0f766e'],
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            plugins: {
-              legend: { position: 'bottom', labels: { color: strongColor, boxWidth: 10, usePointStyle: true, pointStyle: 'circle' } }
-            }
+        document.addEventListener('click', (event) => {
+          if (!field.contains(event.target)) {
+            panel?.classList.add('hidden');
           }
         });
 
-        buildChart('staffTypeBreakdownChart', {
-          type: 'bar',
-          data: {
-            labels: Object.keys(staffTypeBreakdown),
-            datasets: [{
-              label: 'Cases',
-              data: Object.values(staffTypeBreakdown),
-              backgroundColor: ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8', '#cbd5e1'],
-              borderRadius: 10,
-              maxBarThickness: 34,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: textColor }, grid: { display: false } },
-              y: { ticks: { color: textColor, precision: 0 }, grid: { color: baseGrid } }
+        syncFromState();
+      });
+
+      document.querySelectorAll('[data-quick-date-form]').forEach((form) => {
+        const fromInput = form.querySelector('input[name="from"]');
+        const toInput = form.querySelector('input[name="to"]');
+        const chips = Array.from(form.querySelectorAll('[data-quick-range]'));
+        if (!fromInput || !toInput || chips.length === 0) {
+          return;
+        }
+
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const startOfTuesdayWeek = (baseDate) => {
+          const date = new Date(baseDate);
+          date.setHours(12, 0, 0, 0);
+          const day = date.getDay();
+          const offset = (day - 2 + 7) % 7;
+          date.setDate(date.getDate() - offset);
+          return date;
+        };
+
+        const getRange = (rangeKey) => {
+          const today = new Date();
+          today.setHours(12, 0, 0, 0);
+
+          switch (rangeKey) {
+            case 'today':
+              return { from: formatDate(today), to: formatDate(today) };
+            case 'this-week': {
+              const start = startOfTuesdayWeek(today);
+              const end = new Date(start);
+              end.setDate(start.getDate() + 6);
+              return { from: formatDate(start), to: formatDate(end) };
             }
+            case 'last-week': {
+              const end = startOfTuesdayWeek(today);
+              end.setDate(end.getDate() - 1);
+              const start = new Date(end);
+              start.setDate(end.getDate() - 6);
+              return { from: formatDate(start), to: formatDate(end) };
+            }
+            case 'this-month': {
+              const start = new Date(today.getFullYear(), today.getMonth(), 1, 12);
+              const end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12);
+              return { from: formatDate(start), to: formatDate(end) };
+            }
+            case 'last-month': {
+              const start = new Date(today.getFullYear(), today.getMonth() - 1, 1, 12);
+              const end = new Date(today.getFullYear(), today.getMonth(), 0, 12);
+              return { from: formatDate(start), to: formatDate(end) };
+            }
+            default:
+              return null;
           }
+        };
+
+        const syncQuickDateState = () => {
+          const currentFrom = fromInput.value;
+          const currentTo = toInput.value;
+          chips.forEach((chip) => chip.classList.remove('active'));
+
+          const matchingChip = chips.find((chip) => {
+            const key = chip.dataset.quickRange;
+            if (key === 'custom') {
+              return false;
+            }
+            const range = getRange(key);
+            return range && range.from === currentFrom && range.to === currentTo;
+          });
+
+          if (matchingChip) {
+            matchingChip.classList.add('active');
+          } else if (currentFrom !== '' || currentTo !== '') {
+            const customChip = chips.find((chip) => chip.dataset.quickRange === 'custom');
+            customChip?.classList.add('active');
+          }
+        };
+
+        chips.forEach((chip) => {
+          chip.addEventListener('click', () => {
+            const key = chip.dataset.quickRange || 'custom';
+            if (key === 'custom') {
+              chip.classList.add('active');
+              fromInput.focus();
+              return;
+            }
+
+            const range = getRange(key);
+            if (!range) {
+              return;
+            }
+
+            fromInput.value = range.from;
+            toInput.value = range.to;
+            syncQuickDateState();
+            form.requestSubmit();
+          });
         });
 
-        buildChart('statusBreakdownChart', {
-          type: 'pie',
-          data: {
-            labels: Object.keys(statusBreakdown),
-            datasets: [{
-              data: Object.values(statusBreakdown),
-              backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#64748b'],
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'bottom', labels: { color: strongColor, boxWidth: 10, usePointStyle: true, pointStyle: 'circle' } }
-            }
-          }
-        });
+        fromInput.addEventListener('change', syncQuickDateState);
+        toInput.addEventListener('change', syncQuickDateState);
+        syncQuickDateState();
+      });
 
-        buildChart('topRepeatedIssuesChart', {
-          type: 'bar',
-          data: {
-            labels: Object.keys(repeatedIssues),
-            datasets: [{
-              label: 'Occurrences',
-              data: Object.values(repeatedIssues),
-              backgroundColor: '#334155',
-              borderRadius: 10,
-              maxBarThickness: 22,
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: textColor, precision: 0 }, grid: { color: baseGrid } },
-              y: { ticks: { color: textColor }, grid: { display: false } }
-            }
-          }
-        });
+      if (!window.Chart || @json($activeView !== 'analytics')) {
+        return;
       }
+
+      const charts = @json($analyticsCharts);
+      const commonScales = {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#64748b', font: { size: 11, weight: '600' } },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(148,163,184,0.14)' },
+          ticks: { color: '#64748b', font: { size: 11, weight: '600' } },
+        },
+      };
+      const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              color: '#475569',
+              padding: 16,
+            },
+          },
+        },
+      };
+      const axisOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: commonScales,
+      };
+      const lineOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              color: '#475569',
+              padding: 16,
+            },
+          },
+        },
+        scales: commonScales,
+      };
+
+      const mountChart = (id, type, data, options) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el.getContext('2d'), { type, data, options });
+      };
+
+      const teamPerformanceChartEl = document.getElementById('teamPerformanceByMemberChart');
+      const teamPerformanceTabs = Array.from(document.querySelectorAll('[data-team-performance-tab]'));
+      let teamPerformanceChart = null;
+      if (teamPerformanceChartEl && charts.teamPerformanceByMember) {
+        const setActiveTeamPerformanceMetric = (metric) => {
+          const metricData = charts.teamPerformanceByMember[metric] ?? charts.teamPerformanceByMember.complaints;
+          if (!metricData) return;
+
+          teamPerformanceTabs.forEach((tab) => {
+            const active = tab.dataset.teamPerformanceTab === metric;
+            tab.className = active
+              ? 'inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm'
+              : 'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50';
+          });
+
+          if (!teamPerformanceChart) {
+            teamPerformanceChart = new Chart(teamPerformanceChartEl.getContext('2d'), {
+              type: 'bar',
+              data: metricData,
+              options: axisOptions,
+            });
+            return;
+          }
+
+          teamPerformanceChart.data = metricData;
+          teamPerformanceChart.update();
+        };
+
+        teamPerformanceTabs.forEach((tab) => {
+          tab.addEventListener('click', () => setActiveTeamPerformanceMetric(tab.dataset.teamPerformanceTab || 'complaints'));
+        });
+
+        setActiveTeamPerformanceMetric('complaints');
+      }
+
+      mountChart('monthlyTrendChart', 'line', charts.monthlyTrend, lineOptions);
+      mountChart('casesByTypeChart', 'doughnut', charts.casesByType, doughnutOptions);
+      mountChart('staffTypeBreakdownChart', 'bar', charts.staffTypeBreakdown, axisOptions);
+      mountChart('statusBreakdownChart', 'doughnut', charts.statusBreakdown, doughnutOptions);
+      mountChart('complaintCategoriesChart', 'bar', charts.complaintCategories, {
+        ...axisOptions,
+        indexAxis: 'y',
+      });
+      mountChart('employeePerformanceScoreChart', 'bar', charts.employeePerformanceScore, {
+        ...axisOptions,
+        indexAxis: 'y',
+      });
+      mountChart('netScoreTrendChart', 'line', charts.netScoreTrend, lineOptions);
+      mountChart('operationalIncidentsTrendChart', 'line', charts.operationalIncidentsTrend, lineOptions);
     });
   </script>
 </body>

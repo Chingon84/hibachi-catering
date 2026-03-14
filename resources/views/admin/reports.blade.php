@@ -9,8 +9,15 @@
     .subnav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
     .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
     .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
+    .reports-filter-bar{display:grid;grid-template-columns:minmax(180px,3fr) minmax(150px,2fr) minmax(150px,2fr) minmax(180px,3fr) auto;gap:10px;align-items:center}
+    .reports-filter-bar .input,
+    .reports-filter-bar .select,
+    .reports-filter-bar .btn{width:100%;min-height:40px}
+    .reports-filter-bar .btn{justify-content:center;white-space:nowrap}
     .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+    @media (max-width: 1100px){.reports-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.reports-filter-bar .apply-btn{grid-column:span 1}}
     @media (max-width: 1100px){.cards{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 760px){.reports-filter-bar{grid-template-columns:1fr}}
     @media (max-width: 640px){.cards{grid-template-columns:1fr}}
     .metric{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
     .metric .label{color:#6b7280;font-size:12px}
@@ -32,7 +39,7 @@
     </div>
 
     <div class="card"><div class="card-body">
-      <form class="toolbar" method="get" action="{{ route('admin.reports') }}">
+      <form class="reports-filter-bar" method="get" action="{{ route('admin.reports') }}">
         @php $presetVal = $preset ?? 'month'; @endphp
         <select name="preset" class="select" onchange="toggleCustom(this.value)">
           <option value="day" {{ $presetVal==='day'?'selected':'' }}>Today</option>
@@ -44,13 +51,13 @@
         <input class="input" type="date" name="from" id="rep-from" value="{{ $from }}">
         <input class="input" type="date" name="to" id="rep-to" value="{{ $to }}">
         @php $agentVal = $agent ?? 'all'; @endphp
-        <select name="booked_by" class="select" style="min-width:180px">
+        <select name="booked_by" class="select">
           <option value="all" {{ $agentVal==='all' ? 'selected' : '' }}>All</option>
           @foreach(($agentOptions ?? []) as $opt)
             <option value="{{ $opt }}" {{ $agentVal===$opt ? 'selected' : '' }}>{{ $opt }}</option>
           @endforeach
         </select>
-        <button class="btn secondary" type="submit">Apply</button>
+        <button class="btn secondary apply-btn" type="submit">Apply</button>
         <script>
           function toggleCustom(v){
             const on = v==='custom';

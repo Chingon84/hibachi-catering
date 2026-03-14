@@ -7,6 +7,20 @@
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
     .title{font-size:22px;margin:0}
+    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .reservations-filter-bar{display:grid;grid-template-columns:minmax(140px,2fr) minmax(150px,2fr) minmax(170px,2fr) minmax(260px,4fr) auto;gap:10px;align-items:center;flex:1 1 860px}
+    .reservations-filter-bar .input,
+    .reservations-filter-bar .select,
+    .reservations-filter-bar .btn{width:100%;min-height:40px}
+    .reservations-filter-bar .btn{justify-content:center;white-space:nowrap}
+    @media (max-width: 980px){
+      .reservations-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .reservations-filter-bar .search-field{grid-column:span 2}
+    }
+    @media (max-width: 680px){
+      .reservations-filter-bar{grid-template-columns:1fr}
+      .reservations-filter-bar .search-field{grid-column:auto}
+    }
     .inv{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #e5e7eb;white-space:nowrap}
     .table td select{max-width:160px}
     .inv.paid{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
@@ -25,7 +39,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <form method="get" class="toolbar" action="{{ route('admin.reservations') }}">
+      <form method="get" class="reservations-filter-bar" action="{{ route('admin.reservations') }}">
         <input class="input" type="date" name="d" value="{{ $d }}">
         <select name="status" class="select">
           <option value="">All statuses</option>
@@ -42,7 +56,7 @@
           <option value="invoice_desc" {{ $sortVal==='invoice_desc' ? 'selected':'' }}>Invoice # (high→low)</option>
           <option value="invoice_asc" {{ $sortVal==='invoice_asc' ? 'selected':'' }}>Invoice # (low→high)</option>
         </select>
-        <input class="input" type="text" name="q" placeholder="Search name, code, email…" value="{{ $q }}" style="min-width:260px">
+        <input class="input search-field" type="text" name="q" placeholder="Search name, code, email…" value="{{ $q }}">
         <button class="btn secondary" type="submit">Filter</button>
       </form>
       <a href="http://127.0.0.1:8000/reservations/1" target="_blank" rel="noopener" class="btn" style="margin-left:auto">Resv Flow</a>

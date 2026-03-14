@@ -16,13 +16,13 @@
     aria-haspopup="menu"
     aria-expanded="false"
     aria-controls="{{ $menuId }}"
-    class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition-all duration-150 hover:border-gray-300 hover:bg-gray-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
   >
-    <svg class="size-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <svg class="size-4 text-slate-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
     </svg>
     <span>{{ $buttonLabel }}</span>
-    <svg class="size-4 text-gray-400 transition-transform duration-150" data-feedback-menu-chevron viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <svg class="size-4 text-slate-300 transition-transform duration-150" data-feedback-menu-chevron viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
       <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.25a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08Z" clip-rule="evenodd" />
     </svg>
   </button>
