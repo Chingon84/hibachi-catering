@@ -1,290 +1,288 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Reservations</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    .title{font-size:22px;margin:0}
-    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
-    .reservations-filter-bar{display:grid;grid-template-columns:minmax(140px,2fr) minmax(150px,2fr) minmax(170px,2fr) minmax(260px,4fr) auto;gap:10px;align-items:center;flex:1 1 860px}
-    .reservations-filter-bar .input,
-    .reservations-filter-bar .select,
-    .reservations-filter-bar .btn{width:100%;min-height:40px}
-    .reservations-filter-bar .btn{justify-content:center;white-space:nowrap}
-    @media (max-width: 980px){
-      .reservations-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .reservations-filter-bar .search-field{grid-column:span 2}
-    }
-    @media (max-width: 680px){
-      .reservations-filter-bar{grid-template-columns:1fr}
-      .reservations-filter-bar .search-field{grid-column:auto}
-    }
-    .reservation-row{cursor:pointer;transition:background-color .15s ease,box-shadow .15s ease}
-    .reservation-row:hover{background:#fff8f8}
-    .reservation-row:focus-within{background:#f8fafc}
-    .table th.invoice-col,
-    .table th.inv-status-col,
-    .table th.actions-col,
-    .table td.invoice-cell,
-    .table td.inv-status-cell,
-    .table td.actions-cell{white-space:nowrap}
-    .invoice-cell,.inv-status-cell,.actions-cell{vertical-align:middle}
-    .invoice-actions{display:inline-flex;align-items:center;gap:6px}
-    .invoice-icon-btn,
-    .row-action-btn{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;justify-content:center;line-height:1;text-decoration:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
-    .invoice-icon-btn svg,.row-action-btn svg{width:16px;height:16px;display:block}
-    .invoice-icon-btn.invoice-view{color:#b21e27}
-    .invoice-icon-btn.menu-print{color:#2563eb}
-    .invoice-icon-btn.invoice-view:hover{background:#fff1f2;border-color:#fecdd3;color:#9f1620}
-    .invoice-icon-btn.menu-print:hover{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
-    .row-action-btn{color:#374151;border-color:#e5e7eb;background:#fff}
-    .row-action-btn:hover{background:#f8fafc;border-color:#d1d5db;color:#111827;box-shadow:0 2px 8px rgba(15,23,42,.08)}
-    .inv-status-form{display:flex;align-items:center;margin:0}
-    .select.inv{appearance:none;-webkit-appearance:none;display:inline-flex;width:auto;min-width:0;max-width:132px;height:24px;padding:3px 22px 3px 10px;border-radius:999px;border:1px solid #e5e7eb;font-size:11px;font-weight:600;line-height:1;color:#374151;background-color:#fff;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 12px) 9px,calc(100% - 8px) 9px;background-size:4px 4px,4px 4px;background-repeat:no-repeat;white-space:nowrap;box-shadow:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
-    .select.inv:hover{box-shadow:0 1px 4px rgba(15,23,42,.06)}
-    .select.inv:focus{outline:2px solid rgba(178,30,39,.12);outline-offset:1px}
-    .select.inv.paid{background-color:#ecfdf5;color:#065f46;border-color:#a7f3d0}
-    .select.inv.pending{background-color:#fffbeb;color:#92400e;border-color:#fde68a}
-    .select.inv.partially_paid,.select.inv.partial{background-color:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
-    .select.inv.overdue{background-color:#fff7ed;color:#9a3412;border-color:#fed7aa}
-    .select.inv.cancelled,.select.inv.canceled{background-color:#fef2f2;color:#991b1b;border-color:#fecaca}
-    .select.inv.refunded,.select.inv.void{background-color:#f3f4f6;color:#4b5563;border-color:#e5e7eb}
-    .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-    .toast{padding:10px 12px;border-radius:10px;border:1px solid;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.12);background:#fff}
-    .toast.success{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
-    .toast.warn{color:#92400e;border-color:#fcd34d;background:#fffbeb}
-    .toast.error{color:#991b1b;border-color:#fecaca;background:#fef2f2}
-  </style>
-  @php $fmt = fn($n)=>'$'.number_format((float)$n,2); @endphp
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <form method="get" class="reservations-filter-bar" action="{{ route('admin.reservations') }}">
-        <input class="input" type="date" name="d" value="{{ $d }}">
-        <select name="status" class="select">
-          <option value="">All statuses</option>
-          @foreach(['pending','confirmed','canceled'] as $st)
-            <option value="{{ $st }}" {{ $status===$st ? 'selected':'' }}>{{ ucfirst($st) }}</option>
-          @endforeach
-        </select>
-        <select name="sort" class="select">
-          @php $sortVal = $sort ?? request('sort','newest'); @endphp
-          <option value="newest" {{ $sortVal==='newest' ? 'selected':'' }}>Newest first</option>
-          <option value="oldest" {{ $sortVal==='oldest' ? 'selected':'' }}>Oldest first</option>
-          <option value="event_desc" {{ $sortVal==='event_desc' ? 'selected':'' }}>Event time (latest→earliest)</option>
-          <option value="event_asc" {{ $sortVal==='event_asc' ? 'selected':'' }}>Event time (earliest→latest)</option>
-          <option value="invoice_desc" {{ $sortVal==='invoice_desc' ? 'selected':'' }}>Invoice # (high→low)</option>
-          <option value="invoice_asc" {{ $sortVal==='invoice_asc' ? 'selected':'' }}>Invoice # (low→high)</option>
-        </select>
-        <input class="input search-field" type="text" name="q" placeholder="Search name, code, email…" value="{{ $q }}">
-        <button class="btn secondary" type="submit">Filter</button>
-      </form>
-      <a href="{{ route('reservations.new') }}" target="_blank" rel="noopener" class="btn" style="margin-left:auto">Resv Flow</a>
-    </div>
+@extends('layouts.admin')
 
-    <div class="card">
-      <div class="card-body">
-        <table class="table" aria-label="Reservations list">
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Guests</th>
-              <th>Customer</th>
-              <th>Total</th>
-              <th>Paid</th>
-              <th>Balance</th>
-              <th>Status</th>
-              <th>Booked by</th>
-              <th class="invoice-col">Invoice</th>
-              <th class="inv-status-col">Inv Status</th>
-              <th class="actions-col" style="width:60px">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($rows as $r)
-              <tr class="reservation-row" data-href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" tabindex="0" aria-label="Open reservation {{ $r->invoice_number ?? $r->code ?? $r->id }}">
-                <td>{{ $r->invoice_number ?? "—" }}</td>
-                <td>{{ $r->date?->format('m/d/Y') }}</td>
-                <td>{{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}</td>
-                <td>{{ $r->guests }}</td>
-                <td>
-                  <div><a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" style="color:inherit;text-decoration:underline">{{ $r->customer_name ?? '—' }}</a></div>
-                  <div class="muted">{{ $r->email ?? '' }}</div>
-                </td>
-                @php
-                  $rowTotals = \App\Support\ReservationTotals::compute($r);
-                  $rowPaid = (float) ($rowTotals['paid_total'] ?? 0);
-                  $bal = max(0, (float) ($rowTotals['balance'] ?? 0));
-                @endphp
-                <td>{{ $fmt($rowTotals['total'] ?? ($r->total ?? 0)) }}</td>
-                <td>{{ $fmt($rowPaid) }}</td>
-                <td>
-                  @if($bal <= 0)
-                    <span style="color:#16a34a;font-weight:700">{{ $fmt(0) }}</span>
-                  @else
-                    {{ $fmt($bal) }}
-                  @endif
-                </td>
-                @php
-                  $statusKey = strtolower((string) ($r->status ?? 'pending'));
-                  if (in_array($statusKey, ['draft', 'pending_payment'], true)) {
-                    $statusKey = 'pending';
-                  }
-                @endphp
-                <td><span class="status {{ $statusKey }}">{{ ucfirst($statusKey) }}</span></td>
-                <td>{{ $r->booked_by ?? '—' }}</td>
-                <td class="invoice-cell" data-row-action-ignore>
-                  <div class="invoice-actions">
-                    <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn invoice-view" title="View invoice" aria-label="View invoice">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2zm0-8h4v2H8V8z"/>
-                      </svg>
-                    </a>
-                    <a href="{{ route('admin.reservations.prep_print',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn menu-print" title="Kitchen prep ticket" aria-label="Kitchen prep ticket">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="5" cy="7" r="1.5" fill="currentColor"/>
-                        <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
-                        <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
-                        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-                      </svg>
-                    </a>
-                  </div>
-                </td>
-                <td class="inv-status-cell" data-row-action-ignore>
-                  <form method="post" action="{{ route('admin.reservations.invoice_status',['id'=>$r->id]) }}" class="inv-status-form">
-                    @csrf
-                    <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
-                    @php $ist = strtolower($r->invoice_status ?? 'pending'); @endphp
-                    <select name="invoice_status" class="select inv {{ $ist }}" onchange="this.form.submit()">
-                      @foreach(['paid'=>'Paid','pending'=>'Pending','overdue'=>'Overdue','cancelled'=>'Cancelled','refunded'=>'Refunded'] as $k=>$label)
-                        <option value="{{ $k }}" {{ $ist===$k ? 'selected':'' }}>{{ $label }}</option>
-                      @endforeach
-                    </select>
-                    
-                  </form>
-                </td>
-                <td class="actions-cell" style="position:relative" data-row-action-ignore>
-                  <div class="actions-menu" style="position:relative;display:inline-block">
-                    <button type="button" class="row-action-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleMenu(this)" title="Actions">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"/></svg>
-                    </button>
-                    <div class="menu" style="display:none;position:absolute;right:0;z-index:10;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);min-width:160px;overflow:hidden">
-                      <a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">Edit</a>
-                      <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">View invoice</a>
-                      <button
-                        type="button"
-                        class="menu-item"
-                        style="display:block;width:100%;text-align:left;padding:8px 12px;color:#111;background:#fff;border:0;cursor:pointer"
-                        onclick="addToClients({{ (int) $r->id }}, this)"
-                      >Add to Clients</button>
-                      <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none" onclick="setTimeout(()=>window.print(),400)">Print</a>
-                      <form method="post" action="{{ route('admin.reservations.delete',['id'=>$r->id]) }}" onsubmit="return confirm('Are you sure you want to delete this reservation?');">
-                        @csrf
-                        <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
-                        <button type="submit" class="menu-item" style="display:block;width:100%;text-align:left;padding:8px 12px;color:#b91c1c;background:#fff;border:0;cursor:pointer">Delete</button>
-                      </form>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            @empty
-              <tr><td colspan="11" class="muted">No reservations found.</td></tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-    @include('admin.partials.pagination', ['paginator' => $rows])
+@section('title', 'Reservations')
+
+@push('styles')
+<style>
+  /* Page-specific layout only — visual styling comes from the shared app.css */
+  .reservations-filter-bar{display:grid;grid-template-columns:minmax(140px,2fr) minmax(150px,2fr) minmax(170px,2fr) minmax(260px,4fr) auto;gap:10px;align-items:center;flex:1 1 860px}
+  .reservations-filter-bar .input,
+  .reservations-filter-bar .select,
+  .reservations-filter-bar .btn{width:100%}
+  .reservations-filter-bar .btn{justify-content:center;white-space:nowrap}
+  @media (max-width: 980px){
+    .reservations-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .reservations-filter-bar .search-field{grid-column:span 2}
+  }
+  @media (max-width: 680px){
+    .reservations-filter-bar{grid-template-columns:1fr}
+    .reservations-filter-bar .search-field{grid-column:auto}
+  }
+  .reservation-row{cursor:pointer}
+  .table th.invoice-col,
+  .table th.inv-status-col,
+  .table th.actions-col,
+  .table td.invoice-cell,
+  .table td.inv-status-cell,
+  .table td.actions-cell{white-space:nowrap}
+  .invoice-cell,.inv-status-cell,.actions-cell{vertical-align:middle}
+  .invoice-actions{display:inline-flex;align-items:center;gap:6px}
+  .invoice-icon-btn,
+  .row-action-btn{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;justify-content:center;line-height:1;text-decoration:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+  .invoice-icon-btn svg,.row-action-btn svg{width:16px;height:16px;display:block}
+  .invoice-icon-btn.invoice-view{color:#b21e27}
+  .invoice-icon-btn.menu-print{color:#2563eb}
+  .invoice-icon-btn.invoice-view:hover{background:#fff1f2;border-color:#fecdd3;color:#9f1620}
+  .invoice-icon-btn.menu-print:hover{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+  .row-action-btn{color:#374151;border-color:#e5e7eb;background:#fff}
+  .row-action-btn:hover{background:#f8fafc;border-color:#d1d5db;color:#111827;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+  .inv-status-form{display:flex;align-items:center;margin:0}
+  .select.inv{appearance:none;-webkit-appearance:none;display:inline-flex;width:auto;min-width:0;max-width:132px;height:24px;min-height:0;padding:3px 22px 3px 10px;border-radius:999px;border:1px solid #e5e7eb;font-size:11px;font-weight:600;line-height:1;color:#374151;background-color:#fff;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 12px) 9px,calc(100% - 8px) 9px;background-size:4px 4px,4px 4px;background-repeat:no-repeat;white-space:nowrap;box-shadow:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+  .select.inv:hover{box-shadow:0 1px 4px rgba(15,23,42,.06)}
+  .select.inv:focus{outline:2px solid rgba(178,30,39,.12);outline-offset:1px}
+  .select.inv.paid{background-color:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+  .select.inv.pending{background-color:#fffbeb;color:#92400e;border-color:#fde68a}
+  .select.inv.partially_paid,.select.inv.partial{background-color:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .select.inv.overdue{background-color:#fff7ed;color:#9a3412;border-color:#fed7aa}
+  .select.inv.cancelled,.select.inv.canceled{background-color:#fef2f2;color:#991b1b;border-color:#fecaca}
+  .select.inv.refunded,.select.inv.void{background-color:#f3f4f6;color:#4b5563;border-color:#e5e7eb}
+  .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+  .toast{padding:10px 12px;border-radius:10px;border:1px solid;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.12);background:#fff}
+  .toast.success{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
+  .toast.warn{color:#92400e;border-color:#fcd34d;background:#fffbeb}
+  .toast.error{color:#991b1b;border-color:#fecaca;background:#fef2f2}
+</style>
+@endpush
+
+@section('content')
+@php $fmt = fn($n)=>'$'.number_format((float)$n,2); @endphp
+<div class="container">
+  <div class="header">
+    <form method="get" class="reservations-filter-bar" action="{{ route('admin.reservations') }}">
+      <input class="input" type="date" name="d" value="{{ $d }}">
+      <select name="status" class="select">
+        <option value="">All statuses</option>
+        @foreach(['pending','confirmed','canceled'] as $st)
+          <option value="{{ $st }}" {{ $status===$st ? 'selected':'' }}>{{ ucfirst($st) }}</option>
+        @endforeach
+      </select>
+      <select name="sort" class="select">
+        @php $sortVal = $sort ?? request('sort','newest'); @endphp
+        <option value="newest" {{ $sortVal==='newest' ? 'selected':'' }}>Newest first</option>
+        <option value="oldest" {{ $sortVal==='oldest' ? 'selected':'' }}>Oldest first</option>
+        <option value="event_desc" {{ $sortVal==='event_desc' ? 'selected':'' }}>Event time (latest→earliest)</option>
+        <option value="event_asc" {{ $sortVal==='event_asc' ? 'selected':'' }}>Event time (earliest→latest)</option>
+        <option value="invoice_desc" {{ $sortVal==='invoice_desc' ? 'selected':'' }}>Invoice # (high→low)</option>
+        <option value="invoice_asc" {{ $sortVal==='invoice_asc' ? 'selected':'' }}>Invoice # (low→high)</option>
+      </select>
+      <input class="input search-field" type="text" name="q" placeholder="Search name, code, email…" value="{{ $q }}">
+      <button class="btn secondary" type="submit">Filter</button>
+    </form>
+    <a href="{{ route('reservations.new') }}" target="_blank" rel="noopener" class="btn" style="margin-left:auto">Resv Flow</a>
   </div>
-  <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
-  <script>
-    const csrfToken = @json(csrf_token());
-    const toastWrap = document.getElementById('toastWrap');
-    const rowActionSelector = 'a,button,input,select,textarea,form,[data-row-action-ignore]';
 
-    document.querySelectorAll('.reservation-row[data-href]').forEach(row => {
-      row.addEventListener('click', event => {
-        if (event.target.closest(rowActionSelector)) return;
-        window.location.href = row.dataset.href;
-      });
+  <div class="card">
+    <div class="card-body">
+      <table class="table" aria-label="Reservations list">
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Guests</th>
+            <th>Customer</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Booked by</th>
+            <th class="invoice-col">Invoice</th>
+            <th class="inv-status-col">Inv Status</th>
+            <th class="actions-col" style="width:60px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($rows as $r)
+            <tr class="reservation-row" data-href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" tabindex="0" aria-label="Open reservation {{ $r->invoice_number ?? $r->code ?? $r->id }}">
+              <td>{{ $r->invoice_number ?? "—" }}</td>
+              <td>{{ $r->date?->format('m/d/Y') }}</td>
+              <td>{{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}</td>
+              <td>{{ $r->guests }}</td>
+              <td>
+                <div><a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" style="color:inherit;text-decoration:underline">{{ $r->customer_name ?? '—' }}</a></div>
+                <div class="muted">{{ $r->email ?? '' }}</div>
+              </td>
+              @php
+                $rowTotals = \App\Support\ReservationTotals::compute($r);
+                $rowPaid = (float) ($rowTotals['paid_total'] ?? 0);
+                $bal = max(0, (float) ($rowTotals['balance'] ?? 0));
+              @endphp
+              <td>{{ $fmt($rowTotals['total'] ?? ($r->total ?? 0)) }}</td>
+              <td>{{ $fmt($rowPaid) }}</td>
+              <td>
+                @if($bal <= 0)
+                  <span style="color:#16a34a;font-weight:700">{{ $fmt(0) }}</span>
+                @else
+                  {{ $fmt($bal) }}
+                @endif
+              </td>
+              @php
+                $statusKey = strtolower((string) ($r->status ?? 'pending'));
+                if (in_array($statusKey, ['draft', 'pending_payment'], true)) {
+                  $statusKey = 'pending';
+                }
+              @endphp
+              <td><span class="status {{ $statusKey }}">{{ ucfirst($statusKey) }}</span></td>
+              <td>{{ $r->booked_by ?? '—' }}</td>
+              <td class="invoice-cell" data-row-action-ignore>
+                <div class="invoice-actions">
+                  <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn invoice-view" title="View invoice" aria-label="View invoice">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2zm0-8h4v2H8V8z"/>
+                    </svg>
+                  </a>
+                  <a href="{{ route('admin.reservations.prep_print',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn menu-print" title="Kitchen prep ticket" aria-label="Kitchen prep ticket">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="5" cy="7" r="1.5" fill="currentColor"/>
+                      <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+                      <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
+                      <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+                    </svg>
+                  </a>
+                </div>
+              </td>
+              <td class="inv-status-cell" data-row-action-ignore>
+                <form method="post" action="{{ route('admin.reservations.invoice_status',['id'=>$r->id]) }}" class="inv-status-form">
+                  @csrf
+                  <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
+                  @php $ist = strtolower($r->invoice_status ?? 'pending'); @endphp
+                  <select name="invoice_status" class="select inv {{ $ist }}" onchange="this.form.submit()">
+                    @foreach(['paid'=>'Paid','pending'=>'Pending','overdue'=>'Overdue','cancelled'=>'Cancelled','refunded'=>'Refunded'] as $k=>$label)
+                      <option value="{{ $k }}" {{ $ist===$k ? 'selected':'' }}>{{ $label }}</option>
+                    @endforeach
+                  </select>
 
-      row.addEventListener('keydown', event => {
-        if (!['Enter', ' '].includes(event.key)) return;
-        if (event.target.closest(rowActionSelector)) return;
-        event.preventDefault();
-        window.location.href = row.dataset.href;
-      });
+                </form>
+              </td>
+              <td class="actions-cell" style="position:relative" data-row-action-ignore>
+                <div class="actions-menu" style="position:relative;display:inline-block">
+                  <button type="button" class="row-action-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleMenu(this)" title="Actions">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"/></svg>
+                  </button>
+                  <div class="menu" style="display:none;position:absolute;right:0;z-index:10;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);min-width:160px;overflow:hidden">
+                    <a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">Edit</a>
+                    <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">View invoice</a>
+                    <button
+                      type="button"
+                      class="menu-item"
+                      style="display:block;width:100%;text-align:left;padding:8px 12px;color:#111;background:#fff;border:0;cursor:pointer"
+                      onclick="addToClients({{ (int) $r->id }}, this)"
+                    >Add to Clients</button>
+                    <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none" onclick="setTimeout(()=>window.print(),400)">Print</a>
+                    <form method="post" action="{{ route('admin.reservations.delete',['id'=>$r->id]) }}" onsubmit="return confirm('Are you sure you want to delete this reservation?');">
+                      @csrf
+                      <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
+                      <button type="submit" class="menu-item" style="display:block;width:100%;text-align:left;padding:8px 12px;color:#b91c1c;background:#fff;border:0;cursor:pointer">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="11" class="muted">No reservations found.</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </div>
+  @include('admin.partials.pagination', ['paginator' => $rows])
+</div>
+<div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
+@endsection
+
+@push('scripts')
+<script>
+  const csrfToken = @json(csrf_token());
+  const toastWrap = document.getElementById('toastWrap');
+  const rowActionSelector = 'a,button,input,select,textarea,form,[data-row-action-ignore]';
+
+  document.querySelectorAll('.reservation-row[data-href]').forEach(row => {
+    row.addEventListener('click', event => {
+      if (event.target.closest(rowActionSelector)) return;
+      window.location.href = row.dataset.href;
     });
 
-    document.querySelectorAll(rowActionSelector).forEach(el => {
-      el.addEventListener('click', event => event.stopPropagation());
+    row.addEventListener('keydown', event => {
+      if (!['Enter', ' '].includes(event.key)) return;
+      if (event.target.closest(rowActionSelector)) return;
+      event.preventDefault();
+      window.location.href = row.dataset.href;
     });
+  });
 
-    function showToast(message, type = 'success'){
-      if (!toastWrap) return;
-      const el = document.createElement('div');
-      el.className = `toast ${type}`;
-      el.textContent = message;
-      toastWrap.appendChild(el);
-      setTimeout(() => { el.remove(); }, 2800);
-    }
+  document.querySelectorAll(rowActionSelector).forEach(el => {
+    el.addEventListener('click', event => event.stopPropagation());
+  });
 
-    async function addToClients(reservationId, btn){
-      const previousText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Adding...';
+  function showToast(message, type = 'success'){
+    if (!toastWrap) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    toastWrap.appendChild(el);
+    setTimeout(() => { el.remove(); }, 2800);
+  }
 
-      try {
-        const resp = await fetch(`/admin/reservations/${reservationId}/add-to-clients`, {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-          },
-        });
+  async function addToClients(reservationId, btn){
+    const previousText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
 
-        let payload = {};
-        try { payload = await resp.json(); } catch (e) {}
-        if (resp.status === 409 || payload.status === 'exists') {
-          showToast(payload.message || 'This client already exists and cannot be added again.', 'warn');
-          return;
-        }
-        if (resp.status === 201 || payload.status === 'created') {
-          showToast(payload.message || 'Client added successfully.', 'success');
-          return;
-        }
-        if (!resp.ok) {
-          throw new Error(payload.message || `HTTP ${resp.status}`);
-        }
-      } catch (e) {
-        showToast(e.message || 'Could not add client', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = previousText;
+    try {
+      const resp = await fetch(`/admin/reservations/${reservationId}/add-to-clients`, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json',
+        },
+      });
+
+      let payload = {};
+      try { payload = await resp.json(); } catch (e) {}
+      if (resp.status === 409 || payload.status === 'exists') {
+        showToast(payload.message || 'This client already exists and cannot be added again.', 'warn');
+        return;
       }
+      if (resp.status === 201 || payload.status === 'created') {
+        showToast(payload.message || 'Client added successfully.', 'success');
+        return;
+      }
+      if (!resp.ok) {
+        throw new Error(payload.message || `HTTP ${resp.status}`);
+      }
+    } catch (e) {
+      showToast(e.message || 'Could not add client', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = previousText;
     }
+  }
 
-    function closeAllMenus(){
-      document.querySelectorAll('.actions-menu .menu').forEach(m => m.style.display = 'none');
-      document.querySelectorAll('.actions-menu button[aria-expanded]')
-        .forEach(b => b.setAttribute('aria-expanded','false'));
-    }
-    function toggleMenu(btn){
-      const menu = btn.parentElement.querySelector('.menu');
-      const shown = menu.style.display === 'block';
-      closeAllMenus();
-      menu.style.display = shown ? 'none' : 'block';
-      btn.setAttribute('aria-expanded', shown ? 'false' : 'true');
-    }
-    document.addEventListener('click', (e)=>{
-      const wrap = e.target.closest('.actions-menu');
-      if (!wrap) closeAllMenus();
-    });
-  </script>
-</body>
-</html>
+  function closeAllMenus(){
+    document.querySelectorAll('.actions-menu .menu').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.actions-menu button[aria-expanded]')
+      .forEach(b => b.setAttribute('aria-expanded','false'));
+  }
+  function toggleMenu(btn){
+    const menu = btn.parentElement.querySelector('.menu');
+    const shown = menu.style.display === 'block';
+    closeAllMenus();
+    menu.style.display = shown ? 'none' : 'block';
+    btn.setAttribute('aria-expanded', shown ? 'false' : 'true');
+  }
+  document.addEventListener('click', (e)=>{
+    const wrap = e.target.closest('.actions-menu');
+    if (!wrap) closeAllMenus();
+  });
+</script>
+@endpush

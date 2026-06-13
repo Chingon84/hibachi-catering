@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Calendar</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Calendar')
+
+@push('styles')
+<style>
     /* Modern Google-style calendar surface */
     .container{width:100%;max-width:none;margin:0;padding:20px 24px}
     .cal-page-head{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:14px;padding:0 2px}
@@ -162,6 +160,9 @@
       .event-pop:before{display:none}
     }
   </style>
+@endpush
+
+@section('content')
   @php
     $view = $view ?? 'month';
     $dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -182,8 +183,6 @@
       $nextKey = $start->copy()->addDay()->toDateString();
     }
   @endphp
-</head>
-<body>
   <div class="container">
     <div class="cal-page-head">
       <div>
@@ -285,6 +284,9 @@
     </div>
     <div id="event-popover-root"></div>
   </div>
+@endsection
+
+@push('scripts')
   <script>
     (function(){
       const root = document.getElementById('event-popover-root');
@@ -539,5 +541,4 @@
       }
     })();
   </script>
-</body>
-</html>
+@endpush

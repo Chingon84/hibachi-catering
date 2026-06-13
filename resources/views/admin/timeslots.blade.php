@@ -1,34 +1,15 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Timeslots</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    :root{ --warn:#d97706; }
-    .title{font-size:22px;margin:0}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 20px rgba(15,23,42,.04)}
-    .card-body{padding:16px}
-    .card + .card{margin-top:14px}
+@extends('layouts.admin')
 
-    .toolbar{display:flex;gap:10px;align-items:center}
-    .input, .select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-    .input[type=number]{text-align:center;padding:6px 8px}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;white-space:nowrap;
-      box-shadow:0 1px 2px rgba(0,0,0,.05);transition:background .15s ease,box-shadow .15s ease,transform .05s ease}
-    .btn:hover{background:var(--brand-hover);box-shadow:0 2px 6px rgba(0,0,0,.08)}
-    .btn:active{transform:translateY(1px)}
-    .btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
-    .btn.xs{padding:4px 8px;font-size:12px;border-radius:8px}
-    .btn.secondary{background:#4b5563}
-    .btn.secondary:hover{background:#374151}
-    .btn.success{background:#065f46}
-    .btn.success:hover{background:#064e3b}
-    .btn.danger{background:#991b1b}
-    .btn.danger:hover{background:#7f1d1d}
-    .btn.link{background:transparent;color:var(--brand);padding:0}
-    .btn.link:hover{text-decoration:underline}
+@section('title', 'Timeslots')
+
+@push('styles')
+<style>
+    /* Page-specific layout only — visual styling comes from the shared app.css */
+    .btn.xs{min-height:0;padding:4px 8px;font-size:12px;border-radius:8px}
+    .btn.success{background:#065f46;border-color:#065f46}
+    .btn.success:hover{background:#064e3b;border-color:#064e3b}
+    .btn.link{background:transparent;color:var(--brand);border-color:transparent;box-shadow:none;min-height:0;padding:0}
+    .btn.link:hover{background:transparent;box-shadow:none;text-decoration:underline}
 
     .grid{display:grid;gap:12px}
     .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
@@ -36,28 +17,12 @@
     .grid.cols-2{grid-template-columns:1fr 1fr}
     @media (max-width: 720px){.grid.cols-4,.grid.cols-3,.grid.cols-2{grid-template-columns:1fr}}
 
-    .label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
-
-    /* Alerts */
-    .alert{border-radius:10px;padding:10px 12px;font-size:14px}
-    .alert.error{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}
-    .alert.success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
-
-    /* Table */
-    .table{width:100%;border-collapse:separate;border-spacing:0}
-    .table th, .table td{padding:8px 10px;text-align:left;font-size:13px}
-    .table thead th{background:#f8fafc;color:#475569;border-bottom:1px solid var(--border);font-weight:700}
-    .table tbody tr{background:#fff}
-    .table tbody tr + tr td{border-top:1px solid var(--border)}
-    .table tbody tr{transition:background-color .14s ease}
-    .table tbody tr:hover{background:#f8fafc}
+    /* Table helpers */
     #slotsBody tr.slot-row--reserved td{background:#fff6e5}
     #slotsBody tr.slot-row--reserved:hover td{background:#ffefcc}
     #slotsBody tr.slot-row--reserved td:first-child{box-shadow:inset 3px 0 0 #f59e0b}
     .actions a{color:#b91c1c;text-decoration:none}
     .actions a:hover{text-decoration:underline}
-
-    /* Time & metrics columns */
     .time-cell{font-size:12px;font-weight:600;white-space:nowrap;color:#0f172a}
     .col-time{width:80px}
     .col-per{width:100px}
@@ -65,7 +30,6 @@
     .col-cap{width:90px}
     .table td.col-cap, .table th.col-cap{text-align:center}
 
-    .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:600}
     .badge.open{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
     .badge.closed{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 
@@ -73,7 +37,7 @@
     .cap-remaining{font-weight:700;font-variant-numeric:tabular-nums;color:#0f172a}
     .cap-remaining.zero{color:#991b1b}
     .actions{display:flex;align-items:center;gap:8px;white-space:nowrap}
-    .actions .input[type=number]{width:72px !important;min-width:72px;padding:4px 6px !important;height:28px;border-radius:8px;font-size:12px}
+    .actions .input[type=number]{width:72px !important;min-width:72px;padding:4px 6px !important;height:28px;min-height:28px;border-radius:8px;font-size:12px}
     .actions .action-delete{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 8px;border:1px solid #fecaca;border-radius:8px;background:#fff5f5;color:#b91c1c;font-size:12px;font-weight:600;text-decoration:none}
     .actions .action-delete:hover{background:#fef2f2;text-decoration:none}
     .actions .action-delete.disabled,
@@ -84,7 +48,7 @@
     .subtle{color:var(--muted);font-size:13px}
     .spacer{height:8px}
 
-    /* Calendar */
+    /* Mini calendar */
     #calendar{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden}
     .cal-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border-bottom:1px solid var(--border)}
     .cal-month{font-weight:700;color:#111827}
@@ -107,25 +71,17 @@
     .cal-cell.day.occ-high{background:#ede9fe;border-color:#ddd6fe}
     .cal-cell.day.occ-full{background:#fee2e2;border-color:#fecaca}
     .cal-cell.day.full{background:#fee2e2;border-color:#fecaca}
-    /* Ensure selected state is visibly green even if the day is marked full */
     .cal-cell.day.full.selected,
     .cal-cell.day.full.selected:hover{background:#f1f5f9;border-color:#86efac}
 
     /* Status select (single control) */
-    .select.status-select{
-      padding:2px 8px; /* compact */
-      font-size:11px;
-      font-weight:600;
-      width:78px;
-      min-width:78px;
-      max-width:78px;
-      border-radius:999px;
-      line-height:1;
-      height:24px;
-    }
+    .select.status-select{padding:2px 8px;font-size:11px;font-weight:600;width:78px;min-width:78px;max-width:78px;border-radius:999px;line-height:1;height:24px;min-height:24px}
     .select.status-select.open{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
     .select.status-select.closed{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
   </style>
+@endpush
+
+@push('scripts')
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const filter = document.querySelector('#filterDate');
@@ -405,6 +361,9 @@
       }
     });
   </script>
+@endpush
+
+@section('content')
   @php
     // Build time options 7:00–22:00 in 1-hour steps
     $defaultTime = old('time', '18:00');
@@ -415,8 +374,6 @@
       $timeOptions[$val] = $label;
     }
   @endphp
-</head>
-<body>
   <div class="container">
       <div class="header">
       <form method="get" class="toolbar" action="{{ route('admin.timeslots') }}">
@@ -586,5 +543,4 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+@endsection
