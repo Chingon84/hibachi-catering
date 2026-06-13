@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
-    :root{--bg:#f7f7fb;--text:#111827;--muted:#6b7280;--card:#fff;--border:#e5e7eb;--brand:#b21e27}
+    :root{--bg:#f5f6f8;--text:#0f172a;--muted:#64748b;--card:#fff;--border:#e6e8ec;--brand:#b21e27;--brand-hover:#971a22}
     *{box-sizing:border-box}
     [x-cloak]{display:none!important}
     body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
