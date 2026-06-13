@@ -39,7 +39,16 @@ class CalendarController extends Controller
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('date')
             ->orderBy('time')
-            ->get();
+            ->get([
+                'id',
+                'date',
+                'time',
+                'customer_name',
+                'guests',
+                'status',
+                'color',
+                'event_markers',
+            ]);
 
         // Bucket by date string
         $byDate = [];
@@ -61,14 +70,29 @@ class CalendarController extends Controller
     // Return event details as JSON for popover
     public function eventJson(int $id)
     {
-        $r = Reservation::with(['items','payments'])->findOrFail($id);
+        $r = Reservation::with([
+            'items',
+            'payments',
+            'scheduleAssignment.user:id,name',
+            'scheduleAssignment.chef1:id,name',
+            'scheduleAssignment.chef2:id,name',
+            'scheduleAssignment.chef3:id,name',
+            'scheduleAssignment.chef4:id,name',
+            'scheduleAssignment.assistant:id,name',
+        ])->findOrFail($id);
         $status = strtolower((string) ($r->status ?? 'pending'));
         if (in_array($status, ['draft', 'pending_payment'], true)) {
             $status = 'pending';
         }
+        $assignedStaff = ($r->scheduleAssignment?->assignedStaffSummaryRows() ?? collect())
+            ->filter(fn (array $row) => ($row['value'] ?? 'N/A') !== 'N/A')
+            ->values()
+            ->all();
         $out = [
             'id' => $r->id,
             'title' => $r->customer_name ?? '—',
+            'marker_meta' => $r->eventMarkerMeta(),
+            'marker_display' => $r->eventMarkerDisplay(),
             'status' => $status,
             'invoice_status' => $r->invoice_status,
             'date' => optional($r->date)->format('Y-m-d'),
@@ -85,6 +109,7 @@ class CalendarController extends Controller
             'stairs' => (bool) ($r->stairs ?? false),
             'notes' => $r->notes,
             'booked_by' => $r->booked_by,
+            'assigned_staff' => $assignedStaff,
             'totals' => [
                 'subtotal' => (float) ($r->subtotal ?? 0),
                 'travel_fee' => (float) ($r->travel_fee ?? 0),

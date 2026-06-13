@@ -24,18 +24,23 @@
     .metric .value{font-size:22px;font-weight:700}
     .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
   </style>
-  @php $fmt = fn($n)=>'$'.number_format((float)$n,2); @endphp
+  @php
+    $fmt = fn($n)=>'$'.number_format((float)$n,2);
+    $canViewFinancial = (bool) ($canViewFinancial ?? auth()->user()?->hasPermission('financial.view'));
+    $canViewOrders = auth()->user()?->hasPermission('orders.view');
+  @endphp
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="title" style="margin-right:auto">Reports</h1>
-      <a href="{{ route('admin.reservations') }}" class="btn secondary">Back</a>
+      <a href="{{ route('admin.reservations') }}" class="btn secondary" style="margin-left:auto">Back</a>
     </div>
 
     <div class="subnav">
       <a href="{{ route('admin.reports') }}" class="active">Reports Dashboard</a>
+      @if($canViewFinancial)
       <a href="{{ route('admin.reports.financial') }}">Financial Overview</a>
+      @endif
     </div>
 
     <div class="card"><div class="card-body">
@@ -69,78 +74,99 @@
       </form>
     </div></div>
 
-    <div class="cards">
-      <div class="metric"><div class="label">Total Revenue</div><div class="value">{{ $fmt($summary->total_sum ?? 0) }}</div></div>
-      <div class="metric"><div class="label">Deposits</div><div class="value">{{ $fmt($summary->deposit_sum ?? 0) }}</div></div>
-      <div class="metric"><div class="label">Gratuity</div><div class="value">{{ $fmt($summary->gratuity_sum ?? 0) }}</div></div>
-      <div class="metric"><div class="label">Tax</div><div class="value">{{ $fmt($summary->tax_sum ?? 0) }}</div></div>
-      <div class="metric"><div class="label">Reservations</div><div class="value">{{ number_format((int)($summary->count_res ?? 0)) }}</div></div>
-    </div>
-
-    <div class="chart-card" style="margin-bottom:12px">
-      <canvas id="salesChart" height="110"></canvas>
-    </div>
-
-    <div class="card">
-      <div class="card-body">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Total</th>
-              <th>Deposit</th>
-              <th>Gratuity</th>
-              <th>Tax</th>
-              <th>Invoice</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($rows as $r)
-              <tr>
-                <td>{{ $r->date?->format('m/d/Y') }}</td>
-                <td>{{ $r->customer_name ?? '—' }}</td>
-                <td>{{ $fmt($r->total ?? 0) }}</td>
-                <td>{{ $fmt($r->deposit_paid ?? 0) }}</td>
-                <td>{{ $fmt($r->gratuity ?? 0) }}</td>
-                <td>{{ $fmt($r->tax ?? 0) }}</td>
-                <td><a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" style="text-decoration:underline;color:#b21e27">View</a></td>
-              </tr>
-            @empty
-              <tr><td colspan="7" class="muted">No data for selected range</td></tr>
-            @endforelse
-          </tbody>
-        </table>
+    @if($canViewFinancial)
+      <div class="cards">
+        <div class="metric"><div class="label">Total Revenue</div><div class="value">{{ $fmt($summary->total_sum ?? 0) }}</div></div>
+        <div class="metric"><div class="label">Deposits</div><div class="value">{{ $fmt($summary->deposit_sum ?? 0) }}</div></div>
+        <div class="metric"><div class="label">Gratuity</div><div class="value">{{ $fmt($summary->gratuity_sum ?? 0) }}</div></div>
+        <div class="metric"><div class="label">Tax</div><div class="value">{{ $fmt($summary->tax_sum ?? 0) }}</div></div>
+        <div class="metric"><div class="label">Reservations</div><div class="value">{{ number_format((int)($summary->count_res ?? 0)) }}</div></div>
       </div>
-    </div>
+
+      <div class="chart-card" style="margin-bottom:12px">
+        <canvas id="salesChart" height="110"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Deposit</th>
+                <th>Gratuity</th>
+                <th>Tax</th>
+                <th>Invoice</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse($rows as $r)
+                <tr>
+                  <td>{{ $r->date?->format('m/d/Y') }}</td>
+                  <td>{{ $r->customer_name ?? '—' }}</td>
+                  <td>{{ $fmt($r->total ?? 0) }}</td>
+                  <td>{{ $fmt($r->deposit_paid ?? 0) }}</td>
+                  <td>{{ $fmt($r->gratuity ?? 0) }}</td>
+                  <td>{{ $fmt($r->tax ?? 0) }}</td>
+                  <td><a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" style="text-decoration:underline;color:#b21e27">View</a></td>
+                </tr>
+              @empty
+                <tr><td colspan="7" class="muted">No data for selected range</td></tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </div>
+      @include('admin.partials.pagination', ['paginator' => $rows])
+    @else
+      <div class="cards">
+        <div class="metric"><div class="label">Reservations</div><div class="value">{{ number_format((int) data_get($operationalSummary, 'reservation_count', 0)) }}</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:#0f172a">Financial details require additional access</div>
+            <div style="margin-top:6px;color:#64748b;font-size:14px">Revenue, deposits, gratuity, tax, and invoice-level financial reporting are hidden for this role.</div>
+          </div>
+          @if($canViewOrders)
+            <a href="{{ route('admin.orders.breakdown') }}" class="btn secondary">Open Order Breakdown</a>
+          @endif
+        </div>
+      </div>
+    @endif
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const labels = @json($labels);
-    const totals = @json($totals);
-    const deposits = @json($depos);
-    const gratuity = @json($grats);
-    const taxes = @json($taxes);
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Revenue', data: totals, borderColor: '#b21e27', backgroundColor: 'rgba(178,30,39,.12)', tension:.25, fill:true },
-          { label: 'Deposits', data: deposits, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,.12)', tension:.25, fill:true },
-          { label: 'Gratuity', data: gratuity, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,.12)', tension:.25, fill:true },
-          { label: 'Tax', data: taxes, borderColor: '#6d28d9', backgroundColor: 'rgba(109,40,217,.12)', tension:.25, fill:true },
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { display: true } },
-        scales: { y: { beginAtZero: true } }
-      }
-    });
-  </script>
+  @if($canViewFinancial)
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const labels = @json($labels);
+      const totals = @json($totals);
+      const deposits = @json($depos);
+      const gratuity = @json($grats);
+      const taxes = @json($taxes);
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Revenue', data: totals, borderColor: '#b21e27', backgroundColor: 'rgba(178,30,39,.12)', tension:.25, fill:true },
+            { label: 'Deposits', data: deposits, borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,.12)', tension:.25, fill:true },
+            { label: 'Gratuity', data: gratuity, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,.12)', tension:.25, fill:true },
+            { label: 'Tax', data: taxes, borderColor: '#6d28d9', backgroundColor: 'rgba(109,40,217,.12)', tension:.25, fill:true },
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    </script>
+  @endif
 </body>
 </html>

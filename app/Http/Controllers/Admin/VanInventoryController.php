@@ -19,6 +19,7 @@ class VanInventoryController extends Controller
             'status' => trim((string) $request->query('status', '')),
         ];
 
+        $perPage = $this->adminPerPage($request);
         $vans = Van::query()
             ->with(['currentLoadout.checkedBy:id,name', 'currentLoadout.loadedBy:id,name', 'currentLoadout.reservation:id,customer_name,date,code'])
             ->when($filters['q'] !== '', function ($query) use ($filters) {
@@ -33,7 +34,8 @@ class VanInventoryController extends Controller
             ->orderByRaw('van_number is null')
             ->orderBy('van_number')
             ->orderBy('name')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.inventory.vans.index', [
             'vans' => $vans,
@@ -46,6 +48,7 @@ class VanInventoryController extends Controller
                 ->orderByDesc('id')
                 ->limit(30)
                 ->get(['id', 'customer_name', 'date', 'code']),
+            'perPage' => $perPage,
         ]);
     }
 
@@ -90,7 +93,8 @@ class VanInventoryController extends Controller
             ->with(['checkedBy:id,name', 'loadedBy:id,name', 'reservation:id,customer_name,date,code'])
             ->latest('checked_at')
             ->latest('id')
-            ->paginate(12);
+            ->paginate(25)
+            ->withQueryString();
 
         return view('admin.inventory.vans.show', [
             'van' => $van,
@@ -104,6 +108,13 @@ class VanInventoryController extends Controller
                 ->limit(30)
                 ->get(['id', 'customer_name', 'date', 'code']),
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function editVan($id)

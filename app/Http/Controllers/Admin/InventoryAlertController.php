@@ -15,6 +15,7 @@ class InventoryAlertController extends Controller
             'category' => trim((string) $request->query('category', '')),
         ];
 
+        $perPage = $this->adminPerPage($request);
         $items = InventoryItem::query()
             ->whereColumn('current_stock', '<=', 'minimum_stock')
             ->when($filters['q'] !== '', function ($query) use ($filters) {
@@ -26,12 +27,21 @@ class InventoryAlertController extends Controller
             ->when($filters['category'] !== '', fn ($query) => $query->where('category', $filters['category']))
             ->orderByRaw('current_stock <= 0 desc')
             ->orderByRaw('(minimum_stock - current_stock) desc')
-            ->paginate(15);
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.inventory.alerts.index', [
             'items' => $items,
             'filters' => $filters,
             'categories' => InventoryItem::CATEGORIES,
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 }

@@ -274,7 +274,14 @@
           }
         });
         let autoGrat = sub * GRAT;
-        let autoTax  = sub * TAX;
+        const travel = parseFloat(document.getElementById('travelInput')?.value || travelDefault || 0) || 0;
+        const disc = parseFloat(($discount?.value || '0')) || 0;
+        let extras = 0;
+        document.querySelectorAll('.extra-amount').forEach(inp => { const v = parseFloat(inp.value || '0'); if (v > 0) extras += v; });
+        // California catering tax: taxable base includes food/items subtotal, travel fee,
+        // and mandatory gratuity/service charge. Voluntary tips are excluded.
+        const taxableBase = Math.max(0, sub + travel + extras + autoGrat - disc);
+        let autoTax  = Math.round(Math.round(taxableBase * 100) * TAX) / 100;
         if ($gratIn && $gratIn.dataset.manual !== '1') {
           $gratIn.value = autoGrat.toFixed(2);
         }
@@ -283,10 +290,6 @@
         }
         const grat = parseFloat(($gratIn?.value || '0')) || 0;
         const tax  = parseFloat(($taxIn?.value || '0')) || 0;
-        const travel = parseFloat(document.getElementById('travelInput')?.value || travelDefault || 0) || 0;
-        const disc = parseFloat(($discount?.value || '0')) || 0;
-        let extras = 0;
-        document.querySelectorAll('.extra-amount').forEach(inp => { const v = parseFloat(inp.value || '0'); if (v > 0) extras += v; });
         const tot  = Math.max(0, sub + travel + extras + grat + tax - disc);
         $subtotal.textContent = fmt(sub);
         // values shown directly in inputs

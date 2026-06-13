@@ -10,8 +10,20 @@ class TrashController extends Controller
 {
     public function index(Request $req)
     {
-        $rows = Reservation::onlyTrashed()->orderByDesc('deleted_at')->limit(200)->get();
-        return view('admin.trash', ['rows' => $rows]);
+        $perPage = $this->adminPerPage($req);
+        $rows = Reservation::onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('admin.trash', ['rows' => $rows, 'perPage' => $perPage]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function restore(int $id)
@@ -36,4 +48,3 @@ class TrashController extends Controller
         return redirect()->route('admin.trash')->with('ok','Reservation deleted permanently');
     }
 }
-

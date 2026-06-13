@@ -8,7 +8,7 @@ class Menu extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name','category','price','is_active','sort'];
+    protected $fillable = ['item_key','name','description','category','category_sort','price','is_active','sort'];
     protected $casts = [
         'price' => 'decimal:2',
         'is_active' => 'boolean',

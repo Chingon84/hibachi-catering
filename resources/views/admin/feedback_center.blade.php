@@ -24,8 +24,8 @@
     html{-webkit-text-size-adjust:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     *,*::before,*::after{box-sizing:border-box}
     body{background:#f8fafc;color:#0f172a;line-height:1.5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-    .container{width:calc(100vw - 24px);max-width:none;margin:20px 12px;padding:0 12px}
-    .dashboard-stack{display:grid;gap:24px}
+    .container{width:100%;max-width:none;margin:0;padding:20px 24px}
+    .dashboard-stack{display:grid;gap:16px}
     .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:0}
     .page-copy{max-width:760px}
     .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -196,7 +196,7 @@
       .filter-actions{grid-column:span 2}
     }
     @media (max-width: 720px){
-      .container{padding:0 10px}
+      .container{padding:16px}
       .dashboard-stack{gap:18px}
       .kpi-grid,.filter-bar,.fact-grid{grid-template-columns:1fr}
       .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -230,6 +230,9 @@
       'chef' => $filters['chef'] ?? '',
       'staff_type' => $filters['staff_type'] ?? '',
       'source' => $filters['source'] ?? '',
+      'sort' => $filters['sort'] ?? '',
+      'direction' => $filters['direction'] ?? '',
+      'per_page' => $perPage ?? 25,
     ], fn ($value) => $value !== '');
     $viewBase = array_filter($queryBase, fn ($value, $key) => $key !== 'item', ARRAY_FILTER_USE_BOTH);
     $caseTabs = [
@@ -249,6 +252,7 @@
       'resolved' => '<path d="m9.55 16.6-3.9-3.9 1.4-1.4 2.5 2.5 7.4-7.4 1.4 1.4z"/>',
     ];
     $createBackUrl = request()->fullUrl();
+    $canManageFeedback = (bool) ($canManageFeedback ?? auth()->user()?->hasPermission('feedback.manage'));
     $quickCreateGroups = [
       'Feedback' => [
         ['label' => 'Complaint', 'icon' => 'alert-triangle', 'icon_class' => 'text-red-500', 'href' => route('admin.feedback.create', ['type' => 'complaint', 'back' => $createBackUrl])],
@@ -311,7 +315,6 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-4 3v-3H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3 5h10v2H7V9zm0 4h7v2H7v-2z"/></svg>
             Operations module
           </div>
-          <h1 class="title">Feedback Center</h1>
           <p class="subtitle">Operations case management and performance analytics.</p>
         </div>
         <div class="header-actions">
@@ -320,16 +323,18 @@
             <a href="{{ route('admin.feedback', array_merge($viewBase, ['view' => 'analytics'])) }}" class="{{ $activeView === 'analytics' ? 'active' : '' }}">Analytics</a>
           </div>
           <div class="header-slot">Export / Reports</div>
-          <a
-            href="{{ route('admin.feedback.create', ['type' => 'days-off', 'back' => request()->fullUrl()]) }}"
-            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
-            </svg>
-            New Days Off Request
-          </a>
-          <x-admin.new-feedback-menu :groups="$quickCreateGroups" />
+          @if($canManageFeedback)
+            <a
+              href="{{ route('admin.feedback.create', ['type' => 'days-off', 'back' => request()->fullUrl()]) }}"
+              class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+              </svg>
+              New Days Off Request
+            </a>
+            <x-admin.new-feedback-menu :groups="$quickCreateGroups" />
+          @endif
         </div>
       </div>
 
@@ -347,6 +352,11 @@
 
       <div class="surface-card">
         <div class="surface-body">
+          @unless($canManageFeedback)
+            <div class="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              You have read-only access to the Feedback Center. Creating cases and updating workflows requires additional permissions.
+            </div>
+          @endunless
           <div class="filter-shell">
             <div class="filter-head">
               <div class="filter-title">
@@ -544,7 +554,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        @forelse($complaints as $row)
+                        @forelse($complaintsPage as $row)
                           @php
                             $complaintTeamMembers = collect($row['team_members'] ?? [])
                                 ->map(fn ($member) => is_array($member) ? (string) ($member['label'] ?? $member['name'] ?? $member['value'] ?? '') : (string) $member)
@@ -632,7 +642,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @forelse($goodFeedback as $row)
+                      @forelse($goodFeedbackPage as $row)
                         <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'good-feedback', 'item' => $row['feedback_id']])) }}">
                           <td><span class="cell-strong">{{ $row['feedback_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
                           <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
@@ -663,7 +673,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @forelse($vanFeedback as $row)
+                      @forelse($vanFeedbackPage as $row)
                         <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'van-feedback', 'item' => $row['vanfb_id']])) }}">
                           <td><span class="cell-strong">{{ $row['vanfb_id'] }}</span><span class="cell-meta"><span class="badge {{ strtolower(str_replace(' ', '-', $row['status'])) }}">{{ $row['status'] }}</span></span></td>
                           <td>{{ \Carbon\Carbon::parse($row['event_date'])->format('M d, Y') }}</td>
@@ -695,7 +705,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @forelse($attendance as $row)
+                      @forelse($attendancePage as $row)
                         <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'attendance', 'item' => $row['incident_id']])) }}">
                           <td><span class="cell-strong">{{ $row['incident_id'] }}</span></td>
                           <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
@@ -763,7 +773,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                      @forelse($daysOff as $row)
+                      @forelse($daysOffPage as $row)
                         @php
                           $statusClass = match (strtolower($row['status'])) {
                               'approved' => 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
@@ -829,7 +839,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      @forelse($alerts as $row)
+                      @forelse($alertsPage as $row)
                         <tr class="is-clickable" data-href="{{ route('admin.feedback', array_merge($queryBase, ['tab' => 'alerts', 'item' => $row['alert_id']])) }}">
                           <td><span class="cell-strong">{{ $row['alert_id'] }}</span></td>
                           <td>{{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
@@ -845,6 +855,20 @@
                     </tbody>
                   </table>
                 </div>
+              @endif
+              @php
+                $activePaginator = match ($activeTab) {
+                  'complaints' => $complaintsPage,
+                  'good-feedback' => $goodFeedbackPage,
+                  'van-feedback' => $vanFeedbackPage,
+                  'attendance' => $attendancePage,
+                  'days-off' => $daysOffPage,
+                  'alerts' => $alertsPage,
+                  default => null,
+                };
+              @endphp
+              @if($activePaginator)
+                @include('admin.partials.pagination', ['paginator' => $activePaginator])
               @endif
             </div>
           </div>

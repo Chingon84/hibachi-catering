@@ -12,8 +12,10 @@ use App\Models\User;
 use App\Models\VanFeedback;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -24,7 +26,9 @@ use Illuminate\Validation\ValidationException;
 class TeamController extends Controller
 {
     public const STAFF_TYPES = ['Chef', 'Assistant', 'Server', 'Office', 'Manager', 'Fire Show', 'Driver', 'Fleet', 'Admin', 'Other'];
+    public const EMPLOYEE_TYPES = ['Full Time', 'Part Time', 'Seasonal', 'Contractor', 'Temporary', 'Intern', 'Other'];
     public const DOCUMENT_TYPES = ['Warning', 'ID', 'Contract', 'License', 'Other'];
+    public const PASSWORD_PLACEHOLDER = '__KEEP_EXISTING_PASSWORD__';
 
     public function index(Request $request)
     {
@@ -34,7 +38,7 @@ class TeamController extends Controller
             'status' => trim((string) $request->query('status', '')),
         ];
 
-        $users = User::query()
+        $query = User::query()
             ->when($filters['q'] !== '', function ($query) use ($filters) {
                 $query->where(function ($nested) use ($filters) {
                     $nested->where('name', 'like', '%' . $filters['q'] . '%')
@@ -45,15 +49,32 @@ class TeamController extends Controller
                 });
             })
             ->when($filters['staff_type'] !== '', fn ($query) => $query->where('staff_type', $filters['staff_type']))
-            ->when($filters['status'] !== '', fn ($query) => $query->where('is_active', $filters['status'] === 'active'))
-            ->orderBy('name')
-            ->get();
+            ->when($filters['status'] !== '', fn ($query) => $query->where('is_active', $filters['status'] === 'active'));
+
+        $perPage = $this->adminPerPage($request);
+        $summary = [
+            'total' => (clone $query)->count(),
+            'active_chefs' => (clone $query)->where('is_active', true)->where('staff_type', 'Chef')->count(),
+            'admin_access' => (clone $query)->where('can_access_admin', true)->count(),
+            'inactive' => (clone $query)->where('is_active', false)->count(),
+        ];
+
+        $users = $query->orderBy('name')->paginate($perPage)->withQueryString();
 
         return view('admin.team.index', [
             'users' => $users,
             'filters' => $filters,
             'staffTypes' => self::STAFF_TYPES,
+            'summary' => $summary,
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function create()
@@ -63,6 +84,7 @@ class TeamController extends Controller
         return view('admin.team.form', [
             'user' => $user,
             'staffTypes' => self::STAFF_TYPES,
+            'employeeTypes' => self::EMPLOYEE_TYPES,
         ]);
     }
 
@@ -74,6 +96,9 @@ class TeamController extends Controller
             'username' => ['nullable', 'string', 'max:255', 'unique:users,username'],
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
+            'employee_number' => ['nullable', 'string', 'max:40'],
+            'employee_type' => ['nullable', 'string', 'max:40', Rule::in(self::EMPLOYEE_TYPES)],
+            'hire_date' => ['nullable', 'date'],
             'staff_type' => ['nullable', 'string', 'max:40', Rule::in(self::STAFF_TYPES)],
             'role' => ['required', 'string', 'max:50', Rule::in(['owner', 'admin', 'manager', 'staff', 'readonly', 'office'])],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
@@ -105,10 +130,7 @@ class TeamController extends Controller
 
     public function show(Request $request, $id)
     {
-        $user = User::with([
-            'documents.uploader:id,name',
-            'teamActivities.actor:id,name',
-        ])->findOrFail($id);
+        $user = User::findOrFail($id);
 
         $activeTab = strtolower((string) $request->query('tab', 'overview'));
         $tabs = ['overview', 'documents', 'incidents', 'permissions', 'activity'];
@@ -116,38 +138,28 @@ class TeamController extends Controller
             $activeTab = 'overview';
         }
 
-        $complaints = Complaint::query()
-            ->where('chef', $user->name)
-            ->latest('date_received')
-            ->get();
-
-        $attendanceIncidents = AttendanceIncident::query()
-            ->where('chef', $user->name)
-            ->latest('date')
-            ->get();
-
-        $recognition = GoodFeedback::query()
-            ->where('chef', $user->name)
-            ->latest('date_received')
-            ->get();
-
-        $vanFeedback = VanFeedback::query()
-            ->where('chef', $user->name)
-            ->latest('date_received')
-            ->get();
+        $documents = $activeTab === 'documents'
+            ? $user->documents()->with('uploader:id,name')->latest()->paginate(25, ['*'], 'documents_page')->withQueryString()
+            : collect();
+        $incidentFeed = $activeTab === 'incidents'
+            ? $this->incidentFeedPaginator($user->name, $request)
+            : collect();
+        $activity = $activeTab === 'activity'
+            ? $user->teamActivities()->with('actor:id,name')->latest()->paginate(25, ['*'], 'activity_page')->withQueryString()
+            : collect();
 
         return view('admin.team.show', [
             'user' => $user,
             'activeTab' => $activeTab,
             'documentTypes' => self::DOCUMENT_TYPES,
-            'documents' => $user->documents->sortByDesc('created_at')->values(),
-            'incidentFeed' => $this->buildIncidentFeed($complaints, $attendanceIncidents, $recognition, $vanFeedback),
+            'documents' => $documents,
+            'incidentFeed' => $incidentFeed,
             'moduleAccess' => $this->buildModuleAccess($user),
-            'activity' => $user->teamActivities->sortByDesc('created_at')->values(),
+            'activity' => $activity,
             'overviewStats' => [
-                'complaints' => $complaints->count(),
-                'attendance' => $attendanceIncidents->count(),
-                'recognition' => $recognition->count(),
+                'complaints' => Complaint::query()->where('chef', $user->name)->count(),
+                'attendance' => AttendanceIncident::query()->where('chef', $user->name)->count(),
+                'recognition' => GoodFeedback::query()->where('chef', $user->name)->count(),
             ],
         ]);
     }
@@ -159,18 +171,29 @@ class TeamController extends Controller
         return view('admin.team.form', [
             'user' => $user,
             'staffTypes' => self::STAFF_TYPES,
+            'employeeTypes' => self::EMPLOYEE_TYPES,
         ]);
     }
 
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        if ((string) $request->input('password', '') === self::PASSWORD_PLACEHOLDER) {
+            $request->merge([
+                'password' => '',
+                'password_confirmation' => '',
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
             'position' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
+            'employee_number' => ['nullable', 'string', 'max:40'],
+            'employee_type' => ['nullable', 'string', 'max:40', Rule::in(self::EMPLOYEE_TYPES)],
+            'hire_date' => ['nullable', 'date'],
             'staff_type' => ['nullable', 'string', 'max:40', Rule::in(self::STAFF_TYPES)],
             'role' => ['required', 'string', 'max:50', Rule::in(['owner', 'admin', 'manager', 'staff', 'readonly', 'office'])],
             'password' => ['nullable', 'string', 'min:6', 'confirmed'],
@@ -191,7 +214,8 @@ class TeamController extends Controller
             abort(403, 'Only owner can assign owner role');
         }
 
-        if (!empty($data['password'])) {
+        $passwordInput = (string) ($data['password'] ?? '');
+        if ($passwordInput !== '' && $passwordInput !== self::PASSWORD_PLACEHOLDER) {
             $data['password'] = Hash::make($data['password']);
             $this->logActivity($user, 'password_changed', 'Password updated', 'Account password was changed from the team management workflow.');
         } else {
@@ -253,6 +277,70 @@ class TeamController extends Controller
         return redirect()->route('admin.team.show', ['id' => $user->id, 'tab' => 'documents'])->with('ok', 'Document uploaded.');
     }
 
+    public function updateProfilePhoto(Request $request, $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'profile_photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $file = $validated['profile_photo'];
+        $safeName = now()->format('YmdHis') . '-' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+        $safeName = trim($safeName, '-') ?: now()->format('YmdHis') . '-profile';
+        $path = $file->storeAs(
+            'team-profile-photos/' . $user->id,
+            $safeName . '.' . $file->getClientOriginalExtension(),
+            'public'
+        );
+
+        if (!empty($user->profile_photo_path)) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $user->profile_photo_path = $path;
+        $user->save();
+
+        $this->logActivity(
+            $user,
+            'profile_photo_updated',
+            'Profile photo updated',
+            'The employee profile photo was updated.',
+            ['profile_photo_path' => $path]
+        );
+
+        $redirect = $request->query('back') === 'edit'
+            ? redirect()->route('admin.team.edit', $user->id)
+            : redirect()->route('admin.team.show', ['id' => $user->id, 'tab' => $request->query('tab', 'overview')]);
+
+        return $redirect->with('ok', 'Profile photo updated.');
+    }
+
+    public function destroyProfilePhoto(Request $request, $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+
+        if (!empty($user->profile_photo_path)) {
+            Storage::disk('public')->delete($user->profile_photo_path);
+        }
+
+        $user->profile_photo_path = null;
+        $user->save();
+
+        $this->logActivity(
+            $user,
+            'profile_photo_removed',
+            'Profile photo removed',
+            'The employee profile photo was removed.'
+        );
+
+        $redirect = $request->query('back') === 'edit'
+            ? redirect()->route('admin.team.edit', $user->id)
+            : redirect()->route('admin.team.show', ['id' => $user->id, 'tab' => $request->query('tab', 'overview')]);
+
+        return $redirect->with('ok', 'Profile photo removed.');
+    }
+
     public function downloadDocument($id, $documentId)
     {
         $user = User::findOrFail($id);
@@ -261,6 +349,18 @@ class TeamController extends Controller
             ->findOrFail($documentId);
 
         return Storage::download($document->file_path, basename($document->file_path));
+    }
+
+    public function viewDocument($id, $documentId)
+    {
+        $user = User::findOrFail($id);
+        $document = TeamMemberDocument::query()
+            ->where('team_member_id', $user->id)
+            ->findOrFail($documentId);
+
+        return Storage::response($document->file_path, basename($document->file_path), [
+            'Content-Disposition' => 'inline; filename="' . basename($document->file_path) . '"',
+        ]);
     }
 
     public function destroyDocument($id, $documentId): RedirectResponse
@@ -310,51 +410,76 @@ class TeamController extends Controller
         return back()->with('ok', 'Access updated');
     }
 
-    private function buildIncidentFeed(
-        Collection $complaints,
-        Collection $attendanceIncidents,
-        Collection $recognition,
-        Collection $vanFeedback
-    ): Collection {
-        return $complaints->map(fn (Complaint $item) => [
-            'kind' => 'Complaint',
-            'tone' => 'text-red-600 bg-red-50',
-            'date' => optional($item->date_received)->toDateString(),
-            'summary' => $item->category,
-            'detail' => $item->description,
-            'status' => $item->resolution_status,
-            'reference' => $item->complaint_id,
-        ])->concat(
-            $attendanceIncidents->map(fn (AttendanceIncident $item) => [
-                'kind' => 'Attendance Incident',
-                'tone' => 'text-blue-600 bg-blue-50',
-                'date' => optional($item->date)->toDateString(),
-                'summary' => $item->incident_type,
-                'detail' => $item->notes ?: 'Manager-reviewed attendance issue.',
-                'status' => $item->authorized ? 'Authorized' : 'Unauthorized',
-                'reference' => $item->incident_id,
+    private function incidentFeedPaginator(string $chefName, Request $request): LengthAwarePaginator
+    {
+        $queries = [
+            Complaint::query()->selectRaw("
+                'Complaint' as kind,
+                'text-red-600 bg-red-50' as tone,
+                complaints.date_received as date,
+                complaints.category as summary,
+                complaints.description as detail,
+                complaints.resolution_status as status,
+                CONCAT('CMP-', complaints.id) as reference,
+                complaints.date_received as sort_date
+            ")->where('chef', $chefName)->toBase(),
+            AttendanceIncident::query()->selectRaw("
+                'Attendance Incident' as kind,
+                'text-blue-600 bg-blue-50' as tone,
+                attendance_incidents.date as date,
+                attendance_incidents.incident_type as summary,
+                COALESCE(attendance_incidents.notes, 'Manager-reviewed attendance issue.') as detail,
+                CASE WHEN attendance_incidents.authorized = 1 THEN 'Authorized' ELSE 'Unauthorized' END as status,
+                CONCAT('ATT-', attendance_incidents.id) as reference,
+                attendance_incidents.date as sort_date
+            ")->where('chef', $chefName)->toBase(),
+            GoodFeedback::query()->selectRaw("
+                'Recognition' as kind,
+                'text-green-600 bg-green-50' as tone,
+                good_feedback.date_received as date,
+                good_feedback.source as summary,
+                good_feedback.compliment as detail,
+                'Logged' as status,
+                CONCAT('GF-', good_feedback.id) as reference,
+                good_feedback.date_received as sort_date
+            ")->where('chef', $chefName)->toBase(),
+            VanFeedback::query()->selectRaw("
+                'Van Feedback' as kind,
+                'text-orange-600 bg-orange-50' as tone,
+                van_feedback.date_received as date,
+                van_feedback.van as summary,
+                van_feedback.description as detail,
+                CASE WHEN van_feedback.action_taken IS NOT NULL AND van_feedback.action_taken <> '' THEN 'In Review' ELSE 'Open' END as status,
+                CONCAT('VAN-', van_feedback.id) as reference,
+                van_feedback.date_received as sort_date
+            ")->where('chef', $chefName)->toBase(),
+        ];
+
+        $combined = array_shift($queries);
+        foreach ($queries as $query) {
+            $combined->unionAll($query);
+        }
+
+        $paginator = DB::query()
+            ->fromSub($combined, 'incident_feed')
+            ->select(['kind', 'tone', 'date', 'summary', 'detail', 'status', 'reference'])
+            ->orderByDesc('sort_date')
+            ->paginate(25, ['*'], 'incidents_page')
+            ->withQueryString();
+
+        $paginator->setCollection(
+            $paginator->getCollection()->map(fn ($item) => [
+                'kind' => $item->kind,
+                'tone' => $item->tone,
+                'date' => $item->date,
+                'summary' => $item->summary,
+                'detail' => $item->detail,
+                'status' => $item->status,
+                'reference' => $item->reference,
             ])
-        )->concat(
-            $recognition->map(fn (GoodFeedback $item) => [
-                'kind' => 'Recognition',
-                'tone' => 'text-green-600 bg-green-50',
-                'date' => optional($item->date_received)->toDateString(),
-                'summary' => $item->source,
-                'detail' => $item->compliment,
-                'status' => 'Logged',
-                'reference' => $item->feedback_id,
-            ])
-        )->concat(
-            $vanFeedback->map(fn (VanFeedback $item) => [
-                'kind' => 'Van Feedback',
-                'tone' => 'text-orange-600 bg-orange-50',
-                'date' => optional($item->date_received)->toDateString(),
-                'summary' => $item->van,
-                'detail' => $item->description,
-                'status' => filled($item->action_taken) ? 'In Review' : 'Open',
-                'reference' => $item->vanfb_id,
-            ])
-        )->sortByDesc(fn (array $item) => $item['date'] ?? '')->values();
+        );
+
+        return $paginator;
     }
 
     private function buildModuleAccess(User $user): Collection

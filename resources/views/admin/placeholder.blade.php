@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
     .placeholder-note{color:var(--muted);font-size:14px}
+    .placeholder-card{max-width:560px}
   </style>
   
 </head>
 <body>
   <div class="container">
-    <div class="card">
+    <div class="card placeholder-card">
       <div class="card-body">
-        <h2 style="margin:0 0 6px">{{ $title ?? 'Coming soon' }}</h2>
         <p class="placeholder-note">This page is under construction.</p>
         <a class="btn" href="{{ route('admin.dashboard') }}">Back to Dashboard</a>
       </div>

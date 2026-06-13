@@ -7,9 +7,11 @@
 @php
   $state   = $state ?? [];
   $cats    = $menuCategories ?? [];
+  $selectedItems = $selectedItems ?? [];
   $TRAVEL  = (float)($state['travel_fee'] ?? 0);
   $GRAT    = isset($constants['GRATUITY']) ? (float)$constants['GRATUITY'] : 0.18;
   $TAX     = isset($constants['TAX']) ? (float)$constants['TAX'] : 0.1025;
+  $maxQty = 10000;
 @endphp
 
 <div class="rs-card rs-stack-lg">
@@ -22,6 +24,10 @@
 
   <form method="POST" action="{{ route('reservations.submit', ['step'=>3]) }}" id="menuForm">
     @csrf
+
+    @if ($errors->any())
+      <p class="rs-helper" style="color:#b91c1c;font-weight:600">{{ $errors->first() }}</p>
+    @endif
 
     <div class="rs-step3-layout">
       <section class="rs-step3-main rs-section" style="margin-bottom:0;border-bottom:none;padding-bottom:0;">
@@ -65,11 +71,13 @@
                         type="number"
                         name="items[{{ $code }}]"
                         min="0"
+                        max="{{ $maxQty }}"
                         step="1"
-                        value="0"
+                        value="{{ old("items.$code", data_get($selectedItems, $code, 0)) }}"
                         class="rs-input qty-input rs-menu-qty"
                         data-price="{{ (float)$it['price'] }}"
                         data-cat="{{ $cat }}"
+                        inputmode="numeric"
                         aria-label="Quantity for {{ $it['name'] }}"
                       >
                     </div>
@@ -110,12 +118,6 @@
             <span>Total</span>
             <span id="total">$0.00</span>
           </div>
-          <div class="rs-summary-progress" id="pkgProgressWrap" aria-live="polite">
-            <div class="rs-helper" id="pkgHint" style="margin-top:8px;"></div>
-            <div class="rs-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-              <div class="rs-progress-fill" id="pkgProgressBar"></div>
-            </div>
-          </div>
           <button type="submit" class="btn rs-summary-cta" id="continueBtn">
             <span id="continueBtnText">Continue to Payment</span>
           </button>
@@ -137,16 +139,13 @@
   const GRAT = {{ $GRAT }};
   const TAX  = {{ $TAX }};
   const travel = {{ $TRAVEL }};
-  const guests = {{ (int) (data_get($state,'guests',0) ?? 0) }};
+  const maxQty = {{ $maxQty }};
   const $qtys = document.querySelectorAll('.qty-input');
   const $subtotal = document.getElementById('subtotal');
   const $gratuity = document.getElementById('gratuity');
   const $tax = document.getElementById('tax');
   const $total = document.getElementById('total');
   const $totalQty = document.getElementById('totalQty');
-  const $pkgHint = document.getElementById('pkgHint');
-  const $pkgProgressWrap = document.getElementById('pkgProgressWrap');
-  const $pkgProgressBar = document.getElementById('pkgProgressBar');
   const $continueBtn = document.getElementById('continueBtn');
   const $continueBtnText = document.getElementById('continueBtnText');
 
@@ -199,49 +198,33 @@
     });
   }
 
-  function updatePackageProgress(pkgPeople){
-    if (!$pkgHint || !$pkgProgressBar) return;
-    const targetGuests = Math.max(0, guests);
-    const pct = targetGuests > 0 ? clamp((pkgPeople / targetGuests) * 100, 0, 100) : 0;
-    $pkgProgressBar.style.width = `${pct}%`;
-    if ($pkgProgressWrap) {
-      $pkgProgressWrap.classList.remove('is-ok','is-under','is-over');
+  function normalizeQtyInput(inp){
+    const raw = String(inp.value || '').trim();
+    if (raw === '') return 0;
+    let qty = parseInt(raw, 10);
+    if (!Number.isFinite(qty) || qty < 0) qty = 0;
+    qty = clamp(qty, 0, maxQty);
+    if (String(qty) !== raw) {
+      inp.value = String(qty);
     }
-
-    if (targetGuests <= 0) {
-      $pkgHint.textContent = '';
-      if ($pkgProgressWrap) $pkgProgressWrap.classList.add('is-under');
-      return;
-    }
-
-    if (pkgPeople < targetGuests) {
-      $pkgHint.textContent = `Select ${targetGuests - pkgPeople} more`;
-      if ($pkgProgressWrap) $pkgProgressWrap.classList.add('is-under');
-    } else if (pkgPeople === targetGuests) {
-      $pkgHint.textContent = 'Perfect — ready to continue';
-      if ($pkgProgressWrap) $pkgProgressWrap.classList.add('is-ok');
-    } else {
-      $pkgHint.textContent = 'You selected more than guests';
-      if ($pkgProgressWrap) $pkgProgressWrap.classList.add('is-over');
-    }
+    return qty;
   }
 
   function recalc(){
     let sub = 0;
-    let pkgPeople = 0;
     let totalQty = 0;
     $qtys.forEach(inp => {
-      const qty = parseInt(inp.value || '0', 10);
+      const qty = normalizeQtyInput(inp);
       const price = parseFloat(inp.dataset.price || '0');
       if(qty > 0) sub += qty * price;
       if(qty > 0) totalQty += qty;
-      if ((inp.dataset.cat || '') === 'Packages') {
-        if(qty > 0) pkgPeople += qty;
-      }
     });
 
     const grat = sub * GRAT;
-    const tax  = sub * TAX;
+    // California catering tax: taxable base includes food/items subtotal, travel fee,
+    // and mandatory gratuity/service charge. Voluntary tips are excluded.
+    const taxableBase = Math.max(0, sub + travel + grat);
+    const tax  = Math.round(Math.round(taxableBase * 100) * TAX) / 100;
     const tot  = sub + travel + grat + tax;
 
     setMoneyAnimated('subtotal', $subtotal, sub);
@@ -250,16 +233,18 @@
     setMoneyAnimated('total', $total, tot);
     if ($totalQty) $totalQty.textContent = String(totalQty);
     updateSelectedRows();
-    updatePackageProgress(pkgPeople);
   }
 
-  $qtys.forEach(inp => inp.addEventListener('input', recalc));
+  $qtys.forEach(inp => {
+    inp.addEventListener('input', recalc);
+    inp.addEventListener('blur', recalc);
+  });
   if ($continueBtn) {
-    $continueBtn.addEventListener('click', () => {
-      if ($continueBtn.disabled) return;
+    document.getElementById('menuForm')?.addEventListener('submit', () => {
+      recalc();
       $continueBtn.classList.add('is-loading');
       if ($continueBtnText) $continueBtnText.textContent = 'Processing...';
-    }, { once: true });
+    });
   }
   recalc();
 })();

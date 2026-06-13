@@ -8,10 +8,18 @@
 
   @php
     $state = $state ?? [];
+    $r = $reservation ?? null;
     $estimate = $state['estimate'] ?? [];
-    $total = (float)($estimate['total'] ?? 0);
+    $dbTotals = $r ? \App\Support\ReservationTotals::compute($r) : null;
+    $total = (float)($dbTotals['total'] ?? ($estimate['total'] ?? 0));
     $depositPct = 0.20;
-    $deposit = round($total * $depositPct, 2);
+    $deposit = (float)($r && (float)($r->deposit_due ?? 0) > 0 ? $r->deposit_due : round($total * $depositPct, 2));
+    $paidTotal = (float)($dbTotals['paid_total'] ?? 0);
+    $depositPaidAmount = (float)($dbTotals['deposit_paid'] ?? 0);
+    $depositCovered = $deposit > 0 && ($depositPaidAmount >= ($deposit - 0.009) || $paidTotal >= ($deposit - 0.009));
+    $remainingDeposit = max(0, round($deposit - min($deposit, max($depositPaidAmount, min($paidTotal, $deposit))), 2));
+    $balance = (float)($dbTotals['balance'] ?? max(0, round($total - $paidTotal, 2)));
+    $fullPaymentAmount = $paidTotal > 0 ? $balance : $total;
     $d = data_get($state,'date');
     $dateFmt = $d ? \Carbon\Carbon::parse($d)->format('m/d/Y') : '—';
   @endphp
@@ -40,6 +48,19 @@
           </div>
         </div>
       </div>
+      <div class="rs-info" style="margin-top:12px;{{ $depositCovered ? 'background:#ecfdf5;border-color:#d1fae5;color:#065f46;' : '' }}">
+        @if($depositCovered)
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <span style="font-weight:700;">Deposit Paid</span>
+            <span style="display:inline-flex;align-items:center;border-radius:999px;background:#16a34a;color:#fff;padding:4px 10px;font-size:.78rem;font-weight:800;text-transform:uppercase;">Deposit Paid</span>
+          </div>
+        @else
+          <p class="rs-helper" style="margin:0;color:#374151;font-weight:600;">Deposit required to confirm your reservation.</p>
+        @endif
+        @if($balance > 0.009)
+          <p class="rs-helper" style="margin:8px 0 0;color:#374151;font-weight:600;">Remaining balance due at event: ${{ number_format($balance,2) }}</p>
+        @endif
+      </div>
     </section>
 
     <section class="rs-section">
@@ -50,22 +71,23 @@
           <p class="rs-helper" style="margin:0 0 8px;">You’ll be redirected to a secure Stripe page to complete the payment.</p>
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-weight:600;">Pay deposit now</span>
-            <span style="font-weight:700;font-size:1.05rem;">${{ number_format($deposit,2) }}</span>
+            <span style="font-weight:700;font-size:1.05rem;">${{ number_format($remainingDeposit > 0 ? $remainingDeposit : $deposit,2) }}</span>
           </div>
         </div>
-        <input type="hidden" name="deposit_amount" value="{{ number_format($deposit, 2, '.', '') }}">
+        <input type="hidden" name="deposit_amount" value="{{ number_format($remainingDeposit > 0 ? $remainingDeposit : $deposit, 2, '.', '') }}">
         <input type="hidden" name="payment_type" value="deposit">
         <div class="rs-actions">
           <div class="rs-actions-group">
             <a class="btn btn-secondary" href="{{ route('reservations.step', ['step'=>3]) }}">Back</a>
           </div>
           <div class="rs-actions-group">
-            <button type="submit" class="btn">Pay Deposit</button>
+            <button type="submit" class="btn" {{ $depositCovered ? 'disabled' : '' }}>{{ $depositCovered ? 'Deposit Paid' : 'Pay Deposit' }}</button>
           </div>
         </div>
       </form>
     </section>
 
+    @if($fullPaymentAmount > 0.009)
     <section>
       <h3 class="rs-section-head">Pay Full Amount</h3>
       <form method="POST" action="{{ route('payments.checkout') }}" id="payFullForm" class="rs-stack-lg">
@@ -73,11 +95,11 @@
         <div class="rs-info">
           <p class="rs-helper" style="margin:0 0 8px;">Prefer to pay the full amount now?</p>
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-weight:600;">Full payment</span>
-            <span style="font-weight:700;font-size:1.05rem;">${{ number_format($total,2) }}</span>
+            <span style="font-weight:600;">{{ $paidTotal > 0 ? 'Remaining balance' : 'Full payment' }}</span>
+            <span style="font-weight:700;font-size:1.05rem;">${{ number_format($fullPaymentAmount,2) }}</span>
           </div>
         </div>
-        <input type="hidden" name="deposit_amount" value="{{ number_format($total, 2, '.', '') }}">
+        <input type="hidden" name="deposit_amount" value="{{ number_format($fullPaymentAmount, 2, '.', '') }}">
         <input type="hidden" name="payment_type" value="full">
         <div class="rs-actions" style="margin-top:0;padding-top:0;border-top:none;">
           <div></div>
@@ -87,5 +109,6 @@
         </div>
       </form>
     </section>
+    @endif
   </div>
 @endsection

@@ -10,21 +10,23 @@
   <style>
     :root{--bg:#f7f7fb;--text:#111827;--muted:#6b7280;--card:#fff;--border:#e5e7eb;--brand:#b21e27}
     *{box-sizing:border-box}
+    [x-cloak]{display:none!important}
     body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
+    .page-shell{width:100%;max-width:none;margin:0;padding:20px 24px!important}
+    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:9px 13px;cursor:pointer;font-weight:700;text-decoration:none;display:inline-block;font-size:14px;line-height:1.2}
     .btn.secondary{background:#4b5563}
     .badge{display:inline-block;border:1px solid var(--border);background:#f3f4f6;color:#374151;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
     .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px}
     .chip svg{width:14px;height:14px;color:#6b7280}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04);margin-bottom:14px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.035);margin-bottom:12px}
     .input{width:100%;padding:10px 12px;border:1px solid #e6e8ec;border-radius:10px;background:#fff;transition:border-color .12s ease, box-shadow .12s ease}
     .input:focus{outline:none;border-color:#d1d5db;box-shadow:0 0 0 3px rgba(178,30,39,.08)}
     select.input{appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%236b7280"><path d="M5.23 7.21a.75.75 0 011.06.02L10 10.207l3.71-2.977a.75.75 0 111.06 1.06l-4.24 3.4a.75.75 0 01-.94 0l-4.24-3.4a.75.75 0 01.02-1.06z"/></svg>');background-repeat:no-repeat;background-position:right 10px center;background-size:16px;padding-right:34px}
     textarea.input{resize:vertical}
-    .icon-btn{appearance:none;border:0;background:#4b5563;color:#fff;border-radius:8px;padding:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-    .icon-btn:hover{background:#374151}
-    .icon-btn.danger{background:#b21e27}
-    .icon-btn.danger:hover{background:#9a1a22}
+    .icon-btn{appearance:none;border:1px solid #e5e7eb;background:#fff;color:#475569;border-radius:8px;padding:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .icon-btn:hover{background:#f8fafc;color:#111827}
+    .icon-btn.danger{background:#fff;color:#b91c1c;border-color:#fecaca}
+    .icon-btn.danger:hover{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
     .icon-btn svg{width:16px;height:16px;display:block}
     /* Compact controls for adjustments */
     .adj-plus{width:32px;height:32px;border-radius:9999px;border:1px solid #ddd;background:#eee;color:#666;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
@@ -37,58 +39,132 @@
     .swatches{display:grid;grid-template-columns:repeat(5,16px);gap:8px}
     .sw{width:16px;height:16px;border-radius:999px;border:2px solid #fff;box-shadow:0 0 0 1px #d1d5db;position:relative;cursor:pointer}
     .sw .check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
-    .summary-hero{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);border:1px solid var(--border);border-radius:18px;padding:16px 18px;box-shadow:0 12px 30px rgba(15,23,42,.05)}
-    .summary-main{display:flex;flex-direction:column;gap:10px}
+    .summary-hero{background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);border:1px solid var(--border);border-radius:14px;padding:11px 14px;box-shadow:0 10px 24px rgba(15,23,42,.045);margin-bottom:12px !important}
+    .summary-hero > .flex{gap:10px !important}
+    .summary-main{display:flex;flex-direction:column;gap:7px}
     .summary-identity{display:flex;flex-direction:column;gap:4px}
-    .summary-name{margin:0;font-size:30px;line-height:1.05;font-weight:800;letter-spacing:-.02em;color:#0f172a}
-    .summary-meta{font-size:13px;color:#64748b;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .summary-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    .metric-chip{padding:7px 12px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-size:12px;font-weight:600;color:#334155}
-    .summary-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-    .resv-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
-    .resv-main,.resv-side{display:flex;flex-direction:column;gap:14px}
-    .section-card{border-radius:16px;box-shadow:0 14px 34px rgba(15,23,42,.05)}
-    .form-pane{background:#fcfdff;border:1px solid #edf0f4;border-radius:14px;padding:14px}
-    .pane-title{font-size:16px;font-weight:700;color:#0f172a;margin:0 0 12px 0}
+    .summary-name{margin:0;font-size:24px;line-height:1.08;font-weight:800;letter-spacing:0;color:#0f172a}
+    .summary-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .name-markers{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .name-marker{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;color:#0f172a;font-size:16px;font-weight:900;line-height:1}
+    .name-marker.vip{font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 10px}
+    .summary-meta{font-size:12px;color:#64748b;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+    .summary-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+    .metric-chip{padding:5px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-size:11px;font-weight:700;color:#334155}
+    .metric-chip svg{width:13px;height:13px}
+    .summary-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .summary-actions a,.summary-actions button{min-height:34px !important;padding:7px 11px !important;border-radius:9px !important;font-size:13px !important;line-height:1.15}
+    .summary-actions svg{width:15px;height:15px}
+    .resv-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+    .resv-main,.resv-side{display:flex;flex-direction:column;gap:12px}
+    .section-card{border-radius:12px;box-shadow:0 10px 26px rgba(15,23,42,.04);margin-bottom:0}
+    .form-pane{background:#fcfdff;border:1px solid #edf0f4;border-radius:12px;padding:12px}
+    .pane-title{font-size:14px;font-weight:800;color:#0f172a;margin:0 0 8px 0}
     .summary-kv{display:grid;grid-template-columns:1fr;gap:12px}
     .summary-kv .card{margin-bottom:0}
     .items-card table thead tr,.payments-card table thead tr{background:#f8fafc}
-    .items-card table thead th,.payments-card table thead th{color:#475569;padding-top:10px;padding-bottom:10px}
-    .items-card table tbody td,.payments-card table tbody td{padding-top:10px;padding-bottom:10px}
+    .items-card table thead th,.payments-card table thead th{color:#475569;padding:7px 9px !important;font-size:12px !important}
+    .items-card table tbody td,.payments-card table tbody td{padding:7px 9px !important}
     .items-card table tbody tr{transition:background-color .16s ease}
     .items-card table tbody tr:hover{background:#f8fafc}
     .payments-card table tbody tr:hover{background:#f8fbff}
-    .add-items-shell{margin-top:14px;padding-top:12px;border-top:1px solid #e7ebf0}
-    .add-items-head{display:flex;align-items:center;gap:10px;margin:0 0 9px}
-    .add-items-head::before,.add-items-head::after{content:"";height:1px;background:#e7ebf0;flex:1}
-    .add-items-title{font-size:14px;font-weight:600;letter-spacing:0;color:#64748b;text-transform:none;margin:0}
-    .add-row{display:grid;grid-template-columns:2.1fr 2fr .8fr 1fr auto;gap:8px;align-items:end;background:#fafbfd;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
-    .add-row + .add-row{margin-top:8px}
-    .add-row .field label{display:block;font-size:11px;color:#6b7280;margin-bottom:4px}
-    .add-row .input{height:34px;padding:7px 10px;font-size:13px}
-    .add-row .add-btn{height:34px;min-width:34px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer}
-    .add-row .add-btn:hover{background:#f1f5f9}
-    @media (max-width: 1100px){
-      .add-row{grid-template-columns:1fr 1fr}
-      .add-row .field{grid-column:span 1}
-      .add-row .field.qty,.add-row .field.price{grid-column:span 1}
-    }
-    .totals-card{background:#f8fafc;border:1px solid #e6ecf5;border-radius:14px;padding:12px 14px}
-    .totals-card .totals-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
-    .totals-card .totals-row.total{font-size:19px;font-weight:800;color:#0f172a;border-top:1px solid #e5e7eb;margin-top:6px;padding-top:8px}
-    .totals-card .totals-row.total span{font-size:20px;font-weight:900}
-    .totals-card .totals-row.balance{font-size:16px;font-weight:800;color:#b21e27}
-    .status-pill-select{min-width:140px !important;height:32px !important;padding:6px 30px 6px 10px !important;border-radius:999px !important;font-size:12px !important;font-weight:700;border:1px solid #e5e7eb !important;box-shadow:none !important}
+    .line-items-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .line-items-title{font-size:18px;font-weight:800;color:#111827;margin:0}
+    .line-items-collapse{width:30px;height:30px;border:0;background:transparent;color:#111827;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+    .line-items-collapse:hover{background:#f3f4f6}
+    .line-items-table{width:100%;border-collapse:separate;border-spacing:0}
+    .line-items-table thead th{font-size:12px;font-weight:800;color:#111827;background:#fff !important;border-bottom:1px solid #9ca3af;padding:9px 12px !important}
+    .line-items-table tbody td{padding:10px 12px !important;border-bottom:1px solid #eef0f3;vertical-align:middle}
+    .line-items-table tbody tr:hover{background:#fafafa}
+    .line-item-name{font-size:13px;font-weight:800;color:#111827;text-decoration:underline;text-underline-offset:2px;text-transform:uppercase}
+    .line-item-desc{font-size:11px;color:#6b7280;margin-top:4px}
+    .line-item-desc-input{height:30px;padding:5px 8px;font-size:12px;border-radius:8px}
+    .line-item-qty{width:78px;height:38px;border:1px solid #111827;border-radius:8px;text-align:center;font-size:14px;background:#fff}
+    .line-item-qty.compact{width:68px;height:34px}
+    .line-item-price-input{width:92px;height:34px;border:1px solid #d1d5db;border-radius:8px;text-align:right;font-size:13px;padding:6px 9px}
+    .line-item-money{text-align:right;white-space:nowrap;font-size:13px;color:#111827}
+    .line-item-empty{border:1px dashed #d1d5db;border-radius:12px;padding:14px;color:#6b7280;font-size:13px;background:#fafafa}
+    .line-item-grip{color:#9ca3af;font-size:18px;line-height:1}
+    .line-item-search-wrap{position:relative;margin-top:16px}
+    .line-item-search{height:56px;border:1px solid #d1d5db;background:#fff;border-radius:10px;display:flex;align-items:center;gap:14px;padding:0 12px;transition:border-color .14s ease, box-shadow .14s ease}
+    .line-item-search.active{border-color:#111827;box-shadow:0 0 0 1px #111827}
+    .line-item-plus{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#111827;font-size:26px;font-weight:400;line-height:1;flex:0 0 auto}
+    .line-item-search-field{border:0;outline:0;width:100%;font-size:16px;color:#111827;background:transparent}
+    .line-item-search-field::placeholder{color:#6b7280}
+    .line-item-info{width:20px;height:20px;border:1px solid #9ca3af;border-radius:999px;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:0 0 auto}
+    .line-item-dropdown{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:50;background:#fff;border:1px solid #eef0f3;border-radius:12px;box-shadow:0 18px 34px rgba(15,23,42,.12);padding:8px;max-height:330px;overflow-y:auto}
+    .line-item-category{padding:9px 12px 5px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+    .line-item-option{width:100%;border:0;background:#fff;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:14px;align-items:center;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer}
+    .line-item-option:hover,.line-item-option.active{background:#f5f5f5}
+    .line-item-code{width:40px;height:40px;border-radius:7px;background:#eef0f2;color:#6b7280;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-transform:uppercase}
+    .line-item-option-name{font-size:14px;font-weight:800;color:#111827;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .line-item-option-cat{font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .line-item-one-time{background:#f7f7f7;grid-template-columns:42px minmax(0,1fr) 28px}
+    .line-item-return{color:#8b8f96;font-size:22px;text-align:right}
+    .totals-card{background:#f8fafc;border:1px solid #e6ecf5;border-radius:12px;padding:10px 13px;max-width:440px;margin-left:auto}
+    .totals-card .totals-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;gap:18px}
+    .totals-card .totals-row.total{font-size:16px;font-weight:800;color:#0f172a;border-top:1px solid #e5e7eb;margin-top:5px;padding-top:7px}
+    .totals-card .totals-row.total span{font-size:17px;font-weight:900}
+    .totals-card .totals-row.balance{font-size:15px;font-weight:800;color:#b21e27}
+    .status-pill-select{min-width:126px !important;height:28px !important;padding:4px 28px 4px 9px !important;border-radius:999px !important;font-size:11px !important;font-weight:800;border:1px solid #e5e7eb !important;box-shadow:none !important}
     .status-pill-select.status-confirmed{background:#ecfdf5;color:#166534;border-color:#bbf7d0 !important}
     .status-pill-select.status-pending{background:#fffbeb;color:#92400e;border-color:#fde68a !important}
     .status-pill-select.status-canceled{background:#fef2f2;color:#991b1b;border-color:#fecaca !important}
-    .btn{box-shadow:0 4px 12px rgba(178,30,39,.16)}
+    .assigned-staff-card{border-radius:12px;box-shadow:0 10px 26px rgba(15,23,42,.04);margin-bottom:12px}
+    .assigned-staff-card > .p-6{padding:12px 14px !important}
+    .assigned-staff-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+    .assigned-staff-title{font-size:15px;font-weight:800;color:#0f172a;margin:0}
+    .assigned-staff-meta{font-size:12px;font-weight:700;color:#64748b}
+    .assigned-staff-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;justify-content:flex-start}
+    .assigned-staff-item{flex:0 0 auto;min-width:112px;max-width:170px;border:1px solid #e7ebf0;background:#f9fafb;border-radius:10px;padding:8px 12px}
+    .assigned-staff-item.van{min-width:80px;max-width:110px}
+    .assigned-staff-label{font-size:10px;line-height:1.1;color:#64748b;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+    .assigned-staff-value{margin-top:4px;font-size:14px;line-height:1.2;color:#111827;font-weight:800;overflow-wrap:anywhere}
+    .assigned-staff-value.empty{color:#94a3b8;font-weight:700}
+    .assigned-staff-confirmation{display:inline-flex;margin-top:6px;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900;line-height:1;border:1px solid #e2e8f0;background:#f1f5f9;color:#64748b}
+    .assigned-staff-confirmation.viewed{background:#dbeafe;border-color:#bfdbfe;color:#1d4ed8}
+    .assigned-staff-confirmation.confirmed{background:#dcfce7;border-color:#bbf7d0;color:#15803d}
+    .assigned-staff-empty{border:1px dashed #d8dee8;background:#f8fafc;border-radius:12px;padding:12px;color:#64748b;font-size:13px;font-weight:700}
+    .btn{box-shadow:0 4px 12px rgba(178,30,39,.12)}
+    .btn.save{background:#16a34a;box-shadow:0 4px 12px rgba(22,163,74,.16)}
+    .btn.save:hover{background:#15803d}
     .btn.secondary{box-shadow:none;background:#e5e7eb;color:#334155}
     .btn.secondary:hover{background:#dbe1e8}
-    .page-shell{max-width:88rem;margin:0 auto}
+    .page-shell{max-width:none;margin:0;padding:20px 24px !important}
+    .form-card > .p-6,.items-card > .p-6,.payments-card > .p-6{padding:14px !important}
+    .form-card form > .grid{gap:12px !important;margin-bottom:12px !important}
+    .form-pane.space-y-4 > :not([hidden]) ~ :not([hidden]){margin-top:8px !important}
+    .form-pane .grid{gap:6px !important}
+    .form-pane label{font-size:13px !important;line-height:1.18;color:#111827}
+    .form-pane .input{height:36px;padding:7px 10px;border-radius:8px;font-size:13px;line-height:1.25}
+    .form-pane textarea.input{height:72px;min-height:72px;padding-top:8px}
+    .marker-picker{display:flex;flex-wrap:wrap;gap:8px}
+    .marker-toggle{position:relative;display:inline-flex}
+    .marker-toggle input{position:absolute;opacity:0;pointer-events:none}
+    .marker-toggle span{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:7px 11px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;color:#334155;font-size:12px;font-weight:800;line-height:1;cursor:pointer;transition:border-color .14s ease, background-color .14s ease, color .14s ease, box-shadow .14s ease}
+    .marker-toggle .marker-icon{font-size:15px;line-height:1}
+    .marker-toggle input:checked + span{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
+    .marker-help{font-size:11px;color:#64748b;line-height:1.4;margin-top:6px}
+    .items-card h3,.payments-card h3{font-size:16px;margin-bottom:10px !important}
+    .items-card table{font-size:13px}
+    .items-card table tbody td{vertical-align:middle}
+    .items-card [aria-label="Click to edit description"]{min-height:28px !important;padding:4px 8px !important}
+    .items-card input[name^="items["]{height:34px;padding:6px 8px;border-radius:8px}
+    .items-card .icon-btn.danger{width:28px;height:28px;border-radius:8px}
+    .items-card .mt-5{margin-top:14px !important}
+    .items-card .mt-2{margin-top:8px !important}
+    .items-card button[aria-describedby="save-items-help"]{min-height:36px;padding:7px 13px}
     @media (min-width: 1024px){
-      .page-shell{max-width:92rem}
+      .page-shell{max-width:none;padding:20px 24px !important}
       .resv-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,.95fr)}
+    }
+    @media (max-width: 760px){
+      .page-shell{padding:16px!important}
+      .summary-actions{justify-content:flex-start}
+      .summary-actions a,.summary-actions button{min-height:32px !important}
+      .line-items-table{min-width:640px}
+      .line-item-search{height:52px}
+      .totals-card{max-width:none}
     }
   </style>
   @php
@@ -104,6 +180,17 @@
     $statusTone = $statusSelected === 'confirmed'
       ? 'status-confirmed'
       : ($statusSelected === 'canceled' ? 'status-canceled' : 'status-pending');
+    $adminPaymentTotals = \App\Support\ReservationTotals::compute($r);
+    $adminBalanceDue = max(0, (float) ($adminPaymentTotals['balance'] ?? 0));
+    $adminPaidTotal = max(0, (float) ($adminPaymentTotals['paid_total'] ?? 0));
+    $adminManualPaid = max(0, (float) ($adminPaymentTotals['manual_paid'] ?? 0));
+    $adminBasePaidWithoutManual = max(0, round($adminPaidTotal - $adminManualPaid, 2));
+    $eventMarkerOptions = \App\Models\Reservation::eventMarkerOptions();
+    $selectedEventMarkers = old('event_markers', $r->normalizedEventMarkers());
+    $assignedStaffRows = ($r->scheduleAssignment?->assignedStaffSummaryRows() ?? collect())
+      ->whereIn('label', ['Chef 1', 'Chef 2', 'Chef 3', 'Van'])
+      ->values();
+    $hasAssignedStaff = $assignedStaffRows->contains(fn ($row) => ($row['value'] ?? 'N/A') !== 'N/A');
   @endphp
 </head>
 <body>
@@ -113,7 +200,19 @@
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
       <div class="summary-main">
         <div class="summary-identity">
-          <h1 class="summary-name">{{ $r->customer_name ?: 'Reservation Details' }}</h1>
+          <div class="summary-name-row">
+            <h1 class="summary-name">{{ $r->customer_name ?: 'Reservation Details' }}</h1>
+            @if(!empty($selectedEventMarkers))
+              <div class="name-markers" aria-label="Reservation markers">
+                @foreach($selectedEventMarkers as $markerKey)
+                  @php $marker = $eventMarkerOptions[$markerKey] ?? null; @endphp
+                  @if($marker)
+                    <span class="name-marker {{ $markerKey === 'vip' ? 'vip' : '' }}" title="{{ $marker['label'] }}">{{ $marker['icon'] }}</span>
+                  @endif
+                @endforeach
+              </div>
+            @endif
+          </div>
           <div class="summary-meta">
             <span>Reservation #{{ $r->code ?? $r->id }}</span>
             <span>•</span>
@@ -133,7 +232,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 11c1.654 0 3-1.346 3-3S17.654 5 16 5s-3 1.346-3 3 1.346 3 3 3zM8 11c1.654 0 3-1.346 3-3S9.654 5 8 5 5 6.346 5 8s1.346 3 3 3zm0 2c-2.673 0-8 1.337-8 4v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.663-5.327-4-8-4zm8 0c-.29 0-.62.017-.98.047A6.6 6.6 0 0 1 18 17v1a1 1 0 0 1-1 1h6a1 1 0 0 0 1-1v-1c0-2.273-3.876-4-6-4z"/></svg>
             {{ $r->guests }} guests
           </span>
-          @php $balTop = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); $col = $r->color ?? '#6b7280'; @endphp
+          @php $balTop = $adminBalanceDue; $col = $r->color ?? '#6b7280'; @endphp
           <span class="chip metric-chip" title="Balance" style="display:inline-flex;align-items:center;gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm1 17.93V20a1 1 0 0 1-2 0v-1a4.005 4.005 0 0 1-3-3.87 1 1 0 0 1 2 0 2 2 0 0 0 2 2h2a2 2 0 0 0 0-4h-2a4 4 0 0 1 0-8h1V4a1 1 0 0 1 2 0v1a4.005 4.005 0 0 1 3 3.87 1 1 0 0 1-2 0 2 2 0 0 0-2-2h-2a2 2 0 0 0 0 4h2a4 4 0 0 1 0 8h-1.05A10.027 10.027 0 0 1 12 21a10.013 10.013 0 0 1-1-.07z"/></svg>
             Balance: {{ '$'.number_format($balTop,2) }}
@@ -176,6 +275,19 @@
           </svg>
           Invoice
         </a>
+        <form method="POST" action="{{ route('payments.checkout') }}" target="_top" class="inline-flex m-0">
+          @csrf
+          <input type="hidden" name="reservation_id" value="{{ $r->id }}">
+          <input type="hidden" name="payment_type" value="full">
+          <input type="hidden" name="deposit_amount" value="{{ number_format($adminBalanceDue, 2, '.', '') }}">
+          <button class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2" type="submit" title="Pay balance {{ $fmt($adminBalanceDue) }}" {{ $adminBalanceDue <= 0.009 ? 'disabled' : '' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mr-2" aria-hidden="true">
+              <path d="M3 6.75A2.25 2.25 0 0 1 5.25 4.5h13.5A2.25 2.25 0 0 1 21 6.75v6.75a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 13.5V6.75Zm2.25-.25a.25.25 0 0 0-.25.25v1h16v-1a.25.25 0 0 0-.25-.25H5.25ZM5 10.5v3a.25.25 0 0 0 .25.25h13.5a.25.25 0 0 0 .25-.25v-3H5Z"/>
+              <path d="M6 18.75A.75.75 0 0 1 6.75 18h10.5a.75.75 0 0 1 0 1.5H6.75A.75.75 0 0 1 6 18.75Z"/>
+            </svg>
+            Pay
+          </button>
+        </form>
         <a class="inline-flex items-center p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md border border-blue-200" 
            href="{{ route('admin.reservations.show',['id'=>$r->id, 'print'=>'menu', 'back'=>request()->fullUrl()]) }}" 
            title="Print menu" aria-label="Print menu">
@@ -191,10 +303,42 @@
             <path d="M7.5 3.375c0-1.036.84-1.875 1.875-1.875h.375a3.75 3.75 0 0 1 3.75 3.75v1.875C13.5 8.161 14.34 9 15.375 9h1.875A3.75 3.75 0 0 1 21 12.75v3.375C21 17.16 20.16 18 19.125 18h-9.75A1.875 1.875 0 0 1 7.5 16.125V3.375Z"/>
             <path d="M15 5.25a5.23 5.23 0 0 0-1.279-3.434 9.768 9.768 0 0 1 6.963 6.963A5.23 5.23 0 0 0 17.25 7.5h-1.875a.375.375 0 0 1-.375-.375V5.25Z"/>
           </svg>
-          Save
+          Save Reservation
         </button>
       </div>
     </div>
+    </div>
+
+    <div class="card assigned-staff-card">
+      <div class="p-6">
+        <div class="assigned-staff-head">
+          <h2 class="assigned-staff-title">Assigned Staff</h2>
+          @if($hasAssignedStaff)
+            <span class="assigned-staff-meta">Synced from Schedule</span>
+          @endif
+        </div>
+        @if($hasAssignedStaff)
+          <div class="assigned-staff-grid">
+            @foreach($assignedStaffRows as $staffRow)
+              <div class="assigned-staff-item {{ ($staffRow['label'] ?? '') === 'Van' ? 'van' : '' }}">
+                <div class="assigned-staff-label">{{ $staffRow['label'] }}</div>
+                <div class="assigned-staff-value {{ ($staffRow['value'] ?? 'N/A') === 'N/A' ? 'empty' : '' }}">{{ $staffRow['value'] }}</div>
+                @if(filled($staffRow['user_id'] ?? null))
+                  @php $staffConfirmation = $r->staffConfirmationSummaryFor((int) $staffRow['user_id']); @endphp
+                  <div class="assigned-staff-confirmation {{ $staffConfirmation['tone'] }}">
+                    {{ $staffConfirmation['label'] }}
+                    @if($staffConfirmation['timestamp'])
+                      {{ $staffConfirmation['timestamp'] }}
+                    @endif
+                  </div>
+                @endif
+              </div>
+            @endforeach
+          </div>
+        @else
+          <div class="assigned-staff-empty">No staff assigned yet.</div>
+        @endif
+      </div>
     </div>
 
     <div class="resv-grid">
@@ -304,12 +448,26 @@
                 <label class="font-semibold text-sm">Notes</label>
                 <textarea name="notes" rows="3" class="input col-span-2">{{ old('notes',$r->notes) }}</textarea>
               </div>
+              <div class="grid grid-cols-3 gap-2 items-start">
+                <label class="font-semibold text-sm">Event markers</label>
+                <div class="col-span-2">
+                  <div class="marker-picker">
+                    @foreach($eventMarkerOptions as $markerKey => $marker)
+                      <label class="marker-toggle">
+                        <input type="checkbox" name="event_markers[]" value="{{ $markerKey }}" {{ in_array($markerKey, $selectedEventMarkers, true) ? 'checked' : '' }}>
+                        <span>
+                          <span class="marker-icon">{{ $marker['icon'] }}</span>
+                          <span>{{ $marker['label'] }}</span>
+                        </span>
+                      </label>
+                    @endforeach
+                  </div>
+                  <div class="marker-help">Shown in Calendar before the customer name for quick visual scanning.</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="flex justify-end">
-            <button class="btn" type="submit">Save Changes</button>
-          </div>
         </form>
       </div>
     </div>
@@ -358,499 +516,466 @@
     
 
     <!-- Items Section -->
-    <div class="card section-card items-card" x-data="itemsManager()">
+    <div class="card section-card items-card" x-data="itemsManager(@js([
+      'menuOptions' => $lineMenuOptions ?? [],
+      'items' => $lineItems ?? [],
+      'totals' => $lineTotals ?? [],
+      'urls' => [
+        'add' => route('admin.reservations.items.add', ['id' => $r->id]),
+        'update' => route('admin.reservations.items.update', ['id' => $r->id]),
+        'delete' => route('admin.reservations.items.delete', ['id' => $r->id, 'itemId' => '__ITEM__']),
+      ],
+    ]))">
       <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">Items</h3>
-        @php $its = $r->items ?? collect(); @endphp
+        <div class="line-items-header">
+          <h3 class="line-items-title">Line items</h3>
+          <button type="button" class="line-items-collapse" title="Collapse line items" aria-label="Collapse line items">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4" aria-hidden="true"><path d="M4 12l6-6 6 6"/></svg>
+          </button>
+        </div>
         <form method="post" action="{{ route('admin.reservations.items.update',['id'=>$r->id]) }}" id="itemsUpdateForm">
           @csrf
         </form>
-        @if($its && $its->count())
-            <div class="overflow-x-auto">
-              <table class="w-full border-collapse">
-                <thead>
-                  <tr class="border-b border-gray-200">
-                    <th class="text-left p-3 font-semibold text-sm">Item</th>
-                    <th class="text-left p-3 font-semibold text-sm">Description</th>
-                    <th class="text-right p-3 font-semibold text-sm">Unit</th>
-                    <th class="text-right p-3 font-semibold text-sm">Qty</th>
-                    <th class="text-right p-3 font-semibold text-sm">Total</th>
-                    <th class="w-16"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                @foreach($its as $it)
-                  <tr class="border-b border-gray-100">
-                    <td class="p-3 text-sm">{{ $it->name_snapshot }}</td>
-                    <td class="p-3">
-                      <div x-data="{ editing: false, value: '{{ old('desc.'.$it->id, $it->description) }}' }">
-                        <div x-show="!editing" 
-                             @click="editing = true; $nextTick(() => $refs.input.focus())" 
-                             class="text-gray-500 cursor-pointer py-2 px-3 hover:text-gray-700 transition-colors duration-150 min-h-[2rem] flex items-center text-sm"
-                             x-text="value || 'Optional description'"
-                             role="button"
-                             tabindex="0"
-                             aria-label="Click to edit description">
-                        </div>
-                        <input x-show="editing" 
-                               x-ref="input"
-                               type="text" 
-                               name="desc[{{ $it->id }}]" 
-                               form="itemsUpdateForm"
-                               x-model="value"
-                               @blur="editing = false"
-                               @keydown.enter="editing = false"
-                               @keydown.escape="editing = false"
-                               class="input w-full border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                               aria-label="Item description">
-                      </div>
-                    </td>
-                    <td class="p-3 text-right text-sm">{{ $fmt($it->unit_price_snapshot ?? 0) }}</td>
-                    <td class="p-3 text-right">
-                      <input type="number" 
-                             name="items[{{ $it->id }}]" 
-                             form="itemsUpdateForm"
-                             value="{{ $it->qty }}" 
-                             min="0" 
-                             class="w-20 p-2 border border-gray-300 rounded text-center text-sm"
-                             aria-label="Quantity for {{ $it->name_snapshot }}">
-                    </td>
-                    <td class="p-3 text-right text-sm">{{ $fmt($it->line_total ?? 0) }}</td>
-                    <td class="p-3 text-right">
-                      <form method="post" action="{{ route('admin.reservations.items.delete',['id'=>$r->id,'itemId'=>$it->id]) }}" onsubmit="return confirm('Delete this item?')" class="inline">
-                        @csrf
-                        <button class="icon-btn danger" type="submit" title="Delete item" aria-label="Delete {{ $it->name_snapshot }}">
-                          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9z"/></svg>
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                @endforeach
-                </tbody>
-              </table>
-            </div>
-        @else
-          <p class="text-gray-500 text-sm">No items recorded.</p>
-        @endif
+        <div class="overflow-x-auto" x-show="items.length" x-cloak>
+          <table class="line-items-table">
+            <thead>
+              <tr>
+                <th class="w-8"></th>
+                <th class="text-left">Item</th>
+                <th class="text-left">Qty</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Total</th>
+                <th class="w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="item in items" :key="item.id">
+                <tr :class="{ 'opacity-60': item.saving }">
+                  <td class="text-center"><span class="line-item-grip">⁙</span></td>
+                  <td>
+                    <div class="line-item-name" x-text="item.name"></div>
+                    <input type="text"
+                           x-model="item.description"
+                           @change="saveItem(item)"
+                           class="input line-item-desc-input mt-1"
+                           placeholder="Regular"
+                           aria-label="Item description">
+                  </td>
+                  <td>
+                    <input type="number"
+                           min="1"
+                           x-model.number="item.qty"
+                           @input="normalizeItem(item); recalcLocalTotals()"
+                           @change="saveItem(item)"
+                           class="line-item-qty"
+                           :aria-label="'Quantity for ' + item.name">
+                  </td>
+                  <td class="text-right">
+                    <input type="number"
+                           min="0"
+                           step="0.01"
+                           x-model="item.price"
+                           @input="normalizeItem(item); recalcLocalTotals()"
+                           @change="saveItem(item)"
+                           class="line-item-price-input"
+                           :aria-label="'Price for ' + item.name">
+                  </td>
+                  <td class="line-item-money" x-text="fmt(rowTotal(item))"></td>
+                  <td class="text-right">
+                    <button class="icon-btn danger" type="button" @click="deleteLineItem(item)" :disabled="item.saving" :title="'Delete ' + item.name" :aria-label="'Delete ' + item.name">
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 3h6l1 2h5v2H3V5h5l1-2zm1 6h2v10h-2V9zm4 0h2v10h-2V9zM7 9h2v10H7V9z"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="line-item-empty" x-show="!items.length" x-cloak>No line items recorded.</div>
 
-        <!-- Add Items Section -->
-        <div class="add-items-shell">
-          <div class="add-items-head">
-            <h4 class="add-items-title">Add Items</h4>
+        <div class="line-item-search-wrap" @click.outside="closeSearch()">
+          <div class="line-item-search" :class="{ 'active': searchOpen }" @click="focusSearch()">
+            <span class="line-item-plus">+</span>
+            <input type="text"
+                   x-ref="searchInput"
+                   x-model="searchQuery"
+                   @focus="openSearch()"
+                   @input="openSearch()"
+                   @keydown.enter.prevent="chooseFirstResult()"
+                   @keydown.escape.prevent="closeSearch()"
+                   class="line-item-search-field"
+                   placeholder="Add an item"
+                   aria-label="Add an item">
+            <span class="line-item-info" title="Search menu items or add a one-time item">i</span>
           </div>
-            <!-- Menu Items Row -->
-            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="add-row">
-              @csrf
-              <div class="field">
-                <label>From menu</label>
-                <select name="menu_key" class="input w-full" id="menuKey" aria-label="Select menu item">
-                  <option value="">Select item...</option>
-                  @foreach($menuOptions as $key=>$opt)
-                    <option value="{{ $key }}" data-price="{{ number_format($opt['price'],2,'.','') }}">{{ $opt['cat'] }} – {{ $opt['name'] }}</option>
-                  @endforeach
-                </select>
-              </div>
-              <div class="field">
-                <label>Description</label>
-                <input type="text" name="description" class="input w-full" placeholder="Optional description">
-              </div>
-              <div class="field qty">
-                <label>Qty</label>
-                <input type="number" name="qty" min="1" value="0" class="input w-full">
-              </div>
-              <div class="field price">
-                <label>Unit Price</label>
-                <input type="text" class="input w-full bg-gray-100" id="unitPrice" value="$0.00" readonly>
-              </div>
-              <div class="field">
-                <button type="button" 
-                        @click="addMenuRow()" 
-                        class="add-btn"
-                        title="Add new menu item row"
-                        aria-label="Add new menu item row">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
-                    <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z"/>
-                  </svg>
-                </button>
-              </div>
-            </form>
-            
-            <!-- Dynamic Menu Rows -->
-            <template x-for="(row, index) in menuRows" :key="index">
-              <div class="add-row">
-                <div class="field">
-                  <label>From menu</label>
-                  <select x-model="row.menu_key" @change="updateUnitPrice(index, $event)" class="input w-full" aria-label="Select menu item">
-                    <option value="">Select item...</option>
-                    @foreach($menuOptions as $key=>$opt)
-                      <option value="{{ $key }}" data-price="{{ number_format($opt['price'],2,'.','') }}">{{ $opt['cat'] }} – {{ $opt['name'] }}</option>
-                    @endforeach
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Description</label>
-                  <input type="text" x-model="row.description" class="input w-full" placeholder="Optional description">
-                </div>
-                <div class="field qty">
-                  <label>Qty</label>
-                  <input type="number" min="1" x-model="row.qty" class="input w-full">
-                </div>
-                <div class="field price">
-                  <label>Unit Price</label>
-                  <input type="text" class="input w-full bg-gray-100" x-model="row.unit_price" readonly>
-                </div>
-                <div class="field">
-                  <button type="button" 
-                          @click="addMenuRow()" 
-                          class="add-btn"
-                          title="Add new menu item row"
-                          aria-label="Add new menu item row">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
-                      <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z"/>
-                    </svg>
+
+          <div x-show="searchOpen" x-cloak class="line-item-dropdown">
+            <template x-if="showOneTimeOption()">
+              <button type="button" class="line-item-option line-item-one-time" @click="addOneTimeItem()">
+                <span class="line-item-code">+</span>
+                <span>
+                  <span class="line-item-option-name">Use one-time item: "<span x-text="searchQuery.trim()"></span>"</span>
+                </span>
+                <span class="line-item-return">↵</span>
+              </button>
+            </template>
+            <template x-for="group in groupedMenuItems()" :key="group.category">
+              <div>
+                <div class="line-item-category" x-text="group.category"></div>
+                <template x-for="item in group.items" :key="item.key">
+                  <button type="button" class="line-item-option" @click="selectMenuItem(item)">
+                    <span class="line-item-code" x-text="item.code"></span>
+                    <span>
+                      <span class="line-item-option-name" x-text="item.name"></span>
+                      <span class="line-item-option-cat" x-text="item.cat || 'Menu item'"></span>
+                    </span>
+                    <span class="line-item-money" x-text="fmt(item.price)"></span>
                   </button>
-                </div>
+                </template>
               </div>
             </template>
-
-            <!-- Custom Items Row -->
-            <form method="post" action="{{ route('admin.reservations.items.add',['id'=>$r->id]) }}" class="add-row">
-              @csrf
-              <div class="field">
-                <label>Custom name</label>
-                <input type="text" name="custom_name" placeholder="Enter item name" class="input w-full">
-              </div>
-              <div class="field">
-                <label>Description</label>
-                <input type="text" name="description" class="input w-full" placeholder="Optional description">
-              </div>
-              <div class="field qty">
-                <label>Qty</label>
-                <input type="number" name="qty" min="1" value="0" class="input w-full">
-              </div>
-              <div class="field price">
-                <label>Custom Price</label>
-                <input type="number" step="0.01" name="custom_price" placeholder="0.00" class="input w-full" id="customPrice">
-              </div>
-              <div class="field">
-                <button type="button" 
-                        @click="addCustomRow()" 
-                        class="add-btn"
-                        title="Add new custom item row"
-                        aria-label="Add new custom item row">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
-                    <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z"/>
-                  </svg>
-                </button>
-              </div>
-            </form>
-            
-            <!-- Dynamic Custom Rows -->
-            <template x-for="(row, index) in customRows" :key="index">
-              <div class="add-row">
-                <div class="field">
-                  <label>Custom name</label>
-                  <input type="text" x-model="row.custom_name" placeholder="Enter item name" class="input w-full">
-                </div>
-                <div class="field">
-                  <label>Description</label>
-                  <input type="text" x-model="row.description" class="input w-full" placeholder="Optional description">
-                </div>
-                <div class="field qty">
-                  <label>Qty</label>
-                  <input type="number" min="1" x-model="row.qty" class="input w-full">
-                </div>
-                <div class="field price">
-                  <label>Custom Price</label>
-                  <input type="number" step="0.01" x-model="row.custom_price" placeholder="0.00" class="input w-full">
-                </div>
-                <div class="field">
-                  <button type="button" 
-                          @click="addCustomRow()" 
-                          class="add-btn"
-                          title="Add new custom item row"
-                          aria-label="Add new custom item row">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true">
-                      <path d="M12 4a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6V5a1 1 0 0 1 1-1z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+            <template x-if="filteredMenuItems().length === 0 && !showOneTimeOption()">
+              <div class="px-3 py-2 text-sm text-gray-500">No menu items found.</div>
             </template>
-
-          <!-- Save All Items Button -->
-          <div class="flex justify-end mt-2">
-            <button type="button" 
-                    @click="saveAllItems()" 
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm shadow-md transition-all duration-200 hover:shadow-lg" 
-                    title="Save all items"
-                    aria-describedby="save-all-help">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 inline-block mr-2" aria-hidden="true">
-                <path d="M17 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-5 16a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm2-8H10V7a1 1 0 1 1 2 0v4z"/>
-              </svg>
-              Save All Items
-            </button>
-            <p id="save-all-help" class="sr-only">Saves all items added in the forms above</p>
           </div>
         </div>
 
-        @if($its && $its->count())
-          @php $bal = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); @endphp
-          @php 
-            $TAX = 0.1025;
-            $adj = is_array($r->invoice_adjustments ?? null) ? $r->invoice_adjustments : [];
-            $sub = (float)($r->subtotal ?? 0); $trav = (float)($r->travel_fee ?? 0); $grat = (float)($r->gratuity ?? 0);
-            $adjSum = array_reduce($adj, fn($c,$a)=> $c + (float)($a['amount'] ?? 0), 0.0);
-            $taxCalc = round(max(0, $sub + $adjSum) * $TAX, 2);
-            $totalCalc = round($sub + $trav + $grat + $taxCalc + $adjSum, 2);
-            $paidCalc = (float)($r->deposit_paid ?? 0);
-            $balCalc = max(0, round($totalCalc - $paidCalc, 2));
-          @endphp
-          <div class="mt-5">
-            <div class="totals-card text-sm text-gray-700 space-y-1" x-data="adjustmentsManager({
-                  subtotal: {{ number_format($sub,2,'.','') }},
-                  travel: {{ number_format($trav,2,'.','') }},
-                  gratuity: {{ number_format($grat,2,'.','') }},
-                  taxRate: {{ number_format($TAX,4,'.','') }},
-                  paid: {{ number_format($r->deposit_paid ?? 0,2,'.','') }},
-                  adjInit: @js($adj)
-              })" x-init="init()">
-              <div class="flex items-center justify-end mb-2">
-                <button type="button"
-                        class="adj-plus"
-                        :disabled="rows.length>=2"
-                        title="Add custom adjustment"
-                        aria-label="Add custom adjustment"
-                        @click="addRow()">+</button>
-              </div>
-              <div class="totals-row"><strong>Subtotal</strong> <span x-text="fmt(subtotal)">{{ $fmt($sub) }}</span></div>
-              <div class="totals-row"><strong>Travel fee</strong> <span x-text="fmt(travel)">{{ $fmt($trav) }}</span></div>
-              <template x-for="(row,idx) in rows" :key="idx">
-                <div class="flex items-center gap-2 justify-end" style="margin:4px 0">
-                  <input class="input" type="text" x-model="row.label" placeholder="Adjustment" aria-label="Adjustment label" style="width:160px;padding:4px 8px;font-size:13px;height:28px">
-                  <input class="input" type="text" x-model="row.amountStr" @focus="row.editing=true" @blur="normalize(idx)" @input="recalc()" aria-label="Adjustment amount" style="width:120px;text-align:right;padding:4px 8px;font-size:13px;height:28px">
-                  <button type="button" class="adj-remove" title="Remove" aria-label="Remove adjustment" @click="remove(idx)">×</button>
-                  <input type="hidden" name="adj_label[]" form="itemsUpdateForm" :value="row.label">
-                  <input type="hidden" name="adj_amount[]" form="itemsUpdateForm" :value="row.amount">
-                </div>
-              </template>
-              <div class="totals-row"><strong>Gratuity</strong> <span x-text="fmt(gratuity)">{{ $fmt($grat) }}</span></div>
-              <div class="totals-row"><strong>Tax</strong> <span x-text="fmt(tax)">{{ $fmt($taxCalc) }}</span></div>
-              <div class="totals-row total"><strong>Total</strong> <span x-text="fmt(total)">{{ $fmt($totalCalc) }}</span></div>
-              <div class="totals-row"><strong>Paid</strong> <span x-text="fmt(paid)">{{ $fmt($r->deposit_paid ?? 0) }}</span></div>
-              <div class="totals-row balance"><strong>Balance</strong> <span x-text="fmt(balance)">{{ $fmt($balCalc) }}</span></div>
+        <div class="mt-5">
+          <div class="totals-card text-sm text-gray-700 space-y-1">
+            <div class="flex items-center justify-end mb-2">
+              <button type="button"
+                      class="adj-plus"
+                      :disabled="adjustments.length>=2 || saving"
+                      title="Add custom adjustment"
+                      aria-label="Add custom adjustment"
+                      @click="addAdjustment()">+</button>
             </div>
+            <div class="totals-row"><strong>Subtotal</strong> <span x-text="fmt(totals.subtotal)"></span></div>
+            <div class="totals-row"><strong>Travel fee</strong> <span x-text="fmt(totals.travel)"></span></div>
+            <template x-for="(row,idx) in adjustments" :key="idx">
+              <div class="flex items-center gap-2 justify-end" style="margin:4px 0">
+                <input class="input" type="text" x-model="row.label" @change="saveAdjustments()" placeholder="Adjustment" aria-label="Adjustment label" style="width:160px;padding:4px 8px;font-size:13px;height:28px">
+                <input class="input" type="number" step="0.01" x-model="row.amount" @input="recalcLocalTotals()" @change="saveAdjustments()" aria-label="Adjustment amount" style="width:120px;text-align:right;padding:4px 8px;font-size:13px;height:28px">
+                <button type="button" class="adj-remove" title="Remove" aria-label="Remove adjustment" @click="removeAdjustment(idx)">×</button>
+              </div>
+            </template>
+            <div class="totals-row"><strong>Gratuity</strong> <span x-text="fmt(totals.gratuity)"></span></div>
+            <div class="totals-row"><strong>Tax</strong> <span x-text="fmt(totals.tax)"></span></div>
+            <div class="totals-row total"><strong>Total</strong> <span x-text="fmt(totals.total)"></span></div>
+            <div class="totals-row"><strong>Paid</strong> <span x-text="fmt(totals.paid_total)"></span></div>
+            <div class="totals-row balance"><strong>Balance</strong> <span x-text="fmt(totals.balance)"></span></div>
           </div>
-          <div class="mt-2 flex justify-end">
-            <button class="btn" type="submit" form="itemsUpdateForm">Save item changes</button>
-          </div>
-        @endif
+        </div>
 
         <script>
-          function itemsManager() {
+          function itemsManager(config = {}) {
             return {
-              menuRows: [],
-              customRows: [],
-              
-              addMenuRow() {
-                this.menuRows.push({
-                  menu_key: '',
-                  description: '',
-                  qty: 1,
-                  unit_price: '$0.00'
-                });
+              menuOptions: Array.isArray(config.menuOptions) ? config.menuOptions : [],
+              items: Array.isArray(config.items) ? config.items : [],
+              totals: Object.assign({
+                subtotal: 0,
+                travel: 0,
+                gratuity: 0,
+                tax: 0,
+                total: 0,
+                paid_total: 0,
+                balance: 0,
+                tax_rate: 10.25,
+                adjustments: [],
+              }, config.totals || {}),
+              adjustments: Array.isArray(config.totals?.adjustments)
+                ? config.totals.adjustments.map(row => ({
+                    label: row.label || 'Adjustment',
+                    amount: Number(row.amount || 0),
+                  }))
+                : [],
+              urls: config.urls || {},
+              searchQuery: '',
+              searchOpen: false,
+              saving: false,
+
+              fmt(n) {
+                return '$' + Number(n || 0).toFixed(2);
               },
-              
-              addCustomRow() {
-                this.customRows.push({
-                  custom_name: '',
-                  description: '',
-                  qty: 1,
-                  custom_price: ''
-                });
+
+              csrf() {
+                return document.querySelector('meta[name="csrf-token"]')?.content || '';
               },
-              
-              async saveAllItems() {
-                let allItemsSaved = [];
-                let pendingSaves = [];
-                
-                // Check and prepare initial menu form save
-                const initialMenuForm = document.querySelector('#menuKey').closest('form');
-                const menuKey = initialMenuForm.querySelector('[name="menu_key"]').value;
-                const menuQty = initialMenuForm.querySelector('[name="qty"]').value;
-                const menuDesc = initialMenuForm.querySelector('[name="description"]').value;
-                
-                if (menuKey && menuQty > 0) {
-                  pendingSaves.push({ type: 'menu-initial', data: { menu_key: menuKey, qty: menuQty, description: menuDesc } });
+
+              normalizeText(value) {
+                return String(value || '').trim().toLowerCase();
+              },
+
+              openSearch() {
+                this.searchOpen = true;
+              },
+
+              closeSearch() {
+                this.searchOpen = false;
+              },
+
+              focusSearch() {
+                this.openSearch();
+                this.$nextTick(() => this.$refs.searchInput?.focus());
+              },
+
+              filteredMenuItems() {
+                const query = this.normalizeText(this.searchQuery);
+                const items = Array.isArray(this.menuOptions) ? this.menuOptions : [];
+
+                if (!query) {
+                  return items;
                 }
-                
-                // Check and prepare initial custom form save
-                const initialCustomForm = document.querySelector('#customPrice').closest('form');
-                const customName = initialCustomForm.querySelector('[name="custom_name"]').value;
-                const customQty = initialCustomForm.querySelector('[name="qty"]').value;
-                const customPrice = initialCustomForm.querySelector('[name="custom_price"]').value;
-                const customDesc = initialCustomForm.querySelector('[name="description"]').value;
-                
-                if (customName && customQty > 0 && customPrice) {
-                  pendingSaves.push({ type: 'custom-initial', data: { custom_name: customName, qty: customQty, custom_price: customPrice, description: customDesc } });
-                }
-                
-                // Prepare dynamic menu rows save
-                const validMenuRows = this.menuRows.filter(row => row.menu_key && row.qty > 0);
-                for (const row of validMenuRows) {
-                  pendingSaves.push({ type: 'menu-dynamic', data: row });
-                }
-                
-                // Prepare dynamic custom rows save
-                const validCustomRows = this.customRows.filter(row => row.custom_name && row.qty > 0 && row.custom_price);
-                for (const row of validCustomRows) {
-                  pendingSaves.push({ type: 'custom-dynamic', data: row });
-                }
-                
-                if (pendingSaves.length === 0) {
-                  alert('No valid items to save. Please fill in the required fields:\n\nFor menu items: Select from menu + quantity\nFor custom items: Name + quantity + price');
+
+                return items
+                  .filter(item => {
+                    const name = this.normalizeText(item.name);
+                    const cat = this.normalizeText(item.cat);
+                    return name.includes(query) || cat.includes(query);
+                  });
+              },
+
+              groupedMenuItems() {
+                const groups = [];
+                const lookup = new Map();
+
+                this.filteredMenuItems().forEach(item => {
+                  const category = String(item.cat || item.category || 'Uncategorized').trim() || 'Uncategorized';
+                  if (!lookup.has(category)) {
+                    const group = { category, items: [] };
+                    lookup.set(category, group);
+                    groups.push(group);
+                  }
+
+                  lookup.get(category).items.push(item);
+                });
+
+                return groups;
+              },
+
+              showOneTimeOption() {
+                const query = this.searchQuery.trim();
+                if (!query) return false;
+
+                return this.filteredMenuItems().length === 0;
+              },
+
+              chooseFirstResult() {
+                const first = this.filteredMenuItems()[0];
+                if (first) {
+                  this.selectMenuItem(first);
                   return;
                 }
-                
-                // Execute all saves
-                for (const saveItem of pendingSaves) {
-                  let success = false;
-                  
-                  if (saveItem.type.includes('menu')) {
-                    success = await this.saveMenuItem(saveItem.data);
-                  } else if (saveItem.type.includes('custom')) {
-                    success = await this.saveCustomItem(saveItem.data);
-                  }
-                  
-                  if (success) {
-                    allItemsSaved.push(saveItem.type);
-                    
-                    // Remove from dynamic arrays if applicable
-                    if (saveItem.type === 'menu-dynamic') {
-                      const index = this.menuRows.indexOf(saveItem.data);
-                      if (index > -1) this.menuRows.splice(index, 1);
-                    } else if (saveItem.type === 'custom-dynamic') {
-                      const index = this.customRows.indexOf(saveItem.data);
-                      if (index > -1) this.customRows.splice(index, 1);
-                    }
-                  }
-                }
-                
-                if (allItemsSaved.length > 0) {
-                  // Clear initial forms if they were saved
-                  if (allItemsSaved.includes('menu-initial')) {
-                    initialMenuForm.reset();
-                  }
-                  if (allItemsSaved.includes('custom-initial')) {
-                    initialCustomForm.reset();
-                  }
-                  
-                  // Reload to show updated items
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 500);
-                } else {
-                  alert('Failed to save items. Please check the console for errors.');
+
+                if (this.showOneTimeOption()) {
+                  this.addOneTimeItem();
                 }
               },
-              
-              async saveMenuItem(row) {
+
+              async selectMenuItem(item) {
+                await this.addMenuItem(item);
+              },
+
+              async addOneTimeItem() {
+                const name = this.searchQuery.trim();
+                if (!name) return;
+
+                await this.addCustomItem({
+                  custom_name: name,
+                  qty: 1,
+                  custom_price: 0,
+                  description: '',
+                });
+              },
+
+              resetSearch() {
+                this.searchQuery = '';
+                this.closeSearch();
+                this.$nextTick(() => this.$refs.searchInput?.focus());
+              },
+
+              rowTotal(row) {
+                return Number(row.qty || 0) * Number(row.price || 0);
+              },
+
+              normalizeItem(item) {
+                item.qty = Math.max(1, Number.parseInt(item.qty || 1, 10));
+                item.price = Math.max(0, Number.parseFloat(item.price || 0));
+                item.total = this.rowTotal(item);
+              },
+
+              recalcLocalTotals() {
+                const subtotal = this.items.reduce((sum, item) => {
+                  this.normalizeItem(item);
+                  return sum + this.rowTotal(item);
+                }, 0);
+                const adjustmentsSum = this.adjustments.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+                const travel = Number(this.totals.travel || 0);
+                const paid = Number(this.totals.paid_total || 0);
+                const taxRate = Number(this.totals.tax_rate || 10.25);
+                const gratuity = Math.round(subtotal * 0.18 * 100) / 100;
+                // California catering tax: taxable base includes food/items subtotal, travel fee,
+                // and mandatory gratuity/service charge. Voluntary tips are excluded.
+                const taxableBase = Math.max(0, subtotal + travel + gratuity + adjustmentsSum);
+                const tax = Math.round(Math.round(taxableBase * 100) * (taxRate / 100)) / 100;
+                const total = Math.round((subtotal + travel + gratuity + tax + adjustmentsSum) * 100) / 100;
+
+                this.totals.subtotal = Math.round(subtotal * 100) / 100;
+                this.totals.gratuity = gratuity;
+                this.totals.tax = tax;
+                this.totals.total = total;
+                this.totals.balance = Math.max(0, Math.round((total - paid) * 100) / 100);
+              },
+
+              applyPayload(payload) {
+                if (!payload || payload.ok === false) return;
+                if (Array.isArray(payload.items)) {
+                  this.items = payload.items;
+                }
+                if (payload.totals) {
+                  this.totals = Object.assign(this.totals, payload.totals);
+                  this.adjustments = Array.isArray(payload.totals.adjustments)
+                    ? payload.totals.adjustments.map(row => ({
+                        label: row.label || 'Adjustment',
+                        amount: Number(row.amount || 0),
+                      }))
+                    : [];
+                }
+              },
+
+              appendAdjustments(formData) {
+                this.adjustments.forEach(row => {
+                  const label = String(row.label || '').trim();
+                  const amount = Number(row.amount || 0);
+                  if (label === '' && Math.abs(amount) < 0.005) return;
+                  formData.append('adj_label[]', label || 'Adjustment');
+                  formData.append('adj_amount[]', amount);
+                });
+              },
+
+              async postForm(url, formData) {
+                const response = await fetch(url, {
+                  method: 'POST',
+                  headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                  },
+                  body: formData,
+                });
+
+                if (!response.ok) {
+                  throw new Error('Request failed');
+                }
+
+                return response.json();
+              },
+
+              async addMenuItem(item) {
                 const formData = new FormData();
-                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-                formData.append('menu_key', row.menu_key);
-                formData.append('description', row.description);
-                formData.append('qty', row.qty);
-                
+                formData.append('_token', this.csrf());
+                formData.append('menu_key', item.key);
+                formData.append('description', '');
+                formData.append('qty', 1);
+
+                this.saving = true;
                 try {
-                  const response = await fetch('{{ route('admin.reservations.items.add',['id'=>$r->id]) }}', {
-                    method: 'POST',
-                    body: formData
-                  });
-                  return response.ok;
+                  const payload = await this.postForm(this.urls.add, formData);
+                  this.applyPayload(payload);
+                  this.resetSearch();
                 } catch (error) {
-                  console.error('Error saving menu item:', error);
-                  return false;
+                  console.error('Error adding menu item:', error);
+                  alert('Failed to add item. Please try again.');
+                } finally {
+                  this.saving = false;
                 }
               },
-              
-              async saveCustomItem(row) {
+
+              async addCustomItem(row) {
                 const formData = new FormData();
-                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('_token', this.csrf());
                 formData.append('custom_name', row.custom_name);
                 formData.append('description', row.description || '');
                 formData.append('qty', row.qty);
                 formData.append('custom_price', row.custom_price);
-                
+
+                this.saving = true;
                 try {
-                  const response = await fetch('{{ route('admin.reservations.items.add',['id'=>$r->id]) }}', {
-                    method: 'POST',
-                    body: formData
-                  });
-                  return response.ok;
+                  const payload = await this.postForm(this.urls.add, formData);
+                  this.applyPayload(payload);
+                  this.resetSearch();
                 } catch (error) {
-                  console.error('Error saving custom item:', error);
-                  return false;
+                  console.error('Error adding one-time item:', error);
+                  alert('Failed to add one-time item. Please try again.');
+                } finally {
+                  this.saving = false;
                 }
               },
-              
-              updateUnitPrice(index, event = null) {
-                const row = this.menuRows[index];
-                if (!row) return;
-                
-                // If event is provided, use it directly
-                if (event && event.target) {
-                  const selectedOption = event.target.options[event.target.selectedIndex];
-                  const price = selectedOption?.dataset?.price || '0';
-                  row.unit_price = '$' + Number(price).toFixed(2);
-                  return;
-                }
-                
-                // Fallback to finding the select element
-                if (row.menu_key) {
-                  // Find all select elements and match by value
-                  const selects = document.querySelectorAll('select[x-model^="menuRows["]');
-                  for (let select of selects) {
-                    if (select.value === row.menu_key) {
-                      const selectedOption = select.options[select.selectedIndex];
-                      const price = selectedOption?.dataset?.price || '0';
-                      row.unit_price = '$' + Number(price).toFixed(2);
-                      break;
-                    }
-                  }
-                } else {
-                  row.unit_price = '$0.00';
+
+              async saveItem(item) {
+                this.normalizeItem(item);
+                const formData = new FormData();
+                formData.append('_token', this.csrf());
+                formData.append(`items[${item.id}]`, item.qty);
+                formData.append(`desc[${item.id}]`, item.description || '');
+                formData.append(`prices[${item.id}]`, item.price);
+                this.appendAdjustments(formData);
+
+                item.saving = true;
+                try {
+                  const payload = await this.postForm(this.urls.update, formData);
+                  this.applyPayload(payload);
+                } catch (error) {
+                  console.error('Error saving item:', error);
+                  alert('Failed to save item. Please try again.');
+                } finally {
+                  item.saving = false;
                 }
               },
-              
-              init() {
-                // Original script functionality for initial form
-                this.$nextTick(() => {
-                  const sel = document.getElementById('menuKey');
-                  const unit = document.getElementById('unitPrice');
-                  function fmt(n){ try { return '$' + (Number(n||0)).toFixed(2); } catch(e){ return '$0.00'; } }
-                  function refreshUnit(){
-                    const v = sel ? sel.value : '';
-                    unit.value = v ? fmt(sel.options[sel.selectedIndex]?.dataset?.price || 0) : '$0.00';
-                  }
-                  sel && sel.addEventListener('change', refreshUnit);
-                  refreshUnit();
-                });
+
+              async deleteLineItem(item) {
+                if (!confirm('Delete this item?')) return;
+
+                item.saving = true;
+                const formData = new FormData();
+                formData.append('_token', this.csrf());
+
+                try {
+                  const payload = await this.postForm(String(this.urls.delete).replace('__ITEM__', item.id), formData);
+                  this.applyPayload(payload);
+                } catch (error) {
+                  console.error('Error deleting item:', error);
+                  alert('Failed to delete item. Please try again.');
+                } finally {
+                  item.saving = false;
+                }
+              },
+
+              addAdjustment() {
+                if (this.adjustments.length >= 2) return;
+                this.adjustments.push({ label: 'Adjustment', amount: 0 });
+                this.recalcLocalTotals();
+                this.saveAdjustments();
+              },
+
+              removeAdjustment(index) {
+                this.adjustments.splice(index, 1);
+                this.recalcLocalTotals();
+                this.saveAdjustments();
+              },
+
+              async saveAdjustments() {
+                const formData = new FormData();
+                formData.append('_token', this.csrf());
+                this.appendAdjustments(formData);
+
+                try {
+                  const payload = await this.postForm(this.urls.update, formData);
+                  this.applyPayload(payload);
+                } catch (error) {
+                  console.error('Error saving adjustments:', error);
+                  alert('Failed to save adjustment. Please try again.');
+                }
               }
-            }
-          }
-        </script>
-        <script>
-          function adjustmentsManager(init){
-            return {
-              subtotal: init.subtotal||0, travel: init.travel||0, gratuity: init.gratuity||0, taxRate: init.taxRate||0.1025, paid: init.paid||0,
-              rows: [], tax: 0, total: 0, balance: 0,
-              fmt(n){ return '$'+(Number(n||0)).toFixed(2); },
-              parseAmount(s){ const v = (s||'').toString().replace(/[^0-9\-\.]/g,''); const n = parseFloat(v); return isNaN(n)?0:n; },
-              normalize(i){ const r=this.rows[i]; r.editing=false; r.amount = this.parseAmount(r.amountStr); r.amountStr = this.fmt(r.amount); this.recalc(); },
-              addRow(){ if (this.rows.length>=2) return; this.rows.push({label:'Adjustment', amount:0, amountStr:this.fmt(0), editing:false}); this.recalc(); },
-              remove(i){ this.rows.splice(i,1); this.recalc(); },
-              recalc(){ const adj = this.rows.reduce((s,r)=> s + (Number(r.amount)||0), 0); this.tax = Math.max(0, this.subtotal + adj) * this.taxRate; this.tax = Math.round(this.tax*100)/100; this.total = this.subtotal + this.travel + this.gratuity + this.tax + adj; this.balance = Math.max(0, this.total - this.paid); },
-              init(){ const initRows = Array.isArray(init.adjInit) ? init.adjInit.slice(0,2) : []; this.rows = initRows.map(a=>({label: String(a.label||'Adjustment'), amount: Number(a.amount||0), amountStr: this.fmt(a.amount||0), editing:false})); this.recalc(); }
             }
           }
         </script>
@@ -867,7 +992,7 @@
     <!-- Payments Section -->
     <div class="card section-card payments-card" x-data="manualPayments({
         list: @js($r->manual_payments ?? []),
-        basePaid: {{ number_format($r->deposit_paid ?? 0,2,'.','') }},
+        basePaid: {{ number_format($adminBasePaidWithoutManual,2,'.','') }},
         total: {{ number_format($r->total ?? 0,2,'.','') }}
       })">
       <div class="p-6">
@@ -1321,8 +1446,8 @@
         }
       }
     }
-    // Hook to update totals Paid in adjustments block by adding manual succeeded sum
-    window.adjustmentsSetPaidExtra = function(extra){ try { document.querySelectorAll('[x-data^="adjustmentsManager"]').forEach(el=>{ const comp = Alpine.$data(el); comp.paid = Number({{ number_format($r->deposit_paid ?? 0,2,'.','') }}) + Number(extra||0); comp.recalc(); }); } catch(e){} }
+    // Hook to update line-item totals after manual payment changes.
+    window.adjustmentsSetPaidExtra = function(extra){ try { document.querySelectorAll('[x-data^="itemsManager"]').forEach(el=>{ const comp = Alpine.$data(el); comp.totals.paid_total = Number({{ number_format($adminBasePaidWithoutManual,2,'.','') }}) + Number(extra||0); comp.recalcLocalTotals(); }); } catch(e){} }
   </script>
 </body>
 </html>

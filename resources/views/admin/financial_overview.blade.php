@@ -47,14 +47,16 @@
     $profitTone = $kpis['profit'] > 0 ? 'positive' : ($kpis['profit'] < 0 ? 'negative' : '');
     $marginTone = $kpis['margin'] > 0 ? 'positive' : ($kpis['margin'] < 0 ? 'negative' : '');
     $ratioTone = $kpis['expense_ratio'] > 65 ? 'tone-negative' : ($kpis['expense_ratio'] > 0 ? 'tone-neutral' : 'tone-neutral');
+    $canManageFinancial = auth()->user()?->hasPermission('financial.manage');
   @endphp
 </head>
 <body>
   <div class="container">
     <div class="page">
       <div class="header">
-        <h1 class="title" style="margin-right:auto">Financial Overview</h1>
-        <a href="{{ route('admin.expenses.create', ['back' => $backUrl]) }}" class="btn">Add Expense</a>
+        @if ($canManageFinancial)
+        <a href="{{ route('admin.expenses.create', ['back' => $backUrl]) }}" class="btn" style="margin-left:auto">Add Expense</a>
+        @endif
       </div>
 
       @if (session('ok'))
@@ -192,7 +194,9 @@
                 <th>Amount</th>
                 <th>Notes</th>
                 <th>Created By</th>
+                @if ($canManageFinancial)
                 <th>Actions</th>
+                @endif
               </tr>
             </thead>
             <tbody>
@@ -204,6 +208,7 @@
                   <td style="font-weight:800">{{ $money($expense->amount) }}</td>
                   <td style="max-width:320px;color:#64748b">{{ $expense->notes ?: '—' }}</td>
                   <td>{{ $expense->creator?->name ?: 'System' }}</td>
+                  @if ($canManageFinancial)
                   <td>
                     <div style="display:flex;gap:8px;align-items:center">
                       <a class="btn secondary" href="{{ route('admin.expenses.edit', ['id' => $expense->id, 'back' => $backUrl]) }}">Edit</a>
@@ -214,15 +219,17 @@
                       </form>
                     </div>
                   </td>
+                  @endif
                 </tr>
               @empty
                 <tr>
-                  <td colspan="7"><div class="empty-state">No expenses found for the selected period.</div></td>
+                  <td colspan="{{ $canManageFinancial ? 7 : 6 }}"><div class="empty-state">No expenses found for the selected period.</div></td>
                 </tr>
               @endforelse
             </tbody>
           </table>
         </div>
+        @include('admin.partials.pagination', ['paginator' => $expenses])
       </div>
     </div>
   </div>

@@ -9,12 +9,17 @@ use App\Models\ClientReservation;
 use App\Models\Reservation;
 use App\Models\ReservationItem;
 use App\Services\ClientSyncService;
+use App\Services\TaxRateResolver;
+use App\Support\AdminMenuCatalog;
+use App\Support\CaliforniaCateringTax;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Support\MenuLabel;
+use App\Support\ReservationTotals;
 use App\Models\OrderPortionRow;
 use Illuminate\Support\Collection;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReservationAdminController extends Controller
 {
@@ -26,8 +31,9 @@ class ReservationAdminController extends Controller
         $status = $req->query('status');
         $sort = (string) $req->query('sort', 'newest');
         $q = trim((string)$req->query('q', ''));
+        $perPage = $this->adminPerPage($req);
 
-        $query = Reservation::query();
+        $query = Reservation::with('payments');
         // Sorting options
         switch ($sort) {
             case 'oldest':
@@ -73,8 +79,8 @@ class ReservationAdminController extends Controller
             });
         }
 
-        $rows = $query->limit(100)->get();
-        $this->markClientSyncAvailability($rows);
+        $rows = $query->paginate($perPage)->withQueryString();
+        $this->markClientSyncAvailability($rows->getCollection());
 
         return view('admin.reservations', [
             'd' => $d,
@@ -82,14 +88,30 @@ class ReservationAdminController extends Controller
             'q' => $q,
             'sort' => $sort,
             'rows' => $rows,
+            'perPage' => $perPage,
         ]);
     }
 
     public function show(int $id)
     {
-        $r = Reservation::with(['items','payments'])->findOrFail($id);
-        $menu = $this->flatMenu();
-        return view('admin.reservation_show', ['r' => $r, 'menuOptions' => $menu]);
+        $r = Reservation::with([
+            'items',
+            'payments',
+            'staffEventConfirmations',
+            'scheduleAssignment.user:id,name',
+            'scheduleAssignment.chef1:id,name',
+            'scheduleAssignment.chef2:id,name',
+            'scheduleAssignment.chef3:id,name',
+            'scheduleAssignment.chef4:id,name',
+        ])->findOrFail($id);
+        $menu = $this->adminMenuOptions();
+        return view('admin.reservation_show', [
+            'r' => $r,
+            'menuOptions' => $menu,
+            'lineMenuOptions' => $this->lineMenuOptions($menu),
+            'lineItems' => $this->reservationItemsPayload($r),
+            'lineTotals' => ReservationTotals::compute($r),
+        ]);
     }
 
     public function event(int $id)
@@ -120,6 +142,8 @@ class ReservationAdminController extends Controller
             'time'          => 'required',
             'guests'        => 'required|integer|min:1',
             'status'        => 'nullable|string|in:confirmed,pending,pending_payment,canceled',
+            'event_markers' => 'nullable|array',
+            'event_markers.*' => 'string|in:' . implode(',', array_keys(Reservation::eventMarkerOptions())),
         ]);
 
         // Normalize time to H:i:s
@@ -149,6 +173,7 @@ class ReservationAdminController extends Controller
             'time'          => $t,
             'guests'        => (int)$data['guests'],
             'status'        => $statusValue !== '' ? $statusValue : $r->status,
+            'event_markers' => array_values(array_unique((array) ($data['event_markers'] ?? []))),
         ])->save();
 
         $back = $req->input('back');
@@ -193,6 +218,7 @@ class ReservationAdminController extends Controller
         $r = Reservation::with('items')->findOrFail($id);
         $items = (array) $req->input('items', []); // id => qty
         $desc  = (array) $req->input('desc', []);  // id => description
+        $prices = (array) $req->input('prices', []); // id => unit price
         $adjLabels = (array) $req->input('adj_label', []);
         $adjAmounts= (array) $req->input('adj_amount', []);
         foreach ($items as $itemId => $qty) {
@@ -203,6 +229,9 @@ class ReservationAdminController extends Controller
                 $it->delete();
             } else {
                 $it->qty = $qty;
+                if (array_key_exists($itemId, $prices)) {
+                    $it->unit_price_snapshot = max(0, round((float) str_replace([',', '$', ' '], '', (string) $prices[$itemId]), 2));
+                }
                 $unit = (float) ($it->unit_price_snapshot ?? 0);
                 $it->line_total = round($unit * $qty, 2);
                 if (array_key_exists($itemId, $desc)) {
@@ -226,6 +255,10 @@ class ReservationAdminController extends Controller
         $r->save();
 
         $this->recalcTotals($r->fresh('items'));
+        if ($this->wantsJsonResponse($req)) {
+            return $this->reservationItemsResponse($r->fresh(['items', 'payments']));
+        }
+
         return redirect()->route('admin.reservations.show', ['id'=>$r->id])->with('ok','Items updated');
     }
 
@@ -244,12 +277,12 @@ class ReservationAdminController extends Controller
         $qty = (int) $data['qty'];
 
         if (!empty($data['menu_key'])) {
-            $flat = $this->flatMenu();
+            $flat = $this->adminMenuOptions();
             $opt = $flat[$data['menu_key']] ?? null;
             if ($opt) {
                 $name = $opt['name'];
                 $price = (float) $opt['price'];
-                $menuId = null; // not using FK menu table now
+                $menuId = isset($opt['id']) ? (int) $opt['id'] : null;
             }
         }
         if ($name === null) {
@@ -263,24 +296,51 @@ class ReservationAdminController extends Controller
             $description = MenuLabel::standardizeText($description);
         }
 
-        $r->items()->create([
-            'menu_id'             => $menuId,
-            'name_snapshot'       => $name,
-            'description'         => $description,
-            'unit_price_snapshot' => $price,
-            'qty'                 => $qty,
-            'line_total'          => round($price * $qty, 2),
-        ]);
+        $existingQuery = $r->items();
+        if ($menuId !== null) {
+            $existingQuery->where('menu_id', $menuId);
+        } else {
+            $existingQuery
+                ->where('name_snapshot', $name)
+                ->where('unit_price_snapshot', round($price, 2));
+        }
+        $existing = $existingQuery->first();
+
+        if ($existing) {
+            $existing->qty = (int) $existing->qty + $qty;
+            if ($description !== null && $description !== '') {
+                $existing->description = $description;
+            }
+            $existing->line_total = round((float) $existing->unit_price_snapshot * (int) $existing->qty, 2);
+            $existing->save();
+        } else {
+            $r->items()->create([
+                'menu_id'             => $menuId,
+                'name_snapshot'       => $name,
+                'description'         => $description,
+                'unit_price_snapshot' => $price,
+                'qty'                 => $qty,
+                'line_total'          => round($price * $qty, 2),
+            ]);
+        }
 
         $this->recalcTotals($r->fresh('items'));
+        if ($this->wantsJsonResponse($req)) {
+            return $this->reservationItemsResponse($r->fresh(['items', 'payments']));
+        }
+
         return redirect()->route('admin.reservations.show', ['id'=>$r->id])->with('ok','Item added');
     }
 
-    public function deleteItem(int $id, int $itemId)
+    public function deleteItem(Request $req, int $id, int $itemId)
     {
         $r = Reservation::findOrFail($id);
         ReservationItem::where('reservation_id',$r->id)->where('id',$itemId)->delete();
         $this->recalcTotals($r->fresh('items'));
+        if ($this->wantsJsonResponse($req)) {
+            return $this->reservationItemsResponse($r->fresh(['items', 'payments']));
+        }
+
         return redirect()->route('admin.reservations.show', ['id'=>$r->id])->with('ok','Item removed');
     }
 
@@ -307,8 +367,11 @@ class ReservationAdminController extends Controller
             foreach ($adj as $a) { $adjSum += (float) ($a['amount'] ?? 0); }
         } catch (\Throwable $e) { $adjSum = 0.0; }
         $gratuity = round($subtotal * self::GRATUITY, 2);
-        $taxBase  = max(0, $subtotal + $adjSum);
-        $tax      = round($taxBase * self::TAX, 2);
+        $taxRate  = app(TaxRateResolver::class)->rateForCity((string) ($r->city ?? ''));
+        // California catering tax: taxable base includes food/items subtotal, travel fee,
+        // and mandatory gratuity/service charge. Voluntary tips are excluded.
+        $taxBase  = CaliforniaCateringTax::taxableBase($subtotal, $travel, $gratuity, 0, $adjSum);
+        $tax      = CaliforniaCateringTax::tax($taxBase, $taxRate);
         $total    = round($subtotal + $travel + $gratuity + $tax + $adjSum, 2);
         $r->subtotal = round($subtotal, 2);
         $r->gratuity = $gratuity;
@@ -325,6 +388,36 @@ class ReservationAdminController extends Controller
         } catch (\Throwable $e) {}
         $r->balance  = max(0, round($total - $paid, 2));
         $r->save();
+    }
+
+    private function wantsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson() || $request->wantsJson() || $request->ajax();
+    }
+
+    private function reservationItemsResponse(Reservation $reservation)
+    {
+        return response()->json([
+            'ok' => true,
+            'items' => $this->reservationItemsPayload($reservation),
+            'totals' => ReservationTotals::compute($reservation),
+        ]);
+    }
+
+    private function reservationItemsPayload(Reservation $reservation): array
+    {
+        $items = $reservation->relationLoaded('items') ? $reservation->items : $reservation->items()->get();
+
+        return $items->map(function (ReservationItem $item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name_snapshot,
+                'description' => $item->description ?? '',
+                'qty' => (int) $item->qty,
+                'price' => (float) $item->unit_price_snapshot,
+                'total' => (float) $item->line_total,
+            ];
+        })->values()->all();
     }
 
     // Manual payments: save (create/update)
@@ -397,54 +490,43 @@ class ReservationAdminController extends Controller
 
     private function flatMenu(): array
     {
-        $cfg = (array) config('menu');
-        $out = [];
-        foreach ($cfg as $cat => $items) {
-            foreach ((array)$items as $it) {
-                if (!isset($it['key'])) continue;
-                $out[$it['key']] = [
-                    'name'  => MenuLabel::standardizeText($it['name'] ?? $it['key']),
-                    'price' => (float)($it['price'] ?? 0),
-                    'cat'   => $cat,
-                ];
-            }
-        }
-        // Include Packages used in the public wizard as well
-        foreach ($this->packagesMenu() as $code => $it) {
-            $out[$code] = [
-                'name'  => MenuLabel::standardizeText($it['name']),
-                'price' => (float)$it['price'],
-                'cat'   => 'Packages',
-            ];
-        }
-        return $out;
+        return app(AdminMenuCatalog::class)->flat();
     }
 
-    private function packagesMenu(): array
+    private function adminMenuOptions(): array
     {
-        // Keep in sync with ReservationController::menu() Packages section
-        return [
-            'PKG_CLASSIC' => [
-                'name'  => 'Classic Package (pp)',
-                'price' => 85.00,
-            ],
-            'PKG_PREMIUM' => [
-                'name'  => 'Premium Package (pp)',
-                'price' => 95.00,
-            ],
-            'PKG_DELUXE' => [
-                'name'  => 'Deluxe Package (pp)',
-                'price' => 135.00,
-            ],
-            'PKG_KIDS' => [
-                'name'  => 'Kids Package (pp)',
-                'price' => 55.00,
-            ],
-            'PKG_CUSTOM' => [
-                'name'  => 'Custom Package (per quote)',
-                'price' => 0.00,
-            ],
-        ];
+        return app(AdminMenuCatalog::class)->flat();
+    }
+
+    private function lineMenuOptions(array $menu): array
+    {
+        return collect($menu)->map(function (array $opt, string $key) {
+            $name = MenuLabel::standardizeText($opt['name'] ?? $key);
+            $category = trim((string) ($opt['cat'] ?? ''));
+            $source = $name !== '' ? $name : ($category !== '' ? $category : $key);
+
+            return [
+                'key' => $key,
+                'name' => $name,
+                'category' => $category !== '' ? $category : 'Uncategorized',
+                'cat' => $category !== '' ? $category : 'Uncategorized',
+                'description' => MenuLabel::standardizeText($opt['desc'] ?? ''),
+                'price' => (float) ($opt['price'] ?? 0),
+                'code' => $this->lineItemCode($source),
+            ];
+        })->values()->all();
+    }
+
+    private function lineItemCode(string $value): string
+    {
+        $words = preg_split('/\s+/', preg_replace('/[^A-Za-z0-9\s]/', ' ', $value));
+        $first = collect($words)->filter()->first();
+
+        if (!$first) {
+            return 'IT';
+        }
+
+        return strtoupper(substr($first, 0, 2));
     }
 
     public function searchOrdersBreakdown(Request $request)
@@ -703,7 +785,43 @@ class ReservationAdminController extends Controller
     public function invoice(int $id)
     {
         $r = Reservation::with(['items','payments'])->findOrFail($id);
-        return view('admin.invoice', ['r' => $r]);
+        $token = $r->ensurePublicInvoiceToken();
+        $statusUrl = $token !== '' ? route('invoice.status.public', ['token' => $token]) : '';
+        $qrCodeSvg = '';
+
+        if ($statusUrl !== '') {
+            try {
+                $qrCodeSvg = (string) QrCode::format('svg')
+                    ->size(156)
+                    ->margin(1)
+                    ->errorCorrection('M')
+                    ->generate($statusUrl);
+            } catch (\Throwable $e) {
+                $qrCodeSvg = '';
+            }
+        }
+
+        return view('admin.invoice', [
+            'r' => $r,
+            'statusUrl' => $statusUrl,
+            'qrCodeSvg' => $qrCodeSvg,
+        ]);
+    }
+
+    public function prepPrint(int $id)
+    {
+        $r = Reservation::with([
+            'items',
+            'scheduleAssignment.user:id,name',
+            'scheduleAssignment.chef1:id,name',
+            'scheduleAssignment.chef2:id,name',
+            'scheduleAssignment.chef3:id,name',
+            'scheduleAssignment.chef4:id,name',
+        ])->findOrFail($id);
+
+        return view('admin.reservations.prep-print', [
+            'r' => $r,
+        ]);
     }
 
     public function updateInvoiceStatus(\Illuminate\Http\Request $req, int $id)
@@ -819,6 +937,13 @@ class ReservationAdminController extends Controller
 
             $row->can_add_to_clients = $canSyncByStatus && !$alreadyLinked;
         }
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     private function clientSyncResponse(Request $request, bool $ok, string $message)

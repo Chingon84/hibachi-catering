@@ -37,8 +37,10 @@ class ReportRevenueService
         $base = $this->baseQuery($start, $end, $bookedBy);
 
         if ($granularity === 'month') {
+            $periodExpression = $this->monthPeriodExpression();
+
             $groupRows = (clone $base)
-                ->selectRaw("DATE_FORMAT(`date`, '%Y-%m') as period")
+                ->selectRaw($periodExpression . ' as period')
                 ->selectRaw('COALESCE(SUM(total),0) as total_sum')
                 ->selectRaw('COALESCE(SUM(deposit_paid),0) as deposit_sum')
                 ->selectRaw('COALESCE(SUM(gratuity),0) as gratuity_sum')
@@ -117,5 +119,14 @@ class ReportRevenueService
         return $this->baseQuery($start, $end, $bookedBy)
             ->orderBy('id')
             ->pluck('id');
+    }
+
+    private function monthPeriodExpression(): string
+    {
+        $driver = Reservation::query()->getConnection()->getDriverName();
+
+        return $driver === 'sqlite'
+            ? 'strftime(\'%Y-%m\', "date")'
+            : "DATE_FORMAT(`date`, '%Y-%m')";
     }
 }

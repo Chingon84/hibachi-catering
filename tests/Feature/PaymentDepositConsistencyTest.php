@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Payment;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Support\ReservationTotals;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpClientRequest;
@@ -55,12 +56,12 @@ class PaymentDepositConsistencyTest extends TestCase
 
         $this->assertSame(544.81, (float) $reservation->deposit_paid);
         $this->assertSame(544.81, (float) $reservation->amount_paid_total);
-        $this->assertSame(2724.07, (float) $reservation->total);
-        $this->assertSame(2179.26, (float) $reservation->balance);
+        $this->assertSame(2763.26, (float) $reservation->total);
+        $this->assertSame(2218.45, (float) $reservation->balance);
 
         $totals = ReservationTotals::compute($reservation);
         $this->assertSame(544.81, (float) $totals['deposit_display']);
-        $this->assertSame(2179.26, (float) $totals['balance']);
+        $this->assertSame(2218.45, (float) $totals['balance']);
 
         $this->assertDatabaseHas('payments', [
             'reservation_id' => $reservation->id,
@@ -70,6 +71,14 @@ class PaymentDepositConsistencyTest extends TestCase
             'status' => 'succeeded',
             'type' => 'deposit',
         ]);
+
+        $payment = Payment::query()->where('transaction_id', 'pi_test_deposit')->firstOrFail();
+        $payload = json_decode((string) $payment->payload_json, true);
+
+        $this->assertSame('cs_test_deposit', data_get($payload, 'id'));
+        $this->assertSame('deposit', data_get($payload, 'metadata.payment_type'));
+        $this->assertSame('visa', data_get($payload, 'payment_intent.payment_method.card.brand'));
+        $this->assertNull(data_get($payload, 'metadata.customer_email'));
     }
 
     public function test_success_is_idempotent_for_same_session_and_does_not_duplicate_payment_rows(): void
@@ -113,7 +122,7 @@ class PaymentDepositConsistencyTest extends TestCase
         $reservation->refresh();
         $this->assertSame(544.81, (float) $reservation->deposit_paid);
         $this->assertSame(544.81, (float) $reservation->amount_paid_total);
-        $this->assertSame(2179.26, (float) $reservation->balance);
+        $this->assertSame(2218.45, (float) $reservation->balance);
         $this->assertSame(1, Payment::query()->where('transaction_id', 'pi_test_repeat')->count());
     }
 
@@ -202,7 +211,7 @@ class PaymentDepositConsistencyTest extends TestCase
         $reservation->refresh();
         $this->assertSame(0.00, (float) $reservation->deposit_paid);
         $this->assertSame(0.00, (float) $reservation->amount_paid_total);
-        $this->assertSame(2724.07, (float) $reservation->balance);
+        $this->assertSame(2763.26, (float) $reservation->balance);
         $this->assertDatabaseHas('payments', [
             'transaction_id' => 'pi_test_mismatch',
             'status' => 'mismatch',
@@ -266,16 +275,16 @@ class PaymentDepositConsistencyTest extends TestCase
                 'id' => 'cs_test_full',
                 'currency' => 'usd',
                 'payment_status' => 'paid',
-                'amount_total' => 272407,
+                'amount_total' => 276326,
                 'metadata' => [
                     'reservation_id' => (string) $reservation->id,
                     'purpose' => 'full',
                     'payment_type' => 'full',
-                    'expected_amount_cents' => '272407',
+                    'expected_amount_cents' => '276326',
                 ],
                 'payment_intent' => [
                     'id' => 'pi_test_full',
-                    'amount_received' => 272407,
+                    'amount_received' => 276326,
                 ],
             ], 200),
         ]);
@@ -285,7 +294,7 @@ class PaymentDepositConsistencyTest extends TestCase
             ->assertRedirect(route('reservations.step', ['step' => 5]));
 
         $reservation->refresh();
-        $this->assertSame(2724.07, (float) $reservation->amount_paid_total);
+        $this->assertSame(2763.26, (float) $reservation->amount_paid_total);
         $this->assertSame(0.00, (float) $reservation->balance);
 
         $this->get(route('reservations.step', ['step' => 5]))
@@ -347,7 +356,98 @@ class PaymentDepositConsistencyTest extends TestCase
         Http::assertSent(function (HttpClientRequest $request) {
             $payload = $request->data();
             return (int) ($payload['line_items[0][price_data][unit_amount]'] ?? 0) === 13506
-                && ($payload['metadata[payment_type]'] ?? '') === 'deposit';
+                && ($payload['metadata[payment_type]'] ?? '') === 'deposit'
+                && ($payload['metadata[reservation_id]'] ?? '') !== ''
+                && ($payload['metadata[customer_name]'] ?? '') === 'Remaining Deposit'
+                && ($payload['metadata[customer_email]'] ?? '') === 'remaining@example.com'
+                && ($payload['metadata[total]'] ?? '') === '2066.18'
+                && ($payload['metadata[deposit_amount]'] ?? '') === '135.06'
+                && ($payload['client_reference_id'] ?? '') === ($payload['metadata[reservation_id]'] ?? '')
+                && ($payload['customer_email'] ?? '') === 'remaining@example.com';
+        });
+    }
+
+    public function test_admin_checkout_uses_invoice_balance_for_full_payment_without_wizard_session(): void
+    {
+        config()->set('services.stripe.secret', 'sk_test_123');
+        config()->set('services.stripe.key', 'pk_test_123');
+
+        $admin = User::factory()->create([
+            'role' => 'owner',
+            'is_active' => true,
+            'can_access_admin' => true,
+        ]);
+
+        $reservation = Reservation::query()->create([
+            'code' => 'RSV-PAY-ADMIN',
+            'status' => 'confirmed',
+            'invoice_status' => 'partial',
+            'guests' => 10,
+            'date' => now()->addDays(7)->toDateString(),
+            'time' => '18:00:00',
+            'customer_name' => 'Admin Balance',
+            'phone' => '3050001212',
+            'email' => 'admin-balance@example.com',
+            'subtotal' => 1050.00,
+            'travel_fee' => 95.40,
+            'gratuity' => 189.00,
+            'tax' => 107.63,
+            'total' => 1471.18,
+            'deposit_due' => 288.41,
+            'deposit_paid' => 288.41,
+            'amount_paid_total' => 288.41,
+            'balance' => 1182.77,
+        ]);
+        $staleSessionReservation = Reservation::query()->create([
+            'code' => 'RSV-PAY-STALE',
+            'status' => 'pending_payment',
+            'invoice_status' => 'pending',
+            'guests' => 2,
+            'date' => now()->addDays(8)->toDateString(),
+            'time' => '17:00:00',
+            'customer_name' => 'Stale Session',
+            'phone' => '3050001313',
+            'email' => 'stale@example.com',
+            'total' => 999.00,
+            'deposit_due' => 199.80,
+            'deposit_paid' => 0.00,
+            'amount_paid_total' => 0.00,
+            'balance' => 999.00,
+        ]);
+
+        Http::fake([
+            'https://api.stripe.com/v1/checkout/sessions' => Http::response([
+                'id' => 'cs_test_admin_balance',
+                'url' => 'https://checkout.stripe.test/session/admin-balance',
+            ], 200),
+        ]);
+
+        $this->actingAs($admin)
+            ->withSession([
+                'resv' => [
+                    'reservation_id' => $staleSessionReservation->id,
+                    'estimate' => ['total' => 999.00],
+                    'deposit_amount' => 199.80,
+                ],
+            ])
+            ->post(route('payments.checkout'), [
+                'reservation_id' => $reservation->id,
+                'payment_type' => 'full',
+                'deposit_amount' => 1.00,
+            ])
+            ->assertRedirect('https://checkout.stripe.test/session/admin-balance');
+
+        Http::assertSent(function (HttpClientRequest $request) use ($reservation) {
+            $payload = $request->data();
+
+            return (int) ($payload['line_items[0][price_data][unit_amount]'] ?? 0) === 118277
+                && ($payload['metadata[payment_type]'] ?? '') === 'full'
+                && ($payload['metadata[reservation_id]'] ?? '') === (string) $reservation->id
+                && ($payload['metadata[customer_name]'] ?? '') === 'Admin Balance'
+                && ($payload['metadata[customer_email]'] ?? '') === 'admin-balance@example.com'
+                && ($payload['metadata[total]'] ?? '') === '1471.18'
+                && ($payload['metadata[expected_amount_cents]'] ?? '') === '118277'
+                && ($payload['client_reference_id'] ?? '') === (string) $reservation->id;
         });
     }
 
@@ -371,12 +471,12 @@ class PaymentDepositConsistencyTest extends TestCase
             'deposit_due' => 413.24,
             'deposit_paid' => 413.24,
             'amount_paid_total' => 691.42,
-            'balance' => 1374.76,
+            'balance' => 1390.10,
         ]);
 
         $totals = ReservationTotals::compute($reservation);
         $this->assertSame(691.42, (float) $totals['paid_total']);
-        $this->assertSame(1374.76, (float) $totals['balance']);
+        $this->assertSame(1390.10, (float) $totals['balance']);
         $this->assertSame(413.24, (float) $totals['deposit_paid']);
     }
 
@@ -423,11 +523,11 @@ class PaymentDepositConsistencyTest extends TestCase
             'travel_fee' => 0.00,
             'gratuity' => 382.33,
             'tax' => 217.71,
-            'total' => 2724.07,
+            'total' => 2763.26,
             'deposit_due' => 544.81,
             'deposit_paid' => 0.00,
             'amount_paid_total' => 0.00,
-            'balance' => 2724.07,
+            'balance' => 2763.26,
         ]);
 
         $reservation->items()->create([

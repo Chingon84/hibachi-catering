@@ -32,6 +32,7 @@ class TeamPasswordTest extends TestCase
             'position' => 'Tester',
             'role' => 'staff',
             'password' => 'secret123',
+            'password_confirmation' => 'secret123',
             'can_access_admin' => 1,
             'is_active' => 1,
         ]);
@@ -99,6 +100,7 @@ class TeamPasswordTest extends TestCase
             'position' => 'Analyst',
             'role' => 'staff',
             'password' => 'newpass123',
+            'password_confirmation' => 'newpass123',
             'can_access_admin' => 0,
             'is_active' => 1,
         ]);
@@ -133,6 +135,7 @@ class TeamPasswordTest extends TestCase
             'position' => 'Analyst',
             'role' => 'staff',
             'password' => TeamController::PASSWORD_PLACEHOLDER,
+            'password_confirmation' => TeamController::PASSWORD_PLACEHOLDER,
             'can_access_admin' => 0,
             'is_active' => 1,
         ]);

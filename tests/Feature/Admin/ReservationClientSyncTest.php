@@ -367,7 +367,7 @@ class ReservationClientSyncTest extends TestCase
         $response->assertOk()->assertSeeInOrder(['Older Client', 'Recent Client']);
     }
 
-    public function test_paginate_50_places_51st_client_on_second_page(): void
+    public function test_paginate_25_places_51st_client_on_third_page(): void
     {
         $user = $this->adminUser();
 
@@ -386,7 +386,11 @@ class ReservationClientSyncTest extends TestCase
 
         $page2 = $this->actingAs($user, 'web')->get('/admin/clients?page=2');
         $page2->assertOk();
-        $page2->assertSee('PageClient-01');
+        $page2->assertDontSee('PageClient-01');
+
+        $page3 = $this->actingAs($user, 'web')->get('/admin/clients?page=3');
+        $page3->assertOk();
+        $page3->assertSee('PageClient-01');
     }
 
     public function test_pagination_links_preserve_filters_with_query_string(): void

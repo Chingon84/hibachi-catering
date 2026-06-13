@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Reservation;
+use App\Services\TaxRateResolver;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -78,15 +79,22 @@ class ReservationTotals
 
         $adjustments = self::adjustments($reservation, $fallback);
         $adjSum = array_reduce($adjustments, fn($c, $a) => $c + (float) ($a['amount'] ?? 0), 0.0);
+        $hasTaxableComponents = abs($subtotal) > 0.009
+            || abs($travel) > 0.009
+            || abs($gratuity) > 0.009
+            || abs($adjSum) > 0.009;
 
-        $tax = self::value($reservation?->tax, data_get($fallback, 'tax'));
-        if ($tax === null) {
-            $tax = round(max(0, $subtotal + $adjSum) * self::DEFAULT_TAX, 2);
-        }
+        $taxRate = self::taxRate($reservation, $fallback);
+        // California catering tax: taxable base includes food/items subtotal, travel fee,
+        // and mandatory gratuity/service charge. Voluntary tips are excluded.
+        $taxableBase = CaliforniaCateringTax::taxableBase($subtotal, $travel, $gratuity, 0, $adjSum);
+        $tax = CaliforniaCateringTax::tax($taxableBase, $taxRate);
 
         $computedTotal = round($subtotal + $travel + $gratuity + $tax + $adjSum, 2);
         $total = self::value($reservation?->total, data_get($fallback, 'total', $computedTotal));
         if ($total === null || $total <= 0) {
+            $total = $computedTotal;
+        } elseif ($hasTaxableComponents && abs($total - $computedTotal) > 0.009) {
             $total = $computedTotal;
         }
 
@@ -141,6 +149,8 @@ class ReservationTotals
             'travel'         => round($travel, 2),
             'gratuity'       => round($gratuity, 2),
             'tax'            => round($tax, 2),
+            'tax_rate'       => round($taxRate, 2),
+            'taxable_base'   => round($taxableBase, 2),
             'adjustments'    => $adjustments,
             'adjustments_sum'=> round($adjSum, 2),
             'total'          => $total,
@@ -216,5 +226,16 @@ class ReservationTotals
             return (float) $fallback;
         }
         return null;
+    }
+
+    private static function taxRate(?Reservation $reservation, array $fallback): float
+    {
+        $city = trim((string) ($reservation?->city ?? data_get($fallback, 'city', '')));
+
+        if ($city !== '') {
+            return app(TaxRateResolver::class)->rateForCity($city);
+        }
+
+        return round(self::DEFAULT_TAX * 100, 2);
     }
 }

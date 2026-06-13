@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\TaxRateResolver;
+use App\Support\AdminMenuCatalog;
+use App\Support\CaliforniaCateringTax;
 use App\Support\MenuLabel;
 
 class StaffBookingController extends Controller
@@ -58,9 +61,10 @@ class StaffBookingController extends Controller
     {
         $data = session('staff_booking', []);
         $cats = $this->menuCategories();
+        $taxRate = app(TaxRateResolver::class)->rateForCity((string) ($data['city'] ?? ''));
         $constants = [
             'GRATUITY' => 0.18,
-            'TAX'      => 0.1025,
+            'TAX'      => $taxRate / 100,
         ];
         $travelFee = (float) data_get($data, 'calc.travel', 0.00);
         $guests = (int)($data['guest_count'] ?? 0);
@@ -117,11 +121,14 @@ class StaffBookingController extends Controller
             ];
         }
 
-        $GRAT = 0.18; $TAX = 0.1025; $travel = (float) $req->input('travel_fee', 0);
+        $GRAT = 0.18; $taxRate = app(TaxRateResolver::class)->rateForCity((string) data_get(session('staff_booking', []), 'city', '')); $travel = (float) $req->input('travel_fee', 0);
         $manualGrat = $req->input('gratuity', null);
         $manualTax  = $req->input('tax', null);
         $gratuity = is_null($manualGrat) ? round($subtotal * $GRAT, 2) : max(0, round((float)$manualGrat, 2));
-        $tax      = is_null($manualTax)  ? round($subtotal * $TAX, 2) : max(0, round((float)$manualTax, 2));
+        // California catering tax: taxable base includes food/items subtotal, travel fee,
+        // and mandatory gratuity/service charge. Voluntary tips are excluded.
+        $taxableBase = CaliforniaCateringTax::taxableBase($subtotal, $travel, $gratuity, 0, $extrasSum, max(0, $discount));
+        $tax      = is_null($manualTax)  ? CaliforniaCateringTax::tax($taxableBase, $taxRate) : max(0, round((float)$manualTax, 2));
         $total    = round(max(0, $subtotal + $travel + $extrasSum + $gratuity + $tax - max(0, $discount)), 2);
         $balance  = max(0, round($total - $deposit, 2));
 
@@ -247,47 +254,12 @@ class StaffBookingController extends Controller
 
     private function flatMenu(): array
     {
-        // Read directly from file to bypass config cache
-        $path = base_path('config/menu.php');
-        if (is_file($path)) {
-            try {
-                $cfg = include $path;
-                if (!is_array($cfg)) { $cfg = (array) config('menu'); }
-            } catch (\Throwable $e) {
-                $cfg = (array) config('menu');
-            }
-        } else {
-            $cfg = (array) config('menu');
-        }
-        $out = [];
-        foreach ($cfg as $cat => $items) {
-            foreach ((array)$items as $it) {
-                if (!isset($it['key'])) continue;
-                $name = $it['name'] ?? $it['key'];
-                $out[$it['key']] = [
-                    'name' => MenuLabel::standardizeText($name),
-                    'price'=> (float)($it['price'] ?? 0),
-                    'cat'  => $cat,
-                ];
-            }
-        }
-        return $out;
+        return app(AdminMenuCatalog::class)->flat();
     }
 
     private function menuCategories(): array
     {
-        // Read directly from file to bypass config cache
-        $path = base_path('config/menu.php');
-        if (is_file($path)) {
-            try {
-                $cfg = include $path;
-                if (!is_array($cfg)) { $cfg = (array) config('menu'); }
-            } catch (\Throwable $e) {
-                $cfg = (array) config('menu');
-            }
-        } else {
-            $cfg = (array) config('menu');
-        }
+        $cfg = app(AdminMenuCatalog::class)->grouped();
         $cats = [];
         foreach ($cfg as $cat => $items) {
             $cats[$cat] = [];

@@ -21,13 +21,36 @@
       .reservations-filter-bar{grid-template-columns:1fr}
       .reservations-filter-bar .search-field{grid-column:auto}
     }
-    .inv{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid #e5e7eb;white-space:nowrap}
-    .table td select{max-width:160px}
-    .inv.paid{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
-    .inv.pending{background:#fef9c3;color:#854d0e;border-color:#fde68a}
-    .inv.overdue{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe}
-    .inv.cancelled{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    .inv.refunded{background:#f3f4f6;color:#6b7280;border-color:#e5e7eb}
+    .reservation-row{cursor:pointer;transition:background-color .15s ease,box-shadow .15s ease}
+    .reservation-row:hover{background:#fff8f8}
+    .reservation-row:focus-within{background:#f8fafc}
+    .table th.invoice-col,
+    .table th.inv-status-col,
+    .table th.actions-col,
+    .table td.invoice-cell,
+    .table td.inv-status-cell,
+    .table td.actions-cell{white-space:nowrap}
+    .invoice-cell,.inv-status-cell,.actions-cell{vertical-align:middle}
+    .invoice-actions{display:inline-flex;align-items:center;gap:6px}
+    .invoice-icon-btn,
+    .row-action-btn{width:28px;height:28px;border-radius:8px;border:1px solid transparent;background:transparent;display:inline-flex;align-items:center;justify-content:center;line-height:1;text-decoration:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+    .invoice-icon-btn svg,.row-action-btn svg{width:16px;height:16px;display:block}
+    .invoice-icon-btn.invoice-view{color:#b21e27}
+    .invoice-icon-btn.menu-print{color:#2563eb}
+    .invoice-icon-btn.invoice-view:hover{background:#fff1f2;border-color:#fecdd3;color:#9f1620}
+    .invoice-icon-btn.menu-print:hover{background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8}
+    .row-action-btn{color:#374151;border-color:#e5e7eb;background:#fff}
+    .row-action-btn:hover{background:#f8fafc;border-color:#d1d5db;color:#111827;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+    .inv-status-form{display:flex;align-items:center;margin:0}
+    .select.inv{appearance:none;-webkit-appearance:none;display:inline-flex;width:auto;min-width:0;max-width:132px;height:24px;padding:3px 22px 3px 10px;border-radius:999px;border:1px solid #e5e7eb;font-size:11px;font-weight:600;line-height:1;color:#374151;background-color:#fff;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 12px) 9px,calc(100% - 8px) 9px;background-size:4px 4px,4px 4px;background-repeat:no-repeat;white-space:nowrap;box-shadow:none;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+    .select.inv:hover{box-shadow:0 1px 4px rgba(15,23,42,.06)}
+    .select.inv:focus{outline:2px solid rgba(178,30,39,.12);outline-offset:1px}
+    .select.inv.paid{background-color:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .select.inv.pending{background-color:#fffbeb;color:#92400e;border-color:#fde68a}
+    .select.inv.partially_paid,.select.inv.partial{background-color:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+    .select.inv.overdue{background-color:#fff7ed;color:#9a3412;border-color:#fed7aa}
+    .select.inv.cancelled,.select.inv.canceled{background-color:#fef2f2;color:#991b1b;border-color:#fecaca}
+    .select.inv.refunded,.select.inv.void{background-color:#f3f4f6;color:#4b5563;border-color:#e5e7eb}
     .toast-wrap{position:fixed;right:20px;bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
     .toast{padding:10px 12px;border-radius:10px;border:1px solid;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.12);background:#fff}
     .toast.success{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
@@ -77,14 +100,14 @@
               <th>Balance</th>
               <th>Status</th>
               <th>Booked by</th>
-              <th>Invoice</th>
-              <th>Inv Status</th>
-              <th style="width:60px">Actions</th>
+              <th class="invoice-col">Invoice</th>
+              <th class="inv-status-col">Inv Status</th>
+              <th class="actions-col" style="width:60px">Actions</th>
             </tr>
           </thead>
           <tbody>
             @forelse($rows as $r)
-              <tr>
+              <tr class="reservation-row" data-href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" tabindex="0" aria-label="Open reservation {{ $r->invoice_number ?? $r->code ?? $r->id }}">
                 <td>{{ $r->invoice_number ?? "—" }}</td>
                 <td>{{ $r->date?->format('m/d/Y') }}</td>
                 <td>{{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}</td>
@@ -93,9 +116,13 @@
                   <div><a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" style="color:inherit;text-decoration:underline">{{ $r->customer_name ?? '—' }}</a></div>
                   <div class="muted">{{ $r->email ?? '' }}</div>
                 </td>
-                @php $bal = max(0, (float)($r->total ?? 0) - (float)($r->deposit_paid ?? 0)); @endphp
-                <td>{{ $fmt($r->total ?? 0) }}</td>
-                <td>{{ $fmt($r->deposit_paid ?? 0) }}</td>
+                @php
+                  $rowTotals = \App\Support\ReservationTotals::compute($r);
+                  $rowPaid = (float) ($rowTotals['paid_total'] ?? 0);
+                  $bal = max(0, (float) ($rowTotals['balance'] ?? 0));
+                @endphp
+                <td>{{ $fmt($rowTotals['total'] ?? ($r->total ?? 0)) }}</td>
+                <td>{{ $fmt($rowPaid) }}</td>
                 <td>
                   @if($bal <= 0)
                     <span style="color:#16a34a;font-weight:700">{{ $fmt(0) }}</span>
@@ -111,23 +138,25 @@
                 @endphp
                 <td><span class="status {{ $statusKey }}">{{ ucfirst($statusKey) }}</span></td>
                 <td>{{ $r->booked_by ?? '—' }}</td>
-                <td>
-                  <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" title="View invoice" style="text-decoration:none;color:#b21e27">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2zm0-8h4v2H8V8z"/>
-                    </svg>
-                  </a>
-                  <a href="{{ route('admin.reservations.show',['id'=>$r->id, 'print'=>'menu', 'back'=>request()->fullUrl()]) }}" title="Print menu" aria-label="Print menu" style="text-decoration:none;color:#2563eb;margin-left:8px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle cx="5" cy="7" r="1.5" fill="currentColor"/>
-                      <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
-                      <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
-                      <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    </svg>
-                  </a>
+                <td class="invoice-cell" data-row-action-ignore>
+                  <div class="invoice-actions">
+                    <a href="{{ route('admin.reservations.invoice',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn invoice-view" title="View invoice" aria-label="View invoice">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM14 3.5L18.5 8H14V3.5zM8 12h8v2H8v-2zm0 4h8v2H8v-2zm0-8h4v2H8V8z"/>
+                      </svg>
+                    </a>
+                    <a href="{{ route('admin.reservations.prep_print',['id'=>$r->id, 'back'=>request()->fullUrl()]) }}" class="invoice-icon-btn menu-print" title="Kitchen prep ticket" aria-label="Kitchen prep ticket">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="5" cy="7" r="1.5" fill="currentColor"/>
+                        <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+                        <circle cx="5" cy="17" r="1.5" fill="currentColor"/>
+                        <path d="M9 7h10M9 12h10M9 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+                      </svg>
+                    </a>
+                  </div>
                 </td>
-                <td>
-                  <form method="post" action="{{ route('admin.reservations.invoice_status',['id'=>$r->id]) }}" style="display:flex;align-items:center;gap:8px">
+                <td class="inv-status-cell" data-row-action-ignore>
+                  <form method="post" action="{{ route('admin.reservations.invoice_status',['id'=>$r->id]) }}" class="inv-status-form">
                     @csrf
                     <input type="hidden" name="back" value="{{ request()->fullUrl() }}">
                     @php $ist = strtolower($r->invoice_status ?? 'pending'); @endphp
@@ -139,10 +168,10 @@
                     
                   </form>
                 </td>
-                <td style="position:relative">
+                <td class="actions-cell" style="position:relative" data-row-action-ignore>
                   <div class="actions-menu" style="position:relative;display:inline-block">
-                    <button type="button" class="icon-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleMenu(this)" title="Actions" style="border:1px solid #e5e7eb;background:#fff;color:#374151;width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"/></svg>
+                    <button type="button" class="row-action-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleMenu(this)" title="Actions">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4zm0 7a2 2 0 110-4 2 2 0 010 4z"/></svg>
                     </button>
                     <div class="menu" style="display:none;position:absolute;right:0;z-index:10;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);min-width:160px;overflow:hidden">
                       <a href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" class="menu-item" style="display:block;padding:8px 12px;color:#111;text-decoration:none">Edit</a>
@@ -170,11 +199,31 @@
         </table>
       </div>
     </div>
+    @include('admin.partials.pagination', ['paginator' => $rows])
   </div>
   <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
   <script>
     const csrfToken = @json(csrf_token());
     const toastWrap = document.getElementById('toastWrap');
+    const rowActionSelector = 'a,button,input,select,textarea,form,[data-row-action-ignore]';
+
+    document.querySelectorAll('.reservation-row[data-href]').forEach(row => {
+      row.addEventListener('click', event => {
+        if (event.target.closest(rowActionSelector)) return;
+        window.location.href = row.dataset.href;
+      });
+
+      row.addEventListener('keydown', event => {
+        if (!['Enter', ' '].includes(event.key)) return;
+        if (event.target.closest(rowActionSelector)) return;
+        event.preventDefault();
+        window.location.href = row.dataset.href;
+      });
+    });
+
+    document.querySelectorAll(rowActionSelector).forEach(el => {
+      el.addEventListener('click', event => event.stopPropagation());
+    });
 
     function showToast(message, type = 'success'){
       if (!toastWrap) return;

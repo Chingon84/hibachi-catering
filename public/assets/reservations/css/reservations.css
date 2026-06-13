@@ -214,6 +214,19 @@ body{
 .btn:hover{background:var(--brand-hover);box-shadow:0 12px 24px -12px rgba(185,28,28,.8);transform:scale(1.02)}
 .btn:focus{outline:none;box-shadow:0 0 0 2px rgba(239,68,68,.35)}
 .btn:active{transform:scale(1)}
+.btn:disabled,
+.btn[aria-disabled="true"]{
+  opacity:.55;
+  cursor:not-allowed;
+  box-shadow:none;
+  transform:none;
+}
+.btn:disabled:hover,
+.btn[aria-disabled="true"]:hover{
+  background:var(--brand);
+  box-shadow:none;
+  transform:none;
+}
 
 .btn-secondary{
   background:#fff;

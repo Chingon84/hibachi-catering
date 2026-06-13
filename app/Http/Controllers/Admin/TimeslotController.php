@@ -9,6 +9,22 @@ use Carbon\Carbon; // 👈 añade esta línea
 
 class TimeslotController extends Controller
 {
+    private function activeReservationsQuery(string $date, ?string $time = null)
+    {
+        $query = \App\Models\Reservation::query()
+            ->whereDate('date', $date)
+            ->where(function ($q) {
+                $q->whereNull('status')
+                    ->orWhereNotIn('status', ['canceled', 'cancelled']);
+            });
+
+        if ($time !== null) {
+            $query->where('time', $time);
+        }
+
+        return $query;
+    }
+
     public function index(Request $req)
     {
         $d = $req->query('d', now()->toDateString());
@@ -89,15 +105,28 @@ class TimeslotController extends Controller
     public function delete(Request $req, int $id)
     {
         $ts = Timeslot::find($id);
-        $dateStr = null;
-        if ($ts) {
-            $dateStr = is_string($ts->date) ? $ts->date : optional($ts->date)->format('Y-m-d');
-            try { $ts->delete(); } catch (\Throwable $e) { /* no-op */ }
-        } else {
-            // if already gone, fall through
+        if (!$ts) {
+            $d = (string) $req->input('d', now()->toDateString());
+            return redirect()->route('admin.timeslots', ['d' => $d])
+                ->withErrors(['timeslot' => 'Timeslot not found or already deleted.']);
         }
+
+        $dateStr = is_string($ts->date) ? $ts->date : optional($ts->date)->format('Y-m-d');
         $d = (string) $req->input('d', $dateStr ?: now()->toDateString());
-        return redirect()->route('admin.timeslots', ['d' => $d]);
+
+        if ($dateStr && $this->activeReservationsQuery($dateStr, (string) $ts->time)->exists()) {
+            return redirect()->route('admin.timeslots', ['d' => $d])
+                ->withErrors(['timeslot' => 'Cannot delete a timeslot that already has active reservations.']);
+        }
+
+        try {
+            $ts->delete();
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.timeslots', ['d' => $d])
+                ->withErrors(['timeslot' => 'Could not delete the timeslot.']);
+        }
+
+        return redirect()->route('admin.timeslots', ['d' => $d])->with('ok', 'Timeslot deleted.');
     }
 
     public function updateStatus(Request $req, int $id)
@@ -362,11 +391,54 @@ class TimeslotController extends Controller
         $startDate = $start->toDateString();
         $endDate = $start->copy()->endOfMonth()->toDateString();
         $count = 0;
+
         try {
-            $count = Timeslot::whereBetween('date', [$startDate, $endDate])->delete();
-        } catch (\Throwable $e) { /* ignore */ }
-        return redirect()->route('admin.timeslots', ['d' => $startDate])
-            ->with('ok', "Deleted $count slots for ${m}/$y");
+            $protectedSlots = \App\Models\Reservation::query()
+                ->whereBetween('date', [$startDate, $endDate])
+                ->where(function ($q) {
+                    $q->whereNull('status')
+                        ->orWhereNotIn('status', ['canceled', 'cancelled']);
+                })
+                ->get(['date', 'time'])
+                ->map(function ($reservation) {
+                    $date = $reservation->date instanceof Carbon
+                        ? $reservation->date->toDateString()
+                        : Carbon::parse((string) $reservation->date)->toDateString();
+
+                    return $date . '|' . substr((string) $reservation->time, 0, 8);
+                })
+                ->unique()
+                ->flip();
+
+            $skipped = 0;
+
+            Timeslot::whereBetween('date', [$startDate, $endDate])
+                ->get(['id', 'date', 'time'])
+                ->each(function (Timeslot $slot) use ($protectedSlots, &$count, &$skipped) {
+                    $date = $slot->date instanceof Carbon
+                        ? $slot->date->toDateString()
+                        : Carbon::parse((string) $slot->date)->toDateString();
+                    $key = $date . '|' . substr((string) $slot->time, 0, 8);
+
+                    if ($protectedSlots->has($key)) {
+                        $skipped++;
+                        return;
+                    }
+
+                    $slot->delete();
+                    $count++;
+                });
+
+            $message = "Deleted {$count} slots for {$m}/{$y}.";
+            if ($skipped > 0) {
+                $message .= " Skipped {$skipped} booked slots.";
+            }
+
+            return redirect()->route('admin.timeslots', ['d' => $startDate])->with('ok', $message);
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.timeslots', ['d' => $startDate])
+                ->withErrors(['timeslot' => 'Could not clear the selected month.']);
+        }
     }
 
     

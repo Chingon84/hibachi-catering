@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\AdminResetPasswordNotification;
 use App\Models\RolePermission;
 
 class User extends Authenticatable
@@ -26,7 +27,11 @@ class User extends Authenticatable
         'username',
         'position',
         'phone',
+        'employee_number',
+        'employee_type',
+        'hire_date',
         'staff_type',
+        'profile_photo_path',
         'role',
         'can_access_admin',
         'is_active',
@@ -54,6 +59,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'can_access_admin' => 'boolean',
             'is_active' => 'boolean',
+            'hire_date' => 'date',
         ];
     }
 
@@ -65,6 +71,11 @@ class User extends Authenticatable
     public function scopeOperationalType($query, string $type)
     {
         return $query->where('staff_type', $type);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
     }
 
     public function isOwner(): bool
@@ -90,6 +101,23 @@ class User extends Authenticatable
         return $byFlag || $byRole;
     }
 
+    public function isStaffPortalUser(): bool
+    {
+        $role = $this->normalizedRole();
+
+        if (in_array($role, ['owner', 'admin', 'manager', 'office', 'readonly'], true)) {
+            return false;
+        }
+
+        if (in_array($role, ['staff', 'chef', 'employee'], true)) {
+            return true;
+        }
+
+        $staffType = strtolower(trim((string) ($this->staff_type ?? '')));
+
+        return in_array($staffType, ['chef', 'staff', 'employee', 'assistant', 'cook'], true);
+    }
+
     public function baseAdminViewPermissions(): array
     {
         return config('permissions.admin_base_view_permissions', []);
@@ -100,7 +128,9 @@ class User extends Authenticatable
         if ($this->isOwner()) return ['*'];
 
         $role = $this->normalizedRole();
-        $baseViews = $this->isAdminPrincipal() ? $this->baseAdminViewPermissions() : [];
+        $baseViews = $this->hasRole('admin') ? $this->baseAdminViewPermissions() : [];
+        $map = config('permissions.roles');
+        $rolePerms = $map[$role] ?? [];
 
         // Prefer DB mapping if table exists, fallback to config
         try {
@@ -110,21 +140,20 @@ class User extends Authenticatable
                     ->pluck('permission')
                     ->all();
                 if (!empty($list)) {
-                    return array_values(array_unique(array_merge($list, $baseViews)));
+                    return $this->normalizePermissionList(array_merge($rolePerms, $list, $baseViews));
                 }
             }
         } catch (\Throwable $e) {
             // likely table not migrated yet; ignore
         }
-        $map = config('permissions.roles');
-        $rolePerms = $map[$role] ?? [];
 
-        return array_values(array_unique(array_merge($rolePerms, $baseViews)));
+        return $this->normalizePermissionList(array_merge($rolePerms, $baseViews));
     }
 
     public function hasPermission(string $permission): bool
     {
         if ($this->isOwner()) return true;
+        $permission = $this->normalizePermissionKey($permission);
         $perms = $this->permissions();
         if (in_array('*', $perms, true)) return true;
         return in_array($permission, $perms, true);
@@ -140,8 +169,35 @@ class User extends Authenticatable
         return $this->hasMany(TeamMemberActivity::class, 'team_member_id');
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function staffEventConfirmations(): HasMany
+    {
+        return $this->hasMany(StaffEventConfirmation::class);
+    }
+
     private function normalizedRole(): string
     {
         return strtolower((string) ($this->role ?? ''));
+    }
+
+    private function normalizePermissionList(array $permissions): array
+    {
+        return array_values(array_unique(array_map(
+            fn ($permission) => $this->normalizePermissionKey((string) $permission),
+            $permissions
+        )));
+    }
+
+    private function normalizePermissionKey(string $permission): string
+    {
+        return match ($permission) {
+            'complains.view' => 'feedback.view',
+            'complains.manage' => 'feedback.manage',
+            default => $permission,
+        };
     }
 }

@@ -4,29 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Support\AdminMenuCatalog;
 use App\Support\MenuLabel;
 
 class MenuAdminController extends Controller
 {
     public function index()
     {
-        $path = base_path('config/menu.php');
-        if (is_file($path)) {
-            try {
-                $cfg = include $path; // always read freshest file, bypass config cache
-                if (!is_array($cfg)) { $cfg = (array) config('menu'); }
-            } catch (\Throwable $e) {
-                $cfg = (array) config('menu');
-            }
-        } else {
-            $cfg = (array) config('menu');
-        }
+        $cfg = app(AdminMenuCatalog::class)->grouped();
+
         return view('admin.menu_admin', ['cfg' => $cfg]);
     }
 
     public function update(Request $req)
     {
-        $curr = (array) config('menu');
+        $catalog = app(AdminMenuCatalog::class);
+        $curr = $catalog->grouped();
         $items = (array) $req->input('items', []); // [cat => [ [key,name,desc,price], ... ]]
         $out = [];
         $errors = [];
@@ -56,10 +49,10 @@ class MenuAdminController extends Controller
                 }
                 $price = (float) $priceRaw;
 
-                if (isset($seen[$catName][$key])) {
-                    $errors[] = "Duplicate key '{$key}' in category '{$catName}'";
+                if (isset($seen[$key])) {
+                    $errors[] = "Duplicate key '{$key}' across menu catalog";
                 }
-                $seen[$catName][$key] = true;
+                $seen[$key] = true;
                 $out[$catName][] = [
                     'key'   => $key,
                     'name'  => $name !== '' ? $name : MenuLabel::standardizeText($key),
@@ -101,17 +94,10 @@ class MenuAdminController extends Controller
             }
         }
 
-        // Build PHP file contents
-        $export = var_export($out, true);
-        $php = "<?php\nreturn " . $export . ";\n";
-
-        $path = base_path('config/menu.php');
         try {
-            file_put_contents($path, $php);
-            // Also update runtime config so changes reflect immediately
-            config(['menu' => $out]);
+            $catalog->replaceFromGrouped($out);
         } catch (\Throwable $e) {
-            return back()->withErrors(['menu' => 'Failed to write config/menu.php: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['menu' => 'Failed to save menu catalog: ' . $e->getMessage()])->withInput();
         }
 
         $msg = 'Menu updated';

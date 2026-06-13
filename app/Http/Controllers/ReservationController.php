@@ -10,8 +10,11 @@ use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Models\Timeslot;
 use App\Models\ReservationItem;
+use App\Support\AdminMenuCatalog;
+use App\Support\CaliforniaCateringTax;
 use App\Support\MenuLabel;
 use App\Support\ReservationTotals;
+use App\Services\TaxRateResolver;
 
 class ReservationController extends Controller
 {
@@ -28,6 +31,17 @@ class ReservationController extends Controller
     $reservation = null;
     if ($id = data_get(session('resv'), 'reservation_id')) {
         $reservation = \App\Models\Reservation::find($id);
+        if ($step === 1 && $reservation && !$this->isReusableWizardReservation($reservation)) {
+            $this->debugStripe('reservation_flow.reset_stale_session', [
+                'reservation_id' => $reservation->id,
+                'status' => $reservation->status,
+                'invoice_status' => $reservation->invoice_status,
+                'deposit_paid' => (float) ($reservation->deposit_paid ?? 0),
+                'amount_paid_total' => (float) ($reservation->amount_paid_total ?? 0),
+            ]);
+            session()->forget('resv');
+            $reservation = null;
+        }
     }
 
     // Prefill Step 1 from query (e.g., from Calendar quick-add)
@@ -60,7 +74,9 @@ class ReservationController extends Controller
     if ($step === 3) {
         $menuPlano = $this->menu();                     // <- tu menú PLANO tal como ya lo tienes
         $data['menuCategories'] = $this->menuToCategories($menuPlano);
-        $data['constants'] = ['TAX' => 0.1025, 'GRATUITY' => 0.18];
+        $data['selectedItems'] = $this->selectedMenuItems($menuPlano, $reservation, (array) data_get($data, 'state.items', []));
+        $taxRate = app(TaxRateResolver::class)->rateForCity((string) data_get($data, 'state.city', $reservation?->city));
+        $data['constants'] = ['TAX' => $taxRate / 100, 'GRATUITY' => 0.18];
     }
 
     if ($step === 4 && $reservation) {
@@ -79,7 +95,6 @@ class ReservationController extends Controller
         $estimate = (array) data_get($data, 'state.estimate', []);
         if (!empty(data_get($data, 'state.deposit_amount'))) {
             $estimate['deposit_due'] = (float) data_get($data, 'state.deposit_amount');
-            $estimate['deposit_paid_session'] = (float) data_get($data, 'state.deposit_amount');
         }
         $totals = ReservationTotals::compute($reservation, $estimate);
         $this->debugStripe('step5.render', [
@@ -114,6 +129,77 @@ private function menuToCategories(array $menu): array
     return $out;
 }
 
+private function isReusableWizardReservation(?Reservation $reservation): bool
+{
+    if (!$reservation) {
+        return false;
+    }
+
+    $status = strtolower((string) ($reservation->status ?? ''));
+    $invoiceStatus = strtolower((string) ($reservation->invoice_status ?? ''));
+
+    if (in_array($status, ['confirmed', 'canceled'], true)) {
+        return false;
+    }
+
+    if (in_array($invoiceStatus, ['paid', 'cancelled', 'canceled', 'refunded'], true)) {
+        return false;
+    }
+
+    if ((float) ($reservation->deposit_paid ?? 0) > 0.009 || (float) ($reservation->amount_paid_total ?? 0) > 0.009) {
+        return false;
+    }
+
+    try {
+        if ($reservation->payments()->where('status', 'succeeded')->exists()) {
+            return false;
+        }
+    } catch (\Throwable $e) {
+        return false;
+    }
+
+    return in_array($status, ['', 'draft', 'pending', 'pending_payment'], true);
+}
+
+private function selectedMenuItems(array $menu, ?Reservation $reservation, array $sessionItems): array
+{
+    if (!empty($sessionItems)) {
+        $selected = [];
+        foreach ($sessionItems as $code => $qty) {
+            if (!isset($menu[$code]) || !is_numeric($qty)) {
+                continue;
+            }
+            $selected[$code] = max(0, min(10000, (int) $qty));
+        }
+
+        return $selected;
+    }
+
+    if (!$reservation) {
+        return [];
+    }
+
+    $menuIndex = [];
+    foreach ($menu as $code => $item) {
+        $name = MenuLabel::standardize($item['name'] ?? '');
+        $price = number_format((float) ($item['price'] ?? 0), 2, '.', '');
+        $menuIndex[$name.'|'.$price] = $code;
+    }
+
+    $selected = [];
+    foreach ($reservation->items as $item) {
+        $name = MenuLabel::standardize($item->name_snapshot ?? '');
+        $price = number_format((float) ($item->unit_price_snapshot ?? 0), 2, '.', '');
+        $code = $menuIndex[$name.'|'.$price] ?? null;
+        if (!$code) {
+            continue;
+        }
+
+        $selected[$code] = max(0, min(10000, (int) $item->qty));
+    }
+
+    return $selected;
+}
 
     /** ======= WIZARD: SUBMIT ======= */
     public function submit(Request $req, int $step)
@@ -171,11 +257,28 @@ private function menuToCategories(array $menu): array
             $reservation = null;
             if (!empty($state['reservation_id'])) {
                 $reservation = Reservation::find($state['reservation_id']);
+                if ($reservation && !$this->isReusableWizardReservation($reservation)) {
+                    $this->debugStripe('reservation_flow.replaced_stale_reservation', [
+                        'old_reservation_id' => $reservation->id,
+                        'status' => $reservation->status,
+                        'invoice_status' => $reservation->invoice_status,
+                        'deposit_paid' => (float) ($reservation->deposit_paid ?? 0),
+                        'amount_paid_total' => (float) ($reservation->amount_paid_total ?? 0),
+                    ]);
+                    $reservation = null;
+                    $state = [];
+                    session()->forget('resv');
+                }
             }
             if (!$reservation) {
                 $reservation = new Reservation();
                 $reservation->code = 'RSV-'.Str::upper(Str::random(6));
                 $reservation->status = 'draft';
+                $reservation->invoice_status = 'pending';
+                $reservation->deposit_due = 0;
+                $reservation->deposit_paid = 0;
+                $reservation->amount_paid_total = 0;
+                $reservation->balance = 0;
                 // Assign next invoice number starting at 100
                 try {
                     $max = (int) (Reservation::max('invoice_number') ?? 0);
@@ -301,24 +404,59 @@ private function menuToCategories(array $menu): array
 
         /* ---------- STEP 3: Menú + estimate ---------- */
         if ($step === 3) {
+            $state = session('resv', []);
+            $id = data_get($state, 'reservation_id');
+            abort_if(!$id, 400, 'Reservation not started.');
+            $reservation = Reservation::findOrFail($id);
+            $maxQty = 10000;
+
             // Esperamos items[code] => qty
             $items = $req->input('items', []);
             if (!is_array($items)) $items = [];
 
             $menu = $this->menu(); // canonical
+            $cleanItems = [];
+            $quantityErrors = [];
+
+            foreach ($items as $code => $qty) {
+                if (!isset($menu[$code])) {
+                    continue;
+                }
+
+                if ($qty === null || $qty === '') {
+                    $qty = 0;
+                }
+
+                if (!is_numeric($qty) || floor((float) $qty) !== (float) $qty) {
+                    $quantityErrors["items.$code"] = 'Menu quantities must be whole numbers.';
+                    continue;
+                }
+
+                $qty = (int) $qty;
+                if ($qty < 0 || $qty > $maxQty) {
+                    $quantityErrors["items.$code"] = "Each menu quantity must be between 0 and {$maxQty}.";
+                    continue;
+                }
+
+                $cleanItems[$code] = $qty;
+            }
+
+            if (!empty($quantityErrors)) {
+                return back()->withErrors($quantityErrors)->withInput();
+            }
+
             $lines = [];
             $subtotal = 0.0;
 
-            foreach ($items as $code => $qty) {
-                $qty = (int) $qty;
+            foreach ($cleanItems as $code => $qty) {
                 if ($qty <= 0) continue;
-                if (!isset($menu[$code])) continue;
 
                 $name  = MenuLabel::standardize($menu[$code]['name']);
                 $price = (float) $menu[$code]['price'];
                 $line  = $price * $qty;
 
                 $subtotal += $line;
+
                 $lines[] = [
                     'code'       => $code,
                     'name'       => $name,
@@ -328,17 +466,15 @@ private function menuToCategories(array $menu): array
                 ];
             }
 
-            $state = session('resv', []);
             $travelFee = (float) ($state['travel_fee'] ?? 0);
 
             $gratuity = round($subtotal * self::GRATUITY, 2);
-            $tax      = round($subtotal * self::TAX, 2);
+            $taxRate  = app(TaxRateResolver::class)->rateForCity((string) ($state['city'] ?? $reservation->city ?? ''));
+            // California catering tax: taxable base includes food/items subtotal, travel fee,
+            // and mandatory gratuity/service charge. Voluntary tips are excluded.
+            $taxableBase = CaliforniaCateringTax::taxableBase($subtotal, $travelFee, $gratuity);
+            $tax      = CaliforniaCateringTax::tax($taxableBase, $taxRate);
             $total    = round($subtotal + $travelFee + $gratuity + $tax, 2);
-
-            // Guardamos líneas en BD
-            $id = data_get($state, 'reservation_id');
-            abort_if(!$id, 400, 'Reservation not started.');
-            $reservation = Reservation::findOrFail($id);
 
             // Borra anteriores y crea nuevos (ajustado a columnas *_snapshot)
             $reservation->items()->delete();
@@ -371,6 +507,7 @@ private function menuToCategories(array $menu): array
 
             // Persistimos estimate en sesión (lo verás en Step 4)
             session(['resv' => array_merge($state, [
+                'items' => $cleanItems,
                 'estimate' => [
                     'subtotal'  => round($subtotal, 2),
                     'travel'    => round($travelFee, 2),
@@ -530,46 +667,19 @@ private function menuToCategories(array $menu): array
         ]);
     }
 
-    /** ======= Menú canonical (lee config/menu.php si existe) ======= */
+    /** ======= Menú canonical ======= */
     private function menu(): array
     {
-        // Intentar cargar desde config/menu.php (siempre fresco, evitando cache)
-        try {
-            $path = base_path('config/menu.php');
-            $cfg = is_file($path) ? include $path : (array) config('menu');
-            if (!is_array($cfg)) { $cfg = (array) config('menu'); }
-        } catch (\Throwable $e) {
-            $cfg = (array) config('menu');
-        }
-
-        // Si hay configuración, aplanar a [code => [name, price, category, desc?]]
-        if (!empty($cfg) && is_array($cfg)) {
-            $flat = [];
-            foreach ($cfg as $cat => $rows) {
-                $catName = is_string($cat) ? trim($cat) : 'General';
-                // Normalizar visualmente categoría (PACKAGES -> Packages, etc.)
-                $catLabel = ucwords(strtolower($catName));
-                foreach ((array) $rows as $row) {
-                    $code  = (string) ($row['key'] ?? '');
-                    if ($code === '') { continue; }
-
-                    $nameRaw = (string) ($row['name'] ?? '');
-                    $name    = MenuLabel::standardizeText($nameRaw !== '' ? $nameRaw : $code);
-                    $price   = (float) ($row['price'] ?? 0);
-                    $desc    = $row['desc'] ?? null;
-                    $desc    = $desc !== null ? MenuLabel::standardizeText($desc) : null;
-
-                    $flat[$code] = [
-                        'name'     => $name,
-                        'price'    => $price,
-                        'category' => $catLabel,
-                        'desc'     => $desc,
-                    ];
-                }
-            }
-            if (!empty($flat)) {
-                return $flat;
-            }
+        $flat = app(AdminMenuCatalog::class)->flat();
+        if (!empty($flat)) {
+            return collect($flat)->mapWithKeys(function (array $row, string $key) {
+                return [$key => [
+                    'name' => $row['name'],
+                    'price' => $row['price'],
+                    'category' => $row['category'],
+                    'desc' => $row['desc'] !== '' ? $row['desc'] : null,
+                ]];
+            })->all();
         }
 
         // Fallback: menú por defecto (si no hay config)
@@ -650,7 +760,7 @@ private function menuToCategories(array $menu): array
 
     private function debugStripe(string $event, array $context = []): void
     {
-        if (!filter_var((string) env('STRIPE_PAY_DEBUG', 'false'), FILTER_VALIDATE_BOOL)) {
+        if (!filter_var((string) config('services.stripe.debug', false), FILTER_VALIDATE_BOOL)) {
             return;
         }
 

@@ -43,6 +43,7 @@ return [
     'stripe' => [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
+        'debug' => env('STRIPE_PAY_DEBUG', false),
     ],
 
 ];

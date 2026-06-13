@@ -8,7 +8,7 @@
   <style>
     :root{--bg:#f7f7f9;--surface:#fff;--surface-soft:#f8fafc;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--brand:#b21e27;--brand-hover:#991b1b;--shadow:0 8px 26px rgba(15,23,42,.06)}
     body{background:var(--bg)}
-    .page-wrap{max-width:1280px;margin:0 auto;padding:20px 16px 28px}
+    .page-wrap{width:100%;max-width:none;margin:0;padding:20px 24px}
     .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
     .title{font-size:30px;font-weight:800;letter-spacing:-.02em}
     .btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700;font-size:13px;transition:all .15s ease}
@@ -18,6 +18,7 @@
     .card-body{padding:22px}
     .layout-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:20px}
     @media (max-width:1050px){.layout-grid{grid-template-columns:1fr}}
+    @media (max-width:768px){.page-wrap{padding:16px}}
     .totals-card{margin-top:20px}
     .section-title{margin:0 0 12px;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#475569}
     .search-label{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b;margin-bottom:8px}
@@ -116,7 +117,6 @@
 <body>
   <div class="page-wrap">
     <div class="header">
-      <h1 class="title">Orders Breakdown</h1>
       <a href="{{ route('admin.dashboard') }}" class="btn secondary">Dashboard</a>
     </div>
 

@@ -27,6 +27,7 @@ class InventoryMovementController extends Controller
             'reference_type' => trim((string) $request->query('reference_type', '')),
         ];
 
+        $perPage = $this->adminPerPage($request);
         $movements = InventoryMovement::query()
             ->with(['item:id,name,sku', 'user:id,name', 'van:id,name'])
             ->when($filters['q'] !== '', function ($query) use ($filters) {
@@ -38,13 +39,22 @@ class InventoryMovementController extends Controller
             ->when($filters['movement_type'] !== '', fn ($query) => $query->where('movement_type', $filters['movement_type']))
             ->when($filters['reference_type'] !== '', fn ($query) => $query->where('reference_type', $filters['reference_type']))
             ->latest('created_at')
-            ->paginate(20);
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.inventory.movements.index', [
             'movements' => $movements,
             'filters' => $filters,
             'movementTypes' => InventoryMovement::TYPES,
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function create(Request $request)

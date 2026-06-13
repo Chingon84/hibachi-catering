@@ -7,44 +7,95 @@
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
     .page{display:grid;gap:14px}
-    .subnav{display:flex;flex-wrap:wrap;gap:8px}
-    .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
-    .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
-    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    .stat-card,.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
+    .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .hero-copy{display:grid;gap:6px;max-width:760px}
+    .hero-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#64748b}
+    .hero-title{margin:0;font-size:30px;line-height:1.05;font-weight:800;color:#0f172a}
+    .hero-section-label{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#334155}
+    .hero-note{font-size:14px;line-height:1.6;color:#475569}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .stat-card,.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
     .stat-label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
     .stat-value{margin-top:10px;font-size:30px;font-weight:800;color:#0f172a}
-    .stat-copy{margin-top:8px;font-size:12px;color:#94a3b8}
-    .layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(320px,.9fr);gap:14px}
+    .stat-copy{margin-top:8px;font-size:12px;color:#94a3b8;line-height:1.5}
+    .insights-panel{display:grid;gap:12px;padding:14px 16px}
+    .insights-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .insights-title{margin:0;font-size:14px;font-weight:800;color:#0f172a}
+    .insights-copy{margin:4px 0 0;font-size:12px;line-height:1.5;color:#64748b}
+    .insights-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+    .insight-card{border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:10px 12px;display:grid;gap:4px;min-width:0}
+    .insight-label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
+    .insight-value{font-size:20px;font-weight:800;color:#0f172a;line-height:1.1}
+    .insight-note{font-size:12px;line-height:1.45;color:#64748b}
+    .layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(360px,.95fr);gap:14px}
+    .sidebar-stack{display:grid;gap:14px}
     .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
     .panel-title{margin:0;font-size:18px}
-    .panel-copy{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .panel-copy{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
     .action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .quick-link{display:block;padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff;text-decoration:none;color:#111827}
     .quick-link strong{display:block}
-    .quick-link span{display:block;margin-top:6px;color:#64748b;font-size:13px}
-    .movement-list{display:grid;gap:10px}
-    .movement-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
-    .movement-title{font-weight:700}
-    .movement-meta{margin-top:4px;color:#64748b;font-size:12px}
+    .quick-link span{display:block;margin-top:6px;color:#64748b;font-size:13px;line-height:1.5}
+    .movement-list,.checklist-list{display:grid;gap:10px}
+    .movement-row,.checklist-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+    .movement-title,.checklist-title{font-weight:700;color:#0f172a}
+    .movement-meta,.checklist-meta{margin-top:4px;color:#64748b;font-size:12px;line-height:1.55}
     .delta.plus{color:#166534;font-weight:800}
     .delta.minus{color:#b91c1c;font-weight:800}
     .status-pill{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:800}
     .status-pill.warn{background:#fff7ed;color:#9a3412}
     .status-pill.danger{background:#fef2f2;color:#b91c1c}
     .status-pill.neutral{background:#eff6ff;color:#1d4ed8}
-    @media (max-width: 1080px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}}
-    @media (max-width: 760px){.stats,.action-grid{grid-template-columns:1fr}}
+    .status-stack{display:flex;flex-wrap:wrap;gap:6px}
+    .badge{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .badge.clean-pass,.badge.trip-complete{background:#dcfce7;color:#166534}
+    .badge.clean-ok,.badge.trip-needs-review{background:#fef3c7;color:#92400e}
+    .badge.clean-no,.badge.trip-missing-equipment,.badge.trip-damaged{background:#fee2e2;color:#b91c1c}
+    .badge.type-dispatch{background:#dbeafe;color:#1d4ed8}
+    .badge.type-return-check{background:#ede9fe;color:#6d28d9}
+    .badge.type-maintenance{background:#e0f2fe;color:#0f766e}
+    .flag-strip{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .flag{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-size:11px;font-weight:700}
+    .flag.alert{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+    .flag.problem{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+    .flag.muted{background:#f8fafc;border-color:#e2e8f0;color:#64748b}
+    .empty{padding:14px;border:1px dashed #cbd5e1;border-radius:14px;background:#f8fafc;color:#64748b;font-size:13px}
+    @media (max-width: 1240px){
+      .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .insights-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .layout{grid-template-columns:1fr}
+    }
+    @media (max-width: 760px){
+      .stats,.action-grid,.insights-grid{grid-template-columns:1fr}
+      .hero-title{font-size:26px}
+    }
   </style>
 </head>
 <body>
+  @php
+    $tripClass = fn (?string $value) => 'trip-' . \Illuminate\Support\Str::slug((string) $value);
+    $typeClass = fn (?string $value) => 'type-' . \Illuminate\Support\Str::slug((string) $value);
+    $cleanClass = fn (?string $value) => match ($value) {
+        'PASS' => 'clean-pass',
+        'OK' => 'clean-ok',
+        'NO' => 'clean-no',
+        default => '',
+    };
+  @endphp
   <div class="container">
     <div class="page">
-      <div class="header">
-        <h1 class="title" style="margin-right:auto">Inventory</h1>
-        @if(auth()->user()?->hasPermission('inventory.manage'))
-          <a class="btn" href="{{ route('admin.inventory.items.create') }}">Add Inventory Item</a>
-        @endif
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="hero-kicker">Inventory / Operations</div>
+          <div class="hero-section-label">Dashboard</div>
+          <div class="hero-note">Warehouse stock, van readiness, and checklist activity in one operational view. Use this as the daily control room for fleet and equipment management.</div>
+        </div>
+        <div class="hero-actions">
+          @if(auth()->user()?->hasPermission('inventory.manage'))
+            <a class="btn" href="{{ route('admin.inventory.items.create') }}">Add Inventory Item</a>
+          @endif
+        </div>
       </div>
 
       @include('admin.inventory._subnav')
@@ -61,26 +112,57 @@
           <div class="stat-copy">Items at or below minimum stock threshold.</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Out Of Stock</div>
-          <div class="stat-value">{{ number_format($outOfStockItems) }}</div>
-          <div class="stat-copy">Items that cannot currently be allocated.</div>
-        </div>
-        <div class="stat-card">
           <div class="stat-label">Total Vans</div>
           <div class="stat-value">{{ number_format($totalVans) }}</div>
           <div class="stat-copy">Fleet units with operational loadout profiles.</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Vans Needing Attention</div>
-          <div class="stat-value">{{ number_format($vansWithMissingEquipment) }}</div>
-          <div class="stat-copy">Vans without a clean current loadout snapshot.</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Recent Movements</div>
-          <div class="stat-value">{{ number_format($recentMovements->count()) }}</div>
-          <div class="stat-copy">Latest warehouse adjustments and van transfers.</div>
+          <div class="stat-label">Vans With Issues</div>
+          <div class="stat-value">{{ number_format($vansWithIssues) }}</div>
+          <div class="stat-copy">Distinct vans with notes, cleaning failures, or incomplete trips.</div>
         </div>
       </div>
+
+      <section class="panel insights-panel">
+        <div class="insights-head">
+          <div>
+            <h2 class="insights-title">Operational Insights</h2>
+            <p class="insights-copy">Secondary checklist and warehouse signals kept compact so the dashboard stays focused on the primary KPIs.</p>
+          </div>
+        </div>
+        <div class="insights-grid">
+          <div class="insight-card">
+            <div class="insight-label">Today's Checklists</div>
+            <div class="insight-value">{{ number_format($todayChecklists) }}</div>
+            <div class="insight-note">Checklist submissions logged today.</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-label">Vans Needing Attention</div>
+            <div class="insight-value">{{ number_format($vansWithMissingEquipment) }}</div>
+            <div class="insight-note">Units missing a current loadout snapshot.</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-label">Missing Evidence</div>
+            <div class="insight-value">{{ number_format($missingEvidence) }}</div>
+            <div class="insight-note">Checklist records without photos.</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-label">Cleaning Failures</div>
+            <div class="insight-value">{{ number_format($cleaningFailures) }}</div>
+            <div class="insight-note">Records marked as failed cleaning checks.</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-label">Recent Movements</div>
+            <div class="insight-value">{{ number_format($recentMovements->count()) }}</div>
+            <div class="insight-note">Latest stock adjustments and transfers.</div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-label">Out Of Stock</div>
+            <div class="insight-value">{{ number_format($outOfStockItems) }}</div>
+            <div class="insight-note">Items currently unavailable for allocation.</div>
+          </div>
+        </div>
+      </section>
 
       <div class="layout">
         <section class="panel">
@@ -93,7 +175,7 @@
           </div>
 
           @if ($recentMovements->isEmpty())
-            <div class="muted">No stock movements recorded yet.</div>
+            <div class="empty">No stock movements recorded yet.</div>
           @else
             <div class="movement-list">
               @foreach ($recentMovements as $movement)
@@ -119,37 +201,96 @@
           @endif
         </section>
 
-        <aside class="panel">
-          <div class="panel-head">
-            <div>
-              <h2 class="panel-title">Quick Actions</h2>
-              <p class="panel-copy">Operational shortcuts for warehouse and fleet workflows.</p>
+        <aside class="sidebar-stack">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Quick Actions</h2>
+                <p class="panel-copy">Operational shortcuts for warehouse and fleet workflows.</p>
+              </div>
             </div>
-          </div>
-          <div class="action-grid">
-            <a class="quick-link" href="{{ route('admin.inventory.items.create') }}">
-              <strong>Add inventory item</strong>
-              <span>Create a new warehouse stock record.</span>
-            </a>
-            <a class="quick-link" href="{{ route('admin.inventory.vans.index') }}">
-              <strong>Update van loadout</strong>
-              <span>Open a van profile and record grills and equipment counts.</span>
-            </a>
-            <a class="quick-link" href="{{ route('admin.inventory.movements.create') }}">
-              <strong>Record stock movement</strong>
-              <span>Log restocks, event usage, and adjustments.</span>
-            </a>
-            <a class="quick-link" href="{{ route('admin.inventory.alerts.index') }}">
-              <strong>View low stock alerts</strong>
-              <span>Prioritize items that need replenishment.</span>
-            </a>
-          </div>
+            <div class="action-grid">
+              <a class="quick-link" href="{{ route('admin.inventory.items.create') }}">
+                <strong>Add inventory item</strong>
+                <span>Create a new warehouse stock record.</span>
+              </a>
+              <a class="quick-link" href="{{ route('admin.inventory.vans.index') }}">
+                <strong>Update van loadout</strong>
+                <span>Open a van profile and record grills and equipment counts.</span>
+              </a>
+              <a class="quick-link" href="{{ route('admin.inventory.movements.create') }}">
+                <strong>Record stock movement</strong>
+                <span>Log restocks, event usage, and adjustments.</span>
+              </a>
+              <a class="quick-link" href="{{ route('admin.inventory.alerts.index') }}">
+                <strong>View low stock alerts</strong>
+                <span>Prioritize items that need replenishment.</span>
+              </a>
+              <a class="quick-link" href="{{ route('admin.inventory.checklists.create') }}">
+                <strong>New Checklist</strong>
+                <span>Log a dispatch, return check, or maintenance inspection.</span>
+              </a>
+              <a class="quick-link" href="{{ route('admin.inventory.checklists.index') }}">
+                <strong>View Checklist Records</strong>
+                <span>Review operational checklist history and evidence.</span>
+              </a>
+            </div>
 
-          <div style="display:grid;gap:10px;margin-top:14px">
-            <span class="status-pill warn">{{ $lowStockItems }} low stock item{{ $lowStockItems === 1 ? '' : 's' }}</span>
-            <span class="status-pill danger">{{ $outOfStockItems }} out of stock item{{ $outOfStockItems === 1 ? '' : 's' }}</span>
-            <span class="status-pill neutral">{{ $vansWithMissingEquipment }} van{{ $vansWithMissingEquipment === 1 ? '' : 's' }} need attention</span>
-          </div>
+            <div style="display:grid;gap:10px;margin-top:14px">
+              <span class="status-pill warn">{{ $lowStockItems }} low stock item{{ $lowStockItems === 1 ? '' : 's' }}</span>
+              <span class="status-pill danger">{{ $outOfStockItems }} out of stock item{{ $outOfStockItems === 1 ? '' : 's' }}</span>
+              <span class="status-pill neutral">{{ $vansWithIssues }} van{{ $vansWithIssues === 1 ? '' : 's' }} with checklist issues</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 class="panel-title">Recent Checklist Activity</h2>
+                <p class="panel-copy">Latest operational checklist submissions across the fleet.</p>
+              </div>
+              <a class="btn secondary" href="{{ route('admin.inventory.checklists.index') }}">Open Log</a>
+            </div>
+
+            @if($recentChecklistActivity->isEmpty())
+              <div class="empty">No checklist activity recorded yet.</div>
+            @else
+              <div class="checklist-list">
+                @foreach($recentChecklistActivity as $record)
+                  @php
+                    $hasNotes = filled($record->notes);
+                    $missingEvidenceForRecord = !$record->picture1 && !$record->picture2;
+                    $needsAttention = $record->trip_status !== 'Complete' || $record->clean === 'NO' || $hasNotes;
+                  @endphp
+                  <div class="checklist-row">
+                    <div>
+                      <div class="checklist-title">{{ $record->van_number }}</div>
+                      <div class="checklist-meta">{{ $record->date_time?->format('m/d/Y g:i A') }} • {{ $record->user ?: 'System' }}</div>
+                      <div class="status-stack" style="margin-top:8px">
+                        <span class="badge {{ $typeClass($record->checklist_type) }}">{{ $record->checklist_type ?: 'Dispatch' }}</span>
+                        <span class="badge {{ $tripClass($record->trip_status) }}">{{ $record->trip_status ?: 'Complete' }}</span>
+                        @if($record->clean)
+                          <span class="badge {{ $cleanClass($record->clean) }}">{{ $record->clean }}</span>
+                        @endif
+                      </div>
+                      <div class="flag-strip">
+                        @if($needsAttention)
+                          <span class="flag problem">Needs Attention</span>
+                        @endif
+                        @if($missingEvidenceForRecord)
+                          <span class="flag muted">No Evidence</span>
+                        @endif
+                        @if($hasNotes)
+                          <span class="flag alert">Issue Noted</span>
+                        @endif
+                      </div>
+                    </div>
+                    <a class="btn secondary" href="{{ route('admin.inventory.checklists.show', $record->id) }}">View</a>
+                  </div>
+                @endforeach
+              </div>
+            @endif
+          </section>
         </aside>
       </div>
     </div>

@@ -76,6 +76,8 @@
     .actions .input[type=number]{width:72px !important;min-width:72px;padding:4px 6px !important;height:28px;border-radius:8px;font-size:12px}
     .actions .action-delete{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 8px;border:1px solid #fecaca;border-radius:8px;background:#fff5f5;color:#b91c1c;font-size:12px;font-weight:600;text-decoration:none}
     .actions .action-delete:hover{background:#fef2f2;text-decoration:none}
+    .actions .action-delete.disabled,
+    .actions .action-delete[disabled]{border-color:#e5e7eb;background:#f8fafc;color:#94a3b8;cursor:not-allowed}
     .slots-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;gap:10px}
     .slots-head-actions{display:flex;align-items:center;gap:8px}
 
@@ -155,6 +157,35 @@
       const clearMonthForm = document.getElementById('clearMonthForm');
       const bulkCapForm = document.getElementById('bulkCapForm');
       const bulkCapFormTop = document.getElementById('bulkCapFormTop');
+      const deleteForm = document.getElementById('deleteSlotForm');
+      const deleteFormId = document.getElementById('deleteSlotId');
+      const deleteFormDate = document.getElementById('deleteSlotDate');
+
+      function deleteSlotButtonMarkup(slotId, dateValue, hasBookings) {
+        if (hasBookings) {
+          return `<button class=\"action-delete disabled\" type=\"button\" disabled title=\"This slot has reservations\" aria-label=\"Booked slot\">Booked<\/button>`;
+        }
+
+        return `<button class=\"action-delete\" type=\"button\" onclick=\"return window.submitDeleteSlot('${slotId}','${dateValue}')\" title=\"Delete\" aria-label=\"Delete\">Delete<\/button>`;
+      }
+
+      window.submitDeleteSlot = function submitDeleteSlot(slotId, dateValue) {
+        if (!deleteForm || !deleteFormId || !deleteFormDate) {
+          return false;
+        }
+        if (!confirm('Delete this slot?')) {
+          return false;
+        }
+        const actionTemplate = deleteForm.dataset.actionTemplate || '';
+        if (actionTemplate === '') {
+          return false;
+        }
+        deleteForm.setAttribute('action', actionTemplate.replace('__ID__', String(slotId || '')));
+        deleteFormId.value = String(slotId || '');
+        deleteFormDate.value = String(dateValue || '');
+        deleteForm.submit();
+        return false;
+      };
 
       if (calEl) {
         let today = new Date();
@@ -259,7 +290,7 @@
                     <input class=\"input\" type=\"number\" name=\"capacity\" value=\"${s.capacity}\" min=\"0\" style=\"width:70px;padding:4px 6px\">
                     <button class=\"btn secondary xs\" type=\"submit\">Save<\/button>
                   <\/form>
-                  <a class=\"action-delete\" href=\"/admin/timeslots/delete/${s.id}?d=${encodeURIComponent(data.date)}\" onclick=\"return confirm('Delete this slot?')\" title=\"Delete\" aria-label=\"Delete\">Delete<\/a>
+                  ${deleteSlotButtonMarkup(s.id, data.date, (() => { const g=(data.guest_sums && data.guest_sums[s.time+':00']) ? data.guest_sums[s.time+':00'] : 0; return Number(g || 0) > 0; })())}
                 </td>
               </tr>`).join('');
             slotsBody.innerHTML = rows || '<tr><td colspan="4" class="subtle">No slots for this date.</td></tr>';
@@ -269,11 +300,14 @@
                 const form = td.querySelector('form');
                 if (!form) return;
                 const cap = form.querySelector('input[name="capacity"]');
-                const href = td.querySelector('a[href*="/delete/"]');
                 const m = (form.getAttribute('action')||'').match(/\/admin\/timeslots\/(\d+)\/update/);
                 const id = m ? m[1] : '';
                 const capVal = cap ? cap.value : '';
-                const del = href ? `<a class=\"action-delete\" href=\"${href.getAttribute('href')}\" onclick=\"return confirm('Delete this slot?')\" title=\"Delete\" aria-label=\"Delete\">Delete<\/a>` : '';
+                const capNum = Number(capVal || 0);
+                const remainingEl = td.parentElement ? td.parentElement.querySelector('.cap-remaining') : null;
+                const remaining = remainingEl ? Number(remainingEl.textContent || capNum || 0) : capNum;
+                const hasBookings = remaining < capNum;
+                const del = id ? deleteSlotButtonMarkup(id, data.date, hasBookings) : '';
                 td.innerHTML = `<input class=\"input\" type=\"number\" name=\"cap[${id}]\" value=\"${capVal}\" min=\"0\" style=\"width:70px;padding:4px 6px\"> ${del}`;
               });
             } catch (e) {}
@@ -529,7 +563,11 @@
                     </td>
                     <td class="actions">
                       <input class="input" type="number" name="cap[{{ $r->id }}]" value="{{ (int)$r->capacity }}" min="0" style="width:70px;padding:4px 6px">
-                      <a class="action-delete" href="{{ route('admin.timeslots.delete', ['id'=>$r->id, 'd'=>$d]) }}" onclick="return confirm('Delete this slot?')">Delete</a>
+                      @if($isReserved)
+                        <button class="action-delete disabled" type="button" disabled title="This slot has reservations">Booked</button>
+                      @else
+                        <button class="action-delete" type="button" onclick="return window.submitDeleteSlot('{{ $r->id }}', '{{ $d }}')">Delete</button>
+                      @endif
                     </td>
                   </tr>
                 @empty
@@ -537,6 +575,11 @@
                 @endforelse
               </tbody>
               </table>
+            </form>
+            <form id="deleteSlotForm" method="post" data-action-template="{{ route('admin.timeslots.delete', ['id' => '__ID__']) }}" style="display:none">
+              @csrf
+              <input type="hidden" id="deleteSlotId" name="id" value="">
+              <input type="hidden" id="deleteSlotDate" name="d" value="">
             </form>
           </div>
         </div>

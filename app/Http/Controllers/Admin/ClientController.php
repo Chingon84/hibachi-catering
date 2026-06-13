@@ -8,15 +8,27 @@ use App\Models\Client;
 use App\Models\ClientActivity;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
     private const STATUS = ['regular','vip','celebrity','blacklist','preferred'];
+
+    private const ACTIVE_STATUSES = ['regular', 'vip', 'celebrity', 'preferred'];
+
+    private const ACTIVITY_ASSIGNMENT_TYPES = ['admin', 'owner', 'office', 'manager'];
+
+    private const TASK_DATE_PRESETS = ['today', 'tomorrow', '1_business_day', '2_business_days', '3_business_days', '1_week'];
+    private const TASK_REMINDERS = ['none', 'at_due_time', '30_minutes_before', '1_hour_before', '1_day_before', '1_week_before', 'custom_date'];
+    private const TASK_TYPES = ['to_do', 'call', 'email'];
+    private const TASK_PRIORITIES = ['none', 'low', 'medium', 'high'];
+
     public function index(Request $req)
     {
         $q = trim((string)$req->query('q', ''));
@@ -63,7 +75,8 @@ class ClientController extends Controller
             $query->where('events_count', '=', $events);
         }
 
-        $list = $query->paginate(50)->withQueryString();
+        $perPage = $this->adminPerPage($req);
+        $list = $query->paginate($perPage)->withQueryString();
 
         // Build unique city options from both address lines
         $c1 = Client::whereNotNull('address1_city')->where('address1_city','<>','')
@@ -72,6 +85,13 @@ class ClientController extends Controller
             ->distinct()->pluck('address2_city')->all();
         $cityOptions = array_values(array_unique(array_map('trim', array_merge($c1,$c2))));
         sort($cityOptions, SORT_NATURAL|SORT_FLAG_CASE);
+
+        $totalClients = Client::query()->count();
+        $activeClients = Client::query()
+            ->whereIn('status', self::ACTIVE_STATUSES)
+            ->count();
+        $inactiveClients = max($totalClients - $activeClients, 0);
+        $totalEvents = (int) Client::query()->sum('events_count');
 
         return view('admin.clients', [
             'list' => $list,
@@ -82,7 +102,19 @@ class ClientController extends Controller
             'cityOptions' => $cityOptions,
             'date' => $date,
             'events' => $events,
+            'totalClients' => $totalClients,
+            'activeClients' => $activeClients,
+            'inactiveClients' => $inactiveClients,
+            'totalEvents' => $totalEvents,
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function create()
@@ -98,7 +130,7 @@ class ClientController extends Controller
         }
         $client = $query->findOrFail($id);
 
-        $tab = strtolower((string) $req->query('tab', 'overview'));
+        $tab = strtolower((string) $req->query('tab', 'activities'));
         if (!in_array($tab, ['overview', 'activities'], true)) {
             $tab = 'overview';
         }
@@ -148,7 +180,14 @@ class ClientController extends Controller
                 'tasks' => (int) $client->activities()->where('type', 'TASK')->count(),
                 'events' => $client->total_events(),
             ],
-            'activityUsers' => User::query()->orderBy('name')->get(['id', 'name']),
+            'activityUsers' => $this->activityAssignableUsers(),
+            'taskUsers' => User::query()->orderBy('name')->get(['id', 'name']),
+            'latestNotes' => $client->activities()
+                ->with(['creator:id,name', 'assignee:id,name'])
+                ->where('type', 'NOTE')
+                ->latest('created_at')
+                ->limit(3)
+                ->get(),
             'overview' => [
                 'total_events' => $client->total_events(),
                 'total_events_booked' => $client->total_events_booked(),
@@ -167,28 +206,45 @@ class ClientController extends Controller
     public function storeNote(Request $req, int $id)
     {
         $client = Client::findOrFail($id);
+        $assignableUserIds = $this->activityAssignableUsers()->pluck('id')->all();
         $data = $req->validate([
             'body' => ['required', 'string', 'max:10000'],
-            'create_followup' => ['nullable', 'boolean'],
+            'assigned_to' => ['nullable', 'integer', Rule::in($assignableUserIds)],
         ]);
 
-        ClientActivity::create([
+        $note = ClientActivity::create([
             'client_id' => $client->id,
             'type' => 'NOTE',
             'title' => 'Note',
             'body' => trim((string) $data['body']),
-            'meta' => [
-                'create_followup' => (bool) ($data['create_followup'] ?? false),
-            ],
             'created_by' => Auth::id(),
+            'assigned_to' => $data['assigned_to'] ?? null,
             'occurred_at' => now(),
         ]);
+
+        if (!empty($data['assigned_to'])) {
+            app(NotificationService::class)->notifyClientNoteAssigned($client, $note, (int) $data['assigned_to'], $req->user());
+        }
 
         return redirect()->route('admin.clients.show', [
             'id' => $client->id,
             'tab' => 'activities',
             'activity_tab' => 'NOTES',
         ])->with('ok', 'Note created.');
+    }
+
+    private function activityAssignableUsers(): Collection
+    {
+        $displayTypes = array_map('ucfirst', self::ACTIVITY_ASSIGNMENT_TYPES);
+
+        return User::query()
+            ->where(function ($query) use ($displayTypes) {
+                $query->whereIn('role', self::ACTIVITY_ASSIGNMENT_TYPES)
+                    ->orWhereIn('staff_type', $displayTypes)
+                    ->orWhereIn('staff_type', self::ACTIVITY_ASSIGNMENT_TYPES);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     public function storeTask(Request $req, int $id)
@@ -199,26 +255,87 @@ class ClientController extends Controller
             'description' => ['nullable', 'string', 'max:10000'],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'due_at' => ['nullable', 'date'],
+            'due_date_preset' => ['nullable', Rule::in(self::TASK_DATE_PRESETS)],
+            'due_time' => ['nullable', 'date_format:H:i'],
+            'reminder' => ['nullable', Rule::in(self::TASK_REMINDERS)],
+            'task_type' => ['nullable', Rule::in(self::TASK_TYPES)],
+            'priority' => ['nullable', Rule::in(self::TASK_PRIORITIES)],
+            'queue' => ['nullable', 'string', 'max:160'],
+            'repeat' => ['nullable', 'boolean'],
         ]);
 
-        $dueAt = !empty($data['due_at']) ? Carbon::parse($data['due_at']) : null;
+        $dueAt = $this->resolveTaskDueAt($data);
 
-        ClientActivity::create([
+        $task = ClientActivity::create([
             'client_id' => $client->id,
             'type' => 'TASK',
             'title' => trim((string) $data['title']),
             'body' => trim((string) ($data['description'] ?? '')),
+            'meta' => [
+                'task_type' => $data['task_type'] ?? 'to_do',
+                'priority' => $data['priority'] ?? 'none',
+                'queue' => trim((string) ($data['queue'] ?? '')),
+                'reminder' => $data['reminder'] ?? 'none',
+                'repeat' => (bool) ($data['repeat'] ?? false),
+                'due_date_preset' => $data['due_date_preset'] ?? null,
+                'due_time' => $data['due_time'] ?? null,
+            ],
             'created_by' => Auth::id(),
             'assigned_to' => $data['assigned_to'] ?? null,
             'due_at' => $dueAt,
             'occurred_at' => $dueAt ?? now(),
         ]);
 
+        if (!empty($data['assigned_to'])) {
+            app(NotificationService::class)->notifyClientTaskAssigned($client, $task, (int) $data['assigned_to'], $req->user());
+        }
+
         return redirect()->route('admin.clients.show', [
             'id' => $client->id,
             'tab' => 'activities',
             'activity_tab' => 'TASKS',
         ])->with('ok', 'Task created.');
+    }
+
+    private function resolveTaskDueAt(array $data): ?Carbon
+    {
+        if (!empty($data['due_date_preset'])) {
+            $date = $this->taskPresetDate((string) $data['due_date_preset']);
+            [$hour, $minute] = array_map('intval', explode(':', (string) ($data['due_time'] ?? '08:00')));
+
+            return $date->setTime($hour, $minute);
+        }
+
+        return !empty($data['due_at']) ? Carbon::parse($data['due_at']) : null;
+    }
+
+    private function taskPresetDate(string $preset): Carbon
+    {
+        $date = now()->startOfDay();
+
+        return match ($preset) {
+            'tomorrow' => $date->addDay(),
+            '1_business_day' => $this->addBusinessDays($date, 1),
+            '2_business_days' => $this->addBusinessDays($date, 2),
+            '3_business_days' => $this->addBusinessDays($date, 3),
+            '1_week' => $date->addWeek(),
+            default => $date,
+        };
+    }
+
+    private function addBusinessDays(Carbon $date, int $days): Carbon
+    {
+        $result = $date->copy();
+        $remaining = $days;
+
+        while ($remaining > 0) {
+            $result->addDay();
+            if (!$result->isWeekend()) {
+                $remaining--;
+            }
+        }
+
+        return $result;
     }
 
     public function store(Request $req)
@@ -359,6 +476,7 @@ class ClientController extends Controller
                 'type' => $a->type,
                 'title' => $a->title ?: ($a->type === 'TASK' ? 'Task' : 'Note'),
                 'body' => $a->body,
+                'meta' => $a->meta ?? [],
                 'status' => null,
                 'status_key' => null,
                 'occurred_at' => $a->occurred_at,

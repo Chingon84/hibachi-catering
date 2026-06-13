@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
 use App\Models\InventoryMovement;
 use App\Models\Van;
+use App\Models\VanChecklist;
 
 class InventoryDashboardController extends Controller
 {
@@ -29,6 +30,32 @@ class InventoryDashboardController extends Controller
             ->latest('created_at')
             ->limit(8)
             ->get();
+        $todayChecklists = VanChecklist::query()
+            ->whereDate('date_time', today())
+            ->count();
+        $vansWithIssues = VanChecklist::query()
+            ->where(function ($query) {
+                $query->where('trip_status', '!=', 'Complete')
+                    ->orWhere('clean', 'NO')
+                    ->orWhere(function ($notes) {
+                        $notes->whereNotNull('notes')
+                            ->where('notes', '!=', '');
+                    });
+            })
+            ->distinct('van_number')
+            ->count('van_number');
+        $cleaningFailures = VanChecklist::query()
+            ->where('clean', 'NO')
+            ->count();
+        $missingEvidence = VanChecklist::query()
+            ->whereNull('picture1')
+            ->whereNull('picture2')
+            ->count();
+        $recentChecklistActivity = VanChecklist::query()
+            ->latest('date_time')
+            ->latest('id')
+            ->limit(6)
+            ->get();
 
         return view('admin.inventory.dashboard', compact(
             'totalInventoryItems',
@@ -36,7 +63,12 @@ class InventoryDashboardController extends Controller
             'outOfStockItems',
             'totalVans',
             'vansWithMissingEquipment',
-            'recentMovements'
+            'recentMovements',
+            'todayChecklists',
+            'vansWithIssues',
+            'cleaningFailures',
+            'missingEvidence',
+            'recentChecklistActivity'
         ));
     }
 }

@@ -26,6 +26,7 @@ class InventoryItemController extends Controller
             'stock' => trim((string) $request->query('stock', '')),
         ];
 
+        $perPage = $this->adminPerPage($request);
         $items = InventoryItem::query()
             ->when($filters['q'] !== '', function ($query) use ($filters) {
                 $query->where(function ($nested) use ($filters) {
@@ -41,7 +42,8 @@ class InventoryItemController extends Controller
             ->when($filters['stock'] === 'low', fn ($query) => $query->whereColumn('current_stock', '<=', 'minimum_stock'))
             ->when($filters['stock'] === 'out', fn ($query) => $query->where('current_stock', '<=', 0))
             ->orderBy('name')
-            ->paginate(15);
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.inventory.items.index', [
             'items' => $items,
@@ -49,6 +51,7 @@ class InventoryItemController extends Controller
             'categories' => InventoryItem::CATEGORIES,
             'itemTypes' => InventoryItem::ITEM_TYPES,
             'statuses' => InventoryItem::STATUSES,
+            'perPage' => $perPage,
         ]);
     }
 
@@ -76,10 +79,17 @@ class InventoryItemController extends Controller
     public function show($id)
     {
         $item = InventoryItem::with(['creator:id,name', 'updater:id,name'])->findOrFail($id);
-        $movements = $item->movements()->with(['user:id,name', 'van:id,name'])->paginate(12);
+        $movements = $item->movements()->with(['user:id,name', 'van:id,name'])->paginate(25)->withQueryString();
         $vanAssignments = $item->vanAssignments()->with(['van:id,name', 'checkedBy:id,name'])->orderByDesc('updated_at')->get();
 
         return view('admin.inventory.items.show', compact('item', 'movements', 'vanAssignments'));
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function edit($id)

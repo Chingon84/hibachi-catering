@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdminAccess::class,
             'perm' => \App\Http\Middleware\EnsurePermission::class,
+            'presence' => \App\Http\Middleware\TrackOnlinePresence::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

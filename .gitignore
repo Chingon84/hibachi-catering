@@ -18,6 +18,10 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/playwright-report
+/test-results
+/playwright/.auth
+/playwright/artifacts
 /vendor
 Homestead.json
 Homestead.yaml

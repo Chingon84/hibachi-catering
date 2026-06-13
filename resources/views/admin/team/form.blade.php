@@ -45,6 +45,15 @@
     .meta-label{font-size:12px;color:#6b7280}
     .meta-value{font-size:13px;font-weight:600;color:#111827;text-align:right}
     .meta-value.placeholder{color:#94a3b8;font-weight:500}
+    .photo-panel{display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,#fff,#fcfcfd);padding:18px;margin-bottom:18px}
+    .profile-photo{width:154px;height:154px;border-radius:999px;overflow:hidden;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;box-shadow:0 12px 28px rgba(15,23,42,.16);border:1px solid #dbe3ed}
+    .profile-photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .photo-actions{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .photo-action{appearance:none;border:0;border-radius:10px;background:#dff3ff;color:#1f3b53;min-width:110px;padding:8px 14px;font-size:12px;font-weight:800;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+    .photo-action:hover{background:#ccecff}
+    .photo-action.remove{background:#e7f5ff;color:#475569}
+    .photo-action.remove:hover{background:#d8efff}
+    .photo-action svg{width:13px;height:13px}
     @media (max-width: 860px){.security-layout{grid-template-columns:1fr}}
     @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
   </style>
@@ -68,7 +77,38 @@
           ['label' => 'Last login', 'value' => null],
           ['label' => 'Login attempts', 'value' => null],
         ];
+        $nameParts = preg_split('/\s+/', trim((string) $user->name)) ?: [];
+        $initials = collect($nameParts)->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') ?: 'U';
+        $profilePhotoUrl = $user->profile_photo_path ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path) : null;
       @endphp
+      @if($user->exists)
+        <section class="photo-panel" aria-label="Profile photo">
+          <div class="profile-photo">
+            @if($profilePhotoUrl)
+              <img src="{{ $profilePhotoUrl }}" alt="{{ $user->name }}">
+            @else
+              {{ $initials }}
+            @endif
+          </div>
+          <div class="photo-actions">
+            <form method="post" action="{{ route('admin.team.profile-photo.update', ['id' => $user->id, 'back' => 'edit']) }}" enctype="multipart/form-data">
+              @csrf
+              <label class="photo-action" title="Change profile photo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 20 9-9-4-4-9 9-2 6 6-2z"></path><path d="m15 9 4 4"></path></svg>
+                <span>Change</span>
+                <input name="profile_photo" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="this.form.requestSubmit()">
+              </label>
+            </form>
+            <form method="post" action="{{ route('admin.team.profile-photo.delete', ['id' => $user->id, 'back' => 'edit']) }}" onsubmit="return confirm('Remove this profile photo?');">
+              @csrf
+              <button class="photo-action remove" type="submit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v5"></path><path d="M14 11v5"></path></svg>
+                <span>Remove</span>
+              </button>
+            </form>
+          </div>
+        </section>
+      @endif
       <form method="post" action="{{ $user->exists ? route('admin.team.update',$user->id) : route('admin.team.store') }}" data-has-errors="{{ $errors->any() ? '1' : '0' }}">
         @csrf
         <div class="form-stack">
@@ -93,6 +133,24 @@
               <div class="field">
                 <label class="label" for="phone">Phone</label>
                 <input class="input" id="phone" name="phone" value="{{ old('phone', $user->phone) }}">
+              </div>
+              <div class="field">
+                <label class="label" for="employee_number">Employee Number</label>
+                <input class="input" id="employee_number" name="employee_number" value="{{ old('employee_number', $user->employee_number) }}">
+              </div>
+              <div class="field">
+                <label class="label" for="employee_type">Employee Type</label>
+                <select id="employee_type" name="employee_type">
+                  @php $employeeType = old('employee_type', $user->employee_type); @endphp
+                  <option value="">Select employee type</option>
+                  @foreach (($employeeTypes ?? []) as $option)
+                    <option value="{{ $option }}" {{ $employeeType === $option ? 'selected' : '' }}>{{ $option }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <div class="field">
+                <label class="label" for="hire_date">Hire Date</label>
+                <input class="input" id="hire_date" type="date" name="hire_date" value="{{ old('hire_date', $user->hire_date ? $user->hire_date->format('Y-m-d') : '') }}">
               </div>
               <div class="field">
                 <label class="label" for="username">Username</label>

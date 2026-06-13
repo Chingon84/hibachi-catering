@@ -89,6 +89,7 @@
         <h1 class="title" style="margin-right:auto">Van Inventory</h1>
         @if(auth()->user()?->hasPermission('inventory.manage'))
           <a class="btn secondary" href="{{ route('admin.inventory.vans.create') }}">Add Van</a>
+          <a class="btn secondary" href="{{ route('admin.inventory.checklists.create') }}">New Checklist</a>
           <button class="btn" type="button" id="openLoadoutModal">Update Van Loadout</button>
         @endif
       </div>
@@ -119,7 +120,7 @@
         </form>
       </div></div>
 
-      @if ($vans->isEmpty())
+      @if ($vans->count() === 0)
         <div class="empty-state">No vans match the current filters.</div>
       @else
         <div class="cards">
@@ -233,6 +234,7 @@
             </article>
           @endforeach
         </div>
+        @include('admin.inventory._pager', ['paginator' => $vans])
       @endif
     </div>
   </div>

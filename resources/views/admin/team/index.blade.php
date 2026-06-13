@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="/assets/admin.css">
   <style>
     body{background:var(--bg)}
-    .wrap{max-width:1380px;margin:24px auto;padding:0 12px 24px}
+    .wrap{width:100%;max-width:none;margin:0;padding:20px 24px}
     .stack{display:grid;gap:18px}
     .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
     .title{margin:0;font-size:28px;line-height:1.05}
-    .subtitle{margin:8px 0 0;color:var(--muted);max-width:720px}
+    .subtitle{margin:0;color:var(--muted);max-width:720px}
     .actions{display:flex;gap:8px;flex-wrap:wrap}
     .section{padding:22px}
     .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -46,20 +46,27 @@
     .row-action-delete:hover{background:#fef2f2;border-color:#fca5a5}
     .row-action-delete svg{width:14px;height:14px}
     @media (max-width: 1100px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr 1fr}}
-    @media (max-width: 760px){.head{flex-direction:column}.summary-grid,.filters{grid-template-columns:1fr}.table{min-width:920px}}
+    @media (max-width: 760px){.wrap{padding:16px}.head{flex-direction:column}.summary-grid,.filters{grid-template-columns:1fr}.table{min-width:920px}}
   </style>
 </head>
 <body>
+  @php
+    $user = auth()->user();
+    $canManageTeam = (bool) ($user?->hasPermission('team.manage') ?? false);
+  @endphp
   <div class="wrap">
     <div class="stack">
       <div class="head">
         <div>
-          <h1 class="title">Team</h1>
           <p class="subtitle">Central staff directory for chefs, assistants, managers, office staff, and admin operators. Permissions remain intact while the directory now supports operational workflows.</p>
         </div>
         <div class="actions">
-          <a class="btn secondary" href="{{ route('admin.team.permissions') }}">Access Control</a>
-          <a class="btn" href="{{ route('admin.team.create') }}">Add Member</a>
+          @if($canManageTeam)
+            <a class="btn secondary" href="{{ route('admin.team.permissions') }}">Access Control</a>
+            <a class="btn" href="{{ route('admin.team.create') }}">Add Member</a>
+          @else
+            <span class="badge role">Read-only directory access</span>
+          @endif
         </div>
       </div>
 
@@ -67,22 +74,22 @@
         <div class="summary-grid">
           <div class="summary-card">
             <div class="summary-label">Total Staff</div>
-            <div class="summary-value">{{ $users->count() }}</div>
+            <div class="summary-value">{{ $summary['total'] ?? $users->total() }}</div>
             <div class="summary-note">Directory records in Team</div>
           </div>
           <div class="summary-card">
             <div class="summary-label">Active Chefs</div>
-            <div class="summary-value">{{ $users->where('is_active', true)->where('staff_type', 'Chef')->count() }}</div>
+            <div class="summary-value">{{ $summary['active_chefs'] ?? 0 }}</div>
             <div class="summary-note">Available for Feedback Center chef selectors</div>
           </div>
           <div class="summary-card">
             <div class="summary-label">Admin Access</div>
-            <div class="summary-value">{{ $users->where('can_access_admin', true)->count() }}</div>
+            <div class="summary-value">{{ $summary['admin_access'] ?? 0 }}</div>
             <div class="summary-note">Users with dashboard access enabled</div>
           </div>
           <div class="summary-card">
             <div class="summary-label">Inactive Staff</div>
-            <div class="summary-value">{{ $users->where('is_active', false)->count() }}</div>
+            <div class="summary-value">{{ $summary['inactive'] ?? 0 }}</div>
             <div class="summary-note">Excluded from active operational filters</div>
           </div>
         </div>
@@ -179,6 +186,7 @@
             </tbody>
           </table>
         </div>
+        @include('admin.partials.pagination', ['paginator' => $users])
       </div>
     </div>
   </div>

@@ -12,6 +12,8 @@ return [
         'menu.view',
         'menu.manage',
         'reports.view',
+        'financial.view',
+        'financial.manage',
         'orders.view',
         'team.view',
         'team.manage',
@@ -19,8 +21,10 @@ return [
         'staff.view',
         'staff.manage',
         'calendar.view',
-        'complains.view',
-        'complains.manage',
+        'schedule.view',
+        'schedule.manage',
+        'feedback.view',
+        'feedback.manage',
         'settings.view',
         'trash.view',
         'trash.manage',
@@ -28,14 +32,14 @@ return [
         'inventory.manage',
     ],
 
-    // Minimal view permissions granted to admin principals
-    // (role owner/admin or can_access_admin=1).
+    // Minimal view permissions granted to the admin role.
     'admin_base_view_permissions' => [
         'reservations.view',
         'clients.view',
         'reports.view',
         'timeslots.view',
         'calendar.view',
+        'schedule.view',
         'menu.view',
         'orders.view',
         'inventory.view',
@@ -47,9 +51,14 @@ return [
         'admin' => [
             'reservations.view','reservations.manage',
             'timeslots.view','timeslots.manage',
+            'staff.view','staff.manage',
+            'calendar.view',
+            'schedule.view','schedule.manage',
             'clients.view','clients.manage',
             'menu.view','menu.manage',
+            'feedback.view','feedback.manage',
             'reports.view',
+            'financial.view','financial.manage',
             'orders.view',
             'team.view','team.manage',
             'settings.view',
@@ -58,17 +67,23 @@ return [
         ],
         'manager' => [
             'reservations.view','reservations.manage',
+            'staff.view','staff.manage',
+            'calendar.view',
             'timeslots.view','timeslots.manage',
+            'schedule.view','schedule.manage',
             'clients.view','clients.manage',
-            'menu.view',
-            'reports.view',
+            'menu.view','menu.manage',
             'orders.view',
-            'team.view',
+            'team.view','team.manage',
+            'feedback.view','feedback.manage',
+            'reports.view',
+            'financial.view',
             'inventory.view','inventory.manage',
         ],
         'staff' => [
             'reservations.view',
             'timeslots.view',
+            'schedule.view',
             'clients.view',
             'menu.view',
         ],
@@ -77,24 +92,17 @@ return [
         ],
         // New role: office
         'office' => [
-            // Reservations
             'reservations.view','reservations.manage',
-            // Staff bookings
             'staff.view','staff.manage',
-            // Calendar
             'calendar.view',
-            // Timeslots
+            'schedule.view','schedule.manage',
             'timeslots.view','timeslots.manage',
-            // Clients
             'clients.view','clients.manage',
-            // Menu
-            'menu.view','menu.manage',
-            // Reports & dashboards
-            'reports.view','orders.view','inventory.view','inventory.manage',
-            // Complains
-            'complains.view','complains.manage',
-            // Team (view only)
+            'orders.view',
+            'reports.view',
             'team.view',
+            'feedback.view',
+            'inventory.view','inventory.manage',
         ],
     ],
 ];

@@ -18,6 +18,7 @@ class ReportsController extends Controller
 
     public function index(Request $req)
     {
+        $canViewFinancial = (bool) ($req->user()?->hasPermission('financial.view') ?? false);
         $preset = (string) $req->query('preset', 'month'); // day, week, month, year, custom
         $from = $req->query('from');
         $to   = $req->query('to');
@@ -54,9 +55,27 @@ class ReportsController extends Controller
                 break;
         }
 
-        $summary = $this->revenueService->summary($start, $end, $agent);
-        [$labels, $totals, $depos, $grats, $taxes] = $this->revenueService->series($start, $end, $gran, $agent);
-        $rows = $this->revenueService->rows($start, $end, $agent);
+        $baseQuery = $this->revenueService->baseQuery($start, $end, $agent);
+        $operationalReservationCount = (clone $baseQuery)->count();
+        $perPage = $this->adminPerPage($req);
+
+        $summary = null;
+        $labels = [];
+        $totals = [];
+        $depos = [];
+        $grats = [];
+        $taxes = [];
+        $rows = null;
+
+        if ($canViewFinancial) {
+            $summary = $this->revenueService->summary($start, $end, $agent);
+            [$labels, $totals, $depos, $grats, $taxes] = $this->revenueService->series($start, $end, $gran, $agent);
+            $rows = (clone $baseQuery)
+                ->orderByDesc('date')
+                ->orderByDesc('time')
+                ->paginate($perPage)
+                ->withQueryString();
+        }
 
         // Build agent options (case-insensitive unique, normalize "Online")
         try {
@@ -93,6 +112,10 @@ class ReportsController extends Controller
             'to'     => $end->toDateString(),
             'agent'  => $agent,
             'agentOptions' => $agentOptions,
+            'canViewFinancial' => $canViewFinancial,
+            'operationalSummary' => [
+                'reservation_count' => $operationalReservationCount,
+            ],
             'summary' => $summary,
             'labels'  => $labels,
             'totals'  => $totals,
@@ -100,7 +123,15 @@ class ReportsController extends Controller
             'grats'   => $grats,
             'taxes'   => $taxes,
             'rows'    => $rows,
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
 }

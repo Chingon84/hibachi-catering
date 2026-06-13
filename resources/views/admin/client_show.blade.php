@@ -13,8 +13,10 @@
       --border:#e5e7eb;
       --text:#0f172a;
       --muted:#64748b;
-      --brand:#b21e27;
-      --brand-hover:#991b1b;
+      --brand:#243b53;
+      --brand-hover:#172b40;
+      --brand-soft:#eef5fb;
+      --brand-ring:#c7d6e8;
       --shadow:0 10px 30px rgba(15,23,42,.06);
     }
     body{background:var(--bg);color:var(--text)}
@@ -30,11 +32,11 @@
     .status-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;border:1px solid #dbe3ef;background:#f8fbff;color:#1e3a8a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 
     .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .btn-link{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;color:#0f172a;text-decoration:none;font-size:13px;font-weight:700;transition:.18s ease;cursor:pointer}
-    .btn-link:hover{transform:translateY(-1px);border-color:#cbd5e1;box-shadow:0 6px 16px rgba(15,23,42,.08)}
-    .btn-link:focus-visible{outline:2px solid #cbd5e1;outline-offset:2px}
-    .btn-brand{background:var(--brand);border-color:var(--brand);color:#fff}
-    .btn-brand:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+    .btn-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 14px;border:1px solid #d9e1ec;border-radius:12px;background:linear-gradient(180deg,#fff,#f8fafc);color:#1f2937;text-decoration:none;font-size:13px;font-weight:750;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .btn-link:hover{transform:translateY(-1px);border-color:#c5d0dd;background:#fff;box-shadow:0 10px 22px rgba(15,23,42,.10)}
+    .btn-link:focus-visible{outline:2px solid var(--brand-ring);outline-offset:2px}
+    .btn-brand{background:linear-gradient(180deg,#2f4863,#243b53);border-color:#243b53;color:#fff;box-shadow:0 8px 18px rgba(36,59,83,.20)}
+    .btn-brand:hover{background:linear-gradient(180deg,#284059,#172b40);border-color:#172b40;box-shadow:0 12px 24px rgba(36,59,83,.24)}
 
     .client-shell{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:20px;align-items:start;margin-top:16px}
     @media (max-width:1320px){.client-shell{grid-template-columns:300px minmax(0,1fr)}}
@@ -110,20 +112,64 @@
     .photo-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#f3f4f6;border:1px solid var(--border)}
     .photo-name{font-size:13px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .photo-meta{font-size:11px;color:#64748b;margin-top:4px}
-    .btn-danger-ghost{color:#b91c1c;border-color:#fecaca;background:#fff}
-    .btn-danger-ghost:hover{background:#fef2f2;border-color:#fca5a5}
+    .btn-danger-ghost{color:#475569;border-color:#d9e1ec;background:#fff}
+    .btn-danger-ghost:hover{background:#f8fafc;border-color:#cbd5e1;color:#1f2937}
+    .notes-list{display:grid;gap:10px}
+    .note-preview{border:1px solid #e6ebf2;border-radius:12px;background:#fff;padding:10px}
+    .note-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#64748b;font-size:11px;margin-bottom:7px}
+    .note-author{font-weight:800;color:#334155}
+    .note-assignee{margin-bottom:8px;font-size:12px;color:#64748b}
+    .note-assignee b{display:block;margin-bottom:2px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#475569}
+    .note-body{white-space:pre-wrap;font-size:13px;line-height:1.45;color:#1f2937}
 
     .empty-state{padding:14px;border:1px dashed #d1d9e6;border-radius:12px;background:#f8fafc;color:#64748b;font-size:13px;text-align:center}
 
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:50;background:rgba(15,23,42,.45)}
+    .modal{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;height:100vh;min-height:100dvh;padding:clamp(28px,7vh,72px) 20px 24px;z-index:50;background:rgba(15,23,42,.45);overflow-y:auto}
     .modal.show{display:flex}
-    .modal-card{width:min(620px, 100%);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.2)}
+    .modal-card{width:min(620px, 100%);max-height:calc(100vh - 48px);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.2);display:flex;flex-direction:column}
     .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
-    .modal-body{padding:16px}
+    .modal-body{padding:16px;overflow-y:auto}
     .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 16px 16px}
     .input,.select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
     .field{margin-bottom:12px}
     .field label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:6px}
+    .task-modal{padding:0;align-items:flex-start;background:rgba(15,23,42,.38)}
+    .task-modal .modal-card{width:min(650px,100%);max-height:calc(100vh - 20px);border-radius:0;border-color:#cbd5e1}
+    .task-head{display:flex;align-items:center;gap:12px;background:#4f7195;color:#fff;padding:14px 18px;font-weight:800}
+    .task-grip{font-size:20px;line-height:.8;letter-spacing:-4px;color:rgba(255,255,255,.72)}
+    .task-chevron{border:0;background:transparent;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0}
+    .task-close{margin-left:auto;border:0;background:transparent;color:#fff;font-size:30px;line-height:1;cursor:pointer;padding:0 2px}
+    .task-form{display:flex;min-height:0;flex-direction:column}
+    .task-body{padding:18px 22px 0;overflow-y:auto}
+    .task-title-input{width:100%;border:0;border-bottom:1px solid transparent;padding:2px 4px 20px 4px;font-size:15px;color:#243b53;outline:0}
+    .task-title-input:focus{border-bottom-color:#d8e0ea}
+    .task-split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(180px,.75fr);gap:24px;margin-top:8px}
+    .task-label{display:block;margin-bottom:8px;font-size:12px;color:#345277;font-weight:500}
+    .task-pick-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .task-select-link{appearance:none;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;max-width:240px;padding:0 18px 0 0;cursor:pointer}
+    .task-select-link:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
+    .task-time{width:96px;border:0;background:transparent;color:#243b53;font-size:14px;padding:0}
+    .task-checkbox{display:inline-flex;align-items:center;gap:8px;margin-top:24px;color:#243b53;font-size:14px}
+    .task-checkbox input{width:16px;height:16px}
+    .task-divider{height:1px;background:#d9e1ec;margin:18px 0 0}
+    .task-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:16px 0 18px;border-bottom:1px solid #d9e1ec}
+    .task-meta-label{display:block;font-size:12px;color:#345277;margin-bottom:8px}
+    .task-meta-select{appearance:none;width:100%;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;padding:0 16px 0 0;cursor:pointer}
+    .task-meta-select:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
+    .priority-dot{display:inline-flex;width:10px;height:10px;border-radius:999px;background:#e7edf4;margin-right:7px;vertical-align:middle}
+    .task-notes{display:flex;min-height:170px;flex-direction:column;border-bottom:1px solid #d9e1ec}
+    .task-notes textarea{min-height:126px;border:0;border-radius:0;padding:16px 0;resize:vertical;font-size:14px;outline:0}
+    .task-toolbar{display:flex;align-items:center;gap:16px;color:#243b53;font-size:14px;padding:8px 0}
+    .task-toolbar strong,.task-toolbar em,.task-toolbar span{line-height:1}
+    .task-associated{margin-left:auto;color:#008aa8;font-weight:800}
+    .task-foot{display:flex;justify-content:flex-start;border-top:1px solid #d9e1ec;padding:14px 20px}
+    .task-create-btn{border:0;border-radius:4px;background:#ff795f;color:#fff;font-weight:700;padding:10px 17px;cursor:pointer}
+    .task-create-btn:hover{background:#f0644c}
+    @media (max-width:760px){
+      .task-split,.task-meta-grid{grid-template-columns:1fr}
+      .task-modal .modal-card{max-height:100vh}
+      .task-associated{display:none}
+    }
   </style>
   @php
     $money = fn($v) => '$'.number_format((float)$v, 2);
@@ -136,7 +182,12 @@
     $activityTab = $activityTab ?? 'ACTIVITY';
     $groupedActivities = $activities->getCollection()->groupBy(function($a){ return optional($a->occurred_at)->format('F Y') ?: 'Unknown'; });
     $photos = $client->photos ?? collect();
+    $latestNotes = $latestNotes ?? collect();
     $emptyMark = fn($v) => filled($v) ? $v : '—';
+    $selectedAssignedTo = (string) old('assigned_to', '');
+    $taskUserIds = ($taskUsers ?? collect())->pluck('id')->map(fn($id) => (string) $id)->all();
+    $defaultTaskAssignedTo = in_array((string) auth()->id(), $taskUserIds, true) ? (string) auth()->id() : '';
+    $selectedTaskAssignedTo = (string) old('assigned_to', $defaultTaskAssignedTo);
   @endphp
 </head>
 <body>
@@ -203,8 +254,8 @@
         <div class="card">
           <div class="card-body">
             <div class="tabs">
-              <a class="tab {{ $tab === 'overview' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'overview']) }}">Overview</a>
               <a class="tab {{ $tab === 'activities' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'activities', 'activity_tab'=>$activityTab, 'search'=>$f['search'] ?? '']) }}">Activities</a>
+              <a class="tab {{ $tab === 'overview' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'overview']) }}">Overview</a>
             </div>
 
             @if($tab === 'overview')
@@ -307,10 +358,26 @@
                             @endif
 
                             @if($item->type === 'TASK')
+                              @php
+                                $taskMeta = (array) ($item->meta ?? []);
+                                $taskTypeLabel = ucfirst(str_replace('_', '-', (string) ($taskMeta['task_type'] ?? 'to_do')));
+                                $taskPriorityLabel = ucfirst((string) ($taskMeta['priority'] ?? 'none'));
+                                $taskQueueLabel = filled($taskMeta['queue'] ?? '') ? $taskMeta['queue'] : 'None';
+                                $taskReminderLabel = ucfirst(str_replace('_', ' ', (string) ($taskMeta['reminder'] ?? 'none')));
+                              @endphp
                               <div class="meta-grid">
                                 <div class="meta-cell"><b>Due</b>{{ $item->due_at ? \Carbon\Carbon::parse($item->due_at)->format('M d, Y g:i A') : '—' }}</div>
                                 <div class="meta-cell"><b>Assigned to</b>{{ $item->assigned_to_name ?: 'Unassigned' }}</div>
-                                <div class="meta-cell"><b>Created by</b>{{ $item->created_by_name ?: 'System' }}</div>
+                                <div class="meta-cell"><b>Task type</b>{{ $taskTypeLabel }}</div>
+                                <div class="meta-cell"><b>Priority</b>{{ $taskPriorityLabel }}</div>
+                                <div class="meta-cell"><b>Queue</b>{{ $taskQueueLabel }}</div>
+                                <div class="meta-cell"><b>Reminder</b>{{ $taskReminderLabel }}</div>
+                              </div>
+                            @endif
+
+                            @if($item->type === 'NOTE' && $item->assigned_to_name)
+                              <div class="meta-grid">
+                                <div class="meta-cell"><b>Activity assigned to</b>{{ $item->assigned_to_name }}</div>
                               </div>
                             @endif
 
@@ -388,8 +455,24 @@
             <div class="panel-head" style="margin-bottom:8px">
               <h3 class="panel-title">Notes</h3>
             </div>
-            @if(!empty($client->internal_notes))
-              <div style="white-space:pre-wrap;font-size:14px;line-height:1.6;color:#1f2937">{{ $client->internal_notes }}</div>
+            @if($latestNotes->isNotEmpty())
+              <div class="notes-list">
+                @foreach($latestNotes as $note)
+                  <article class="note-preview">
+                    <div class="note-meta">
+                      <span class="note-author">{{ $note->creator?->name ?: 'System' }}</span>
+                      <span>{{ $note->created_at?->format('M d, Y') ?: '—' }}</span>
+                    </div>
+                    @if($note->assignee)
+                      <div class="note-assignee">
+                        <b>Activity assigned to</b>
+                        {{ $note->assignee->name }}
+                      </div>
+                    @endif
+                    <div class="note-body">{{ $note->body ?: '—' }}</div>
+                  </article>
+                @endforeach
+              </div>
             @else
               <div class="empty-state">No notes yet.</div>
             @endif
@@ -413,13 +496,18 @@
             <div class="sub">{{ $client->email_primary ?: 'No email' }}</div>
           </div>
           <div class="field">
+            <label for="note_assigned_to">Activity assigned to</label>
+            <select class="select" id="note_assigned_to" name="assigned_to">
+              <option value="">No assigned team</option>
+              @foreach(($activityUsers ?? []) as $u)
+                <option value="{{ $u->id }}" {{ $selectedAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="field">
             <label>Note</label>
             <textarea name="body" rows="7" placeholder="Start typing to leave a note..." required>{{ old('body') }}</textarea>
           </div>
-          <label class="row" style="font-size:13px">
-            <input type="checkbox" name="create_followup" value="1">
-            Create a To-do task to follow up in X business days
-          </label>
         </div>
         <div class="modal-foot">
           <button type="button" class="btn-link" data-close-modal>Cancel</button>
@@ -429,40 +517,118 @@
     </div>
   </div>
 
-  <div class="modal" id="taskModal" aria-hidden="true">
+  <div class="modal task-modal" id="taskModal" aria-hidden="true">
     <div class="modal-card">
-      <div class="modal-head">
-        <strong>Create Task</strong>
-        <button type="button" class="btn-link" data-close-modal>&times;</button>
-      </div>
-      <form method="post" action="{{ route('admin.clients.tasks.store', ['id' => $client->id]) }}">
+      <form class="task-form" method="post" action="{{ route('admin.clients.tasks.store', ['id' => $client->id]) }}">
         @csrf
-        <div class="modal-body">
-          <div class="field">
-            <label>Title</label>
-            <input class="input" name="title" value="{{ old('title') }}" required>
+        @php
+          $duePreset = old('due_date_preset', '3_business_days');
+          $dueTime = old('due_time', '08:00');
+          $reminder = old('reminder', 'none');
+          $taskType = old('task_type', 'to_do');
+          $priority = old('priority', 'none');
+        @endphp
+        <div class="task-head">
+          <span class="task-grip" aria-hidden="true">&#8942;&#8942;</span>
+          <button type="button" class="task-chevron" aria-label="Collapse task modal">&#8964;</button>
+          <strong>Task</strong>
+          <button type="button" class="task-close" data-close-modal aria-label="Close task modal">&times;</button>
+        </div>
+
+        <div class="task-body">
+          <input class="task-title-input" name="title" value="{{ old('title') }}" placeholder="Task title" required>
+
+          <div class="task-split">
+            <div>
+              <span class="task-label">Activity date</span>
+              <div class="task-pick-row">
+                <select class="task-select-link" name="due_date_preset" aria-label="Activity date">
+                  <option value="today" {{ $duePreset === 'today' ? 'selected' : '' }}>Today</option>
+                  <option value="tomorrow" {{ $duePreset === 'tomorrow' ? 'selected' : '' }}>Tomorrow</option>
+                  <option value="1_business_day" {{ $duePreset === '1_business_day' ? 'selected' : '' }}>In 1 business day</option>
+                  <option value="2_business_days" {{ $duePreset === '2_business_days' ? 'selected' : '' }}>In 2 business days</option>
+                  <option value="3_business_days" {{ $duePreset === '3_business_days' ? 'selected' : '' }}>In 3 business days</option>
+                  <option value="1_week" {{ $duePreset === '1_week' ? 'selected' : '' }}>In 1 week</option>
+                </select>
+                <input class="task-time" type="time" name="due_time" value="{{ $dueTime }}" aria-label="Activity time">
+              </div>
+            </div>
+            <div>
+              <span class="task-label">Send reminder</span>
+              <select class="task-select-link" name="reminder" aria-label="Send reminder">
+                <option value="none" {{ $reminder === 'none' ? 'selected' : '' }}>No reminder</option>
+                <option value="at_due_time" {{ $reminder === 'at_due_time' ? 'selected' : '' }}>At task due time</option>
+                <option value="30_minutes_before" {{ $reminder === '30_minutes_before' ? 'selected' : '' }}>30 minutes before</option>
+                <option value="1_hour_before" {{ $reminder === '1_hour_before' ? 'selected' : '' }}>1 hour before</option>
+                <option value="1_day_before" {{ $reminder === '1_day_before' ? 'selected' : '' }}>1 day before</option>
+                <option value="1_week_before" {{ $reminder === '1_week_before' ? 'selected' : '' }}>1 week before</option>
+                <option value="custom_date" {{ $reminder === 'custom_date' ? 'selected' : '' }}>Custom Date</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Due date</label>
-            <input class="input" type="datetime-local" name="due_at" value="{{ old('due_at') }}">
+
+          <label class="task-checkbox">
+            <input type="checkbox" name="repeat" value="1" {{ old('repeat') ? 'checked' : '' }}>
+            Set to repeat
+          </label>
+
+          <div class="task-divider"></div>
+
+          <div class="task-meta-grid">
+            <div>
+              <span class="task-meta-label">Task Type</span>
+              <select class="task-meta-select" name="task_type" aria-label="Task Type">
+                <option value="to_do" {{ $taskType === 'to_do' ? 'selected' : '' }}>To-do</option>
+                <option value="call" {{ $taskType === 'call' ? 'selected' : '' }}>Call</option>
+                <option value="email" {{ $taskType === 'email' ? 'selected' : '' }}>Email</option>
+              </select>
+            </div>
+            <div>
+              <span class="task-meta-label">Priority</span>
+              <select class="task-meta-select" name="priority" aria-label="Priority">
+                <option value="none" {{ $priority === 'none' ? 'selected' : '' }}>None</option>
+                <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
+                <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
+                <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High</option>
+              </select>
+            </div>
+            <div>
+              <span class="task-meta-label">Queue</span>
+              <select class="task-meta-select" name="queue" aria-label="Queue">
+                <option value="" {{ old('queue', '') === '' ? 'selected' : '' }}>None</option>
+                <option value="Sales follow-up" {{ old('queue') === 'Sales follow-up' ? 'selected' : '' }}>Sales follow-up</option>
+                <option value="Event planning" {{ old('queue') === 'Event planning' ? 'selected' : '' }}>Event planning</option>
+                <option value="Customer service" {{ old('queue') === 'Customer service' ? 'selected' : '' }}>Customer service</option>
+              </select>
+            </div>
+            <div>
+              <span class="task-meta-label">Activity assigned to</span>
+              <select class="task-meta-select" name="assigned_to" aria-label="Activity assigned to">
+                <option value="">Unassigned</option>
+                @foreach(($taskUsers ?? []) as $u)
+                  <option value="{{ $u->id }}" {{ $selectedTaskAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                @endforeach
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Assigned to</label>
-            <select class="select" name="assigned_to">
-              <option value="">Unassigned</option>
-              @foreach(($activityUsers ?? []) as $u)
-                <option value="{{ $u->id }}" {{ (string)old('assigned_to') === (string)$u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-              @endforeach
-            </select>
-          </div>
-          <div class="field">
-            <label>Description</label>
-            <textarea name="description" rows="5">{{ old('description') }}</textarea>
+
+          <div class="task-notes">
+            <textarea name="description" rows="6" placeholder="Notes...">{{ old('description') }}</textarea>
+            <div class="task-toolbar" aria-hidden="true">
+              <strong>B</strong>
+              <em>I</em>
+              <u>U</u>
+              <span>More&#9662;</span>
+              <span>&#128279;</span>
+              <span>&#9638;</span>
+              <span>&#8801;</span>
+              <span class="task-associated">Associated with 1 record&#9662;</span>
+            </div>
           </div>
         </div>
-        <div class="modal-foot">
-          <button type="button" class="btn-link" data-close-modal>Cancel</button>
-          <button type="submit" class="btn-link btn-brand">Create task</button>
+
+        <div class="task-foot">
+          <button type="submit" class="task-create-btn">Create</button>
         </div>
       </form>
     </div>

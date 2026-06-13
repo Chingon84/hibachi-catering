@@ -41,11 +41,13 @@ class FinancialOverviewController extends Controller
 
         [$comparisonLabels, $comparisonRevenue, $comparisonExpenses] = $this->buildMonthlyComparison($end);
 
+        $perPage = $this->adminPerPage($request);
         $expenses = (clone $expenseBase)
             ->with('creator:id,name')
             ->orderByDesc('expense_date')
             ->orderByDesc('id')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         $periodCount = max(1, count($trendLabels));
         $expenseRatio = $totalRevenue > 0 ? ($totalExpenses / $totalRevenue) * 100 : 0;
@@ -77,7 +79,15 @@ class FinancialOverviewController extends Controller
             'comparisonExpenses' => $comparisonExpenses,
             'expenses' => $expenses,
             'backUrl' => $request->fullUrl(),
+            'perPage' => $perPage,
         ]);
+    }
+
+    private function adminPerPage(Request $request): int
+    {
+        $perPage = (int) $request->query('per_page', 25);
+
+        return in_array($perPage, [10, 15, 25], true) ? $perPage : 25;
     }
 
     public function create(Request $request)
@@ -187,9 +197,11 @@ class FinancialOverviewController extends Controller
         [$labels, $revenue] = $this->revenueService->series($start, $end, $groupBy);
 
         if ($groupBy === 'month') {
+            $periodExpression = $this->expenseMonthPeriodExpression();
+
             $expenseRows = Expense::query()
                 ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
-                ->selectRaw("DATE_FORMAT(`expense_date`, '%Y-%m') as period")
+                ->selectRaw($periodExpression . ' as period')
                 ->selectRaw('SUM(amount) as total_amount')
                 ->groupBy('period')
                 ->orderBy('period')
@@ -241,9 +253,11 @@ class FinancialOverviewController extends Controller
 
         [, $revenueSeries] = $this->revenueService->series($start, $finish, 'month');
 
+        $periodExpression = $this->expenseMonthPeriodExpression();
+
         $expenseRows = Expense::query()
             ->whereBetween('expense_date', [$start->toDateString(), $finish->toDateString()])
-            ->selectRaw("DATE_FORMAT(`expense_date`, '%Y-%m') as period")
+            ->selectRaw($periodExpression . ' as period')
             ->selectRaw('SUM(amount) as total_amount')
             ->groupBy('period')
             ->orderBy('period')
@@ -266,5 +280,14 @@ class FinancialOverviewController extends Controller
         }
 
         return [$labels, $revenue, $expenses];
+    }
+
+    private function expenseMonthPeriodExpression(): string
+    {
+        $driver = Expense::query()->getConnection()->getDriverName();
+
+        return $driver === 'sqlite'
+            ? 'strftime(\'%Y-%m\', "expense_date")'
+            : "DATE_FORMAT(`expense_date`, '%Y-%m')";
     }
 }

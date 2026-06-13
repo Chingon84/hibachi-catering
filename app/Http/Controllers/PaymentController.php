@@ -9,6 +9,8 @@ use App\Models\Reservation;
 use App\Models\Payment;
 use App\Services\ClientSyncService;
 use App\Services\ReservationPaymentSyncService;
+use App\Services\TaxRateResolver;
+use App\Support\CaliforniaCateringTax;
 use App\Support\InvoiceRenderer;
 use App\Support\ReservationTotals;
 
@@ -18,6 +20,20 @@ class PaymentController extends Controller
     {
         $state = session('resv', []);
         $reservationId = data_get($state, 'reservation_id');
+        $directReservationId = (int) $req->input('reservation_id', 0);
+        $usingDirectReservation = false;
+        if ($directReservationId > 0) {
+            $user = $req->user();
+            abort_unless(
+                $user
+                && (int) ($user->is_active ?? 1) === 1
+                && method_exists($user, 'hasPermission')
+                && $user->hasPermission('reservations.manage'),
+                403
+            );
+            $reservationId = $directReservationId;
+            $usingDirectReservation = true;
+        }
         abort_if(!$reservationId, 400, 'Reservation not started.');
 
         $reservation = Reservation::findOrFail($reservationId);
@@ -29,6 +45,10 @@ class PaymentController extends Controller
 
         // Payment amount from Step 4 form; defaults to 20% deposit.
         $amount = (float) $req->input('deposit_amount', data_get($state, 'deposit_amount', 0));
+        if ($usingDirectReservation && $paymentType === 'full') {
+            $totals = ReservationTotals::compute($reservation);
+            $amount = (float) ($totals['balance'] ?? 0);
+        }
         if ($amount <= 0) {
             $estimate = data_get($state, 'estimate', []);
             $total = (float) ($estimate['total'] ?? 0);
@@ -37,23 +57,33 @@ class PaymentController extends Controller
 
         $total = (float) ($reservation->total ?? data_get($state, 'estimate.total', 0));
         if ($paymentType === 'deposit') {
-            [$existingDepositPaid] = ReservationTotals::stripeBreakdown($reservation);
+            $totals = ReservationTotals::compute($reservation);
             $depositTarget = (float) ($reservation->deposit_due ?? 0);
             if ($depositTarget <= 0) {
                 $depositTarget = round(max(0, $total) * 0.20, 2);
             }
-            $remainingDeposit = max(0, round($depositTarget - max(0, (float) $existingDepositPaid), 2));
+            $paidTotal = max(0, (float) ($totals['paid_total'] ?? 0));
+            $depositPaid = max(0, (float) ($totals['deposit_paid'] ?? 0));
+            $paidTowardDeposit = min($depositTarget, max($depositPaid, min($paidTotal, $depositTarget)));
+            $remainingDeposit = max(0, round($depositTarget - $paidTowardDeposit, 2));
             $this->debugPayment('deposit.checkout.remaining', [
                 'reservation_id' => $reservation->id,
+                'session_reservation_id' => $reservationId,
                 'deposit_target' => $depositTarget,
-                'existing_deposit_paid' => (float) $existingDepositPaid,
+                'deposit_paid' => $depositPaid,
+                'amount_paid_total' => $paidTotal,
+                'paid_toward_deposit' => $paidTowardDeposit,
                 'remaining_deposit' => $remainingDeposit,
+                'invoice_status' => (string) ($reservation->invoice_status ?? ''),
             ]);
             if ($remainingDeposit <= 0.0) {
                 \Log::warning('deposit.checkout.blocked_already_paid', [
                     'reservation_id' => $reservation->id,
+                    'session_reservation_id' => $reservationId,
                     'deposit_target' => $depositTarget,
-                    'existing_deposit_paid' => (float) $existingDepositPaid,
+                    'deposit_paid' => $depositPaid,
+                    'amount_paid_total' => $paidTotal,
+                    'invoice_status' => (string) ($reservation->invoice_status ?? ''),
                 ]);
                 return back()->withErrors(['payment' => 'Deposit is already paid for this reservation.']);
             }
@@ -85,24 +115,33 @@ class PaymentController extends Controller
                 'payment_type' => $paymentType,
             ]);
 
+            $checkoutPayload = [
+                'mode' => 'payment',
+                'success_url' => $successUrl,
+                'cancel_url'  => $cancelUrl,
+                'currency'    => 'usd',
+                'payment_method_types[]' => 'card',
+                'line_items[0][price_data][currency]' => 'usd',
+                'line_items[0][price_data][product_data][name]' => ($paymentType === 'full' ? 'Reservation Full Payment ' : 'Reservation Deposit ') . ($reservation->code ?? ('#'.$reservation->id)),
+                'line_items[0][price_data][unit_amount]' => $amountCents,
+                'line_items[0][quantity]' => 1,
+                'metadata[reservation_id]' => (string)$reservation->id,
+                'metadata[customer_name]' => (string) ($reservation->customer_name ?? ''),
+                'metadata[customer_email]' => (string) ($reservation->email ?? ''),
+                'metadata[total]' => number_format((float) ($reservation->total ?? $total), 2, '.', ''),
+                'metadata[deposit_amount]' => number_format($paymentType === 'deposit' ? $amount : round(max(0, (float) ($reservation->total ?? $total)) * 0.20, 2), 2, '.', ''),
+                'metadata[purpose]' => $paymentType === 'full' ? 'full' : 'deposit',
+                'metadata[payment_type]' => $paymentType,
+                'metadata[expected_amount_cents]' => (string) $amountCents,
+                'client_reference_id' => (string) $reservation->id,
+            ];
+            if (!empty($reservation->email)) {
+                $checkoutPayload['customer_email'] = $reservation->email;
+            }
+
             $response = Http::asForm()
                 ->withToken($stripeSecret)
-                ->post('https://api.stripe.com/v1/checkout/sessions', [
-                    'mode' => 'payment',
-                    'success_url' => $successUrl,
-                    'cancel_url'  => $cancelUrl,
-                    'currency'    => 'usd',
-                    'payment_method_types[]' => 'card',
-                    'line_items[0][price_data][currency]' => 'usd',
-                    'line_items[0][price_data][product_data][name]' => ($paymentType === 'full' ? 'Reservation Full Payment ' : 'Reservation Deposit ') . ($reservation->code ?? ('#'.$reservation->id)),
-                    'line_items[0][price_data][unit_amount]' => $amountCents,
-                    'line_items[0][quantity]' => 1,
-                    // pass reservation id via metadata
-                    'metadata[reservation_id]' => (string)$reservation->id,
-                    'metadata[purpose]' => $paymentType === 'full' ? 'full' : 'deposit',
-                    'metadata[payment_type]' => $paymentType,
-                    'metadata[expected_amount_cents]' => (string) $amountCents,
-                ]);
+                ->post('https://api.stripe.com/v1/checkout/sessions', $checkoutPayload);
 
             if (!$response->ok()) {
                 $body = $response->body();
@@ -130,8 +169,16 @@ class PaymentController extends Controller
             }
             $reservation->save();
         } catch (\Throwable $e) {}
-        // 2) Keep in session for redundancy
-        session(['resv' => array_merge($state, [ 'deposit_amount' => $amount ])]);
+        // 2) Keep only current checkout context in session; never carry old Stripe/payment IDs forward.
+        $nextState = array_merge($state, [
+            'reservation_id' => $reservation->id,
+            'deposit_amount' => $amount,
+            'payment_status' => 'pending',
+            'checkout_session_id' => $session['id'] ?? null,
+            'stripe_session_id' => $session['id'] ?? null,
+            'payment_intent_id' => null,
+        ]);
+        session(['resv' => $nextState]);
 
         return redirect()->away($session['url']);
     }
@@ -208,7 +255,7 @@ class PaymentController extends Controller
                     'status'         => $status === 'paid' ? 'succeeded' : $status,
                     'stripe_session_id' => $sessionId,
                     'stripe_payment_intent_id' => $txn,
-                    'payload_json'   => is_array($data) ? json_encode($data) : (string) $data,
+                    'payload_json'   => $this->compactStripeSessionPayload($data),
                 ];
                 // Only include card columns if they exist (in case migration not run yet)
                 try {
@@ -239,7 +286,11 @@ class PaymentController extends Controller
                         $adjustments   = ReservationTotals::adjustments($reservation);
                         $adjSum        = array_reduce($adjustments, fn($c, $a) => $c + (float) ($a['amount'] ?? 0), 0.0);
                         $gratuity      = round($itemsSubtotal * 0.18, 2);
-                        $tax           = round(max(0, $itemsSubtotal + $adjSum) * 0.1025, 2);
+                        $taxRate       = app(TaxRateResolver::class)->rateForCity((string) ($reservation->city ?? ''));
+                        // California catering tax: taxable base includes food/items subtotal, travel fee,
+                        // and mandatory gratuity/service charge. Voluntary tips are excluded.
+                        $taxableBase   = CaliforniaCateringTax::taxableBase($itemsSubtotal, $travelFee, $gratuity, 0, $adjSum);
+                        $tax           = CaliforniaCateringTax::tax($taxableBase, $taxRate);
                         $grandTotal    = round($itemsSubtotal + $travelFee + $gratuity + $tax + $adjSum, 2);
 
                         $reservation->subtotal  = round($itemsSubtotal, 2);
@@ -372,24 +423,30 @@ class PaymentController extends Controller
                             'estimate'   => $est,
                             // last payment (this transaction), used for Step5 breakdown
                             'last_payment_amount' => (float) ($amountTotal ?? 0),
+                            'payment_status' => (string) ($data['payment_status'] ?? 'paid'),
+                            'checkout_session_id' => $sessionId,
+                            'stripe_session_id' => $sessionId,
+                            'payment_intent_id' => $txn,
                         ]);
                         session(['resv' => $sessionState]);
                     } catch (\Throwable $e) {}
 
                     // Notify admin
                     try {
-                        $to = 'eric@hibachicater.com';
-                        $payload = [ 'reservation' => $fresh ];
-                        Mail::send('emails.reservation_paid', $payload, function ($m) use ($to, $fresh, $pdf, $htmlInvoice) {
-                            $code = $fresh->code ?: ('#'.$fresh->id);
-                            $invName = 'invoice-'.($fresh->invoice_number ?? $code).'.pdf';
-                            $m->to($to)->subject('New Reservation Paid: '.$code);
-                            if ($pdf) {
-                                $m->attachData($pdf, $invName, ['mime' => 'application/pdf']);
-                            } else {
-                                $m->attachData($htmlInvoice, str_replace('.pdf','.html',$invName), ['mime' => 'text/html']);
-                            }
-                        });
+                        $to = config('mail.admin_address');
+                        if (is_string($to) && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                            $payload = [ 'reservation' => $fresh ];
+                            Mail::send('emails.reservation_paid', $payload, function ($m) use ($to, $fresh, $pdf, $htmlInvoice) {
+                                $code = $fresh->code ?: ('#'.$fresh->id);
+                                $invName = 'invoice-'.($fresh->invoice_number ?? $code).'.pdf';
+                                $m->to($to)->subject('New Reservation Paid: '.$code);
+                                if ($pdf) {
+                                    $m->attachData($pdf, $invName, ['mime' => 'application/pdf']);
+                                } else {
+                                    $m->attachData($htmlInvoice, str_replace('.pdf','.html',$invName), ['mime' => 'text/html']);
+                                }
+                            });
+                        }
                     } catch (\Throwable $e) {
                         // swallow email errors
                     }
@@ -445,9 +502,45 @@ class PaymentController extends Controller
         return round($cents / 100, 2);
     }
 
+    private function compactStripeSessionPayload(mixed $payload): ?string
+    {
+        if (!is_array($payload)) {
+            return is_string($payload) && $payload !== '' ? $payload : null;
+        }
+
+        $compact = [
+            'id' => data_get($payload, 'id'),
+            'currency' => data_get($payload, 'currency'),
+            'payment_status' => data_get($payload, 'payment_status'),
+            'amount_total' => data_get($payload, 'amount_total'),
+            'metadata' => array_filter([
+                'reservation_id' => data_get($payload, 'metadata.reservation_id'),
+                'purpose' => data_get($payload, 'metadata.purpose'),
+                'payment_type' => data_get($payload, 'metadata.payment_type'),
+                'expected_amount_cents' => data_get($payload, 'metadata.expected_amount_cents'),
+            ], fn ($value) => $value !== null && $value !== ''),
+            'payment_intent' => array_filter([
+                'id' => data_get($payload, 'payment_intent.id'),
+                'status' => data_get($payload, 'payment_intent.status'),
+                'amount_received' => data_get($payload, 'payment_intent.amount_received'),
+                'payment_method' => array_filter([
+                    'card' => array_filter([
+                        'brand' => data_get($payload, 'payment_intent.payment_method.card.brand'),
+                        'last4' => data_get($payload, 'payment_intent.payment_method.card.last4'),
+                    ], fn ($value) => $value !== null && $value !== ''),
+                ]),
+            ], fn ($value) => !is_array($value) || !empty($value)),
+        ];
+
+        return json_encode(
+            array_filter($compact, fn ($value) => !is_array($value) || !empty($value)),
+            JSON_UNESCAPED_SLASHES
+        ) ?: null;
+    }
+
     private function debugPayment(string $event, array $context = []): void
     {
-        if (!filter_var((string) env('STRIPE_PAY_DEBUG', 'false'), FILTER_VALIDATE_BOOL)) {
+        if (!filter_var((string) config('services.stripe.debug', false), FILTER_VALIDATE_BOOL)) {
             return;
         }
 

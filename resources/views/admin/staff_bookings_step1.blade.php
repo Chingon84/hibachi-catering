@@ -30,7 +30,12 @@
   <div class="container">
     <div class="header">
       <div></div>
-      <a href="{{ route('admin.dashboard') }}" class="btn secondary">Back to Dashboard</a>
+      <a
+        href="{{ route('admin.dashboard') }}"
+        class="btn secondary"
+        target="_top"
+        onclick="try{window.top.localStorage.removeItem('admin:lastPaneUrl')}catch(e){}"
+      >Back to Dashboard</a>
     </div>
 
     @if ($errors->any())

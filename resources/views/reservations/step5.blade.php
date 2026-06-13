@@ -12,7 +12,6 @@
     $estimate = $state['estimate'] ?? [];
     if (!empty($state['deposit_amount'])) {
       $estimate['deposit_due'] = (float) $state['deposit_amount'];
-      $estimate['deposit_paid_session'] = (float) $state['deposit_amount'];
     }
     $totals = \App\Support\ReservationTotals::compute($r, $estimate);
     $subtotal = $totals['subtotal'];
@@ -23,6 +22,7 @@
     $adjustments = $totals['adjustments'];
     $depositPaid = max(0, min((float) ($totals['paid_total'] ?? 0), $total));
     $balance  = $totals['balance'];
+    $paymentReceived = $depositPaid > 0.009;
     $fmtAdj = function($amount) {
       $sign = $amount < 0 ? '- $' : '$';
       return $sign . number_format(abs($amount), 2);
@@ -46,9 +46,9 @@
           <div class="rs-helper">9022 Pulsar Ct, Corona, CA 92883</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;color:#16a34a;font-weight:700;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" fill="#16a34a"/></svg>
-        <span>Payment received</span>
+      <div style="display:flex;align-items:center;gap:8px;color:{{ $paymentReceived ? '#16a34a' : '#b45309' }};font-weight:700;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" fill="currentColor"/></svg>
+        <span>{{ $paymentReceived ? 'Payment received' : 'Payment pending' }}</span>
       </div>
     </div>
 
@@ -60,9 +60,9 @@
 
     <section class="rs-section">
       <h3 class="rs-section-head">Confirmation</h3>
-      <div class="rs-info" style="background:#ecfdf5;border-color:#d1fae5;color:#065f46;">
-        <p style="margin:0 0 6px;font-weight:600;">Thank you for your reservation!</p>
-        <p style="margin:0;">Our team will contact you a few days before your event to confirm all details. If you need updates, reach us at info@hibachicater.com or 951-326-9602.</p>
+      <div class="rs-info" style="{{ $paymentReceived ? 'background:#ecfdf5;border-color:#d1fae5;color:#065f46;' : 'background:#fffbeb;border-color:#fde68a;color:#92400e;' }}">
+        <p style="margin:0 0 6px;font-weight:600;">{{ $paymentReceived ? 'Thank you for your reservation!' : 'Payment is still pending.' }}</p>
+        <p style="margin:0;">{{ $paymentReceived ? 'Our team will contact you a few days before your event to confirm all details.' : 'Please complete your payment to confirm your reservation.' }} If you need updates, reach us at info@hibachicater.com or 951-326-9602.</p>
       </div>
     </section>
 
