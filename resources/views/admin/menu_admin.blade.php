@@ -1,19 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Menu</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    :root{--brand:#b21e27;--brand-hover:#9a1a22}
-    .title{font-size:22px;margin:0}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04);margin-bottom:12px}
-    .card-body{padding:16px}
-    .muted{color:var(--muted)}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
-    .btn:hover{background:var(--brand-hover)}
-    .btn.secondary{background:#4b5563}
+@extends('layouts.admin')
+
+@section('title', 'Menu')
+
+@push('styles')
+<style>
     .btns{display:flex;gap:10px;align-items:center}
     .input{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:14px}
     .menu-name-input{max-width:220px;border:0;border-bottom:1px solid #e5e7eb;border-radius:0;padding:6px 4px}
@@ -45,9 +35,10 @@
     .icon-btn{appearance:none;border:1px solid #e5e7eb;background:#fff;color:#b21e27;border-radius:10px;width:34px;height:34px;line-height:1;font-size:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease}
     .icon-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(178,30,39,.15);border-color:#d1d5db;background:#fff}
     .icon-btn:active{transform:translateY(0) scale(.98);box-shadow:0 2px 6px rgba(178,30,39,.15)}
-  </style>
-</head>
-<body>
+</style>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="header">
       <div></div>
@@ -155,7 +146,10 @@
       <table data-cat="New Category"><thead><tr><th style="width:140px">Key</th><th style="width:32%">Name</th><th style="width:34%">Description</th><th style="width:120px;text-align:right">Price</th></tr></thead><tbody></tbody></table>
     </div></div>
   </template>
+  </div>
+@endsection
 
+@push('scripts')
   <script>
     (function(){
       const form = document.getElementById('menuForm');
@@ -330,6 +324,4 @@
       init();
     })();
   </script>
-  </div>
-</body>
-</html>
+@endpush

@@ -1,13 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Business Profile</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    body{background:var(--bg)}
+@extends('layouts.admin')
+
+@section('title', 'Business Profile')
+
+@push('styles')
+<style>
     .page-stack{display:grid;gap:18px}
     .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
     .page-title{margin:0;font-size:30px;line-height:1.05;letter-spacing:-.03em}
@@ -78,9 +74,10 @@
       .tax-modal-backdrop{align-items:flex-start;padding:var(--tax-modal-top-pad,12px) 12px 12px}
       .tax-modal{max-height:calc(var(--tax-modal-visible-height,100vh) - 24px)}
     }
-  </style>
-</head>
-<body>
+</style>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="page-stack">
       <div class="page-head">
@@ -339,6 +336,9 @@
       </div>
     </div>
   </div>
+@endsection
+
+@push('scripts')
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const trigger = document.querySelector('[data-custom-tax-open]');
@@ -540,5 +540,4 @@
       });
     });
   </script>
-</body>
-</html>
+@endpush

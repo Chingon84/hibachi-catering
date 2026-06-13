@@ -1,12 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Menu & Pricing Rules</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    body{background:var(--bg)}
+@extends('layouts.admin')
+
+@section('title', 'Menu & Pricing Rules')
+
+@push('styles')
+<style>
     .page-stack{display:grid;gap:18px}
     .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
     .page-title{margin:0;font-size:30px;line-height:1.05;letter-spacing:-.03em}
@@ -58,9 +55,10 @@
       .page-head{flex-direction:column}
       .hero-grid,.section-grid,.field-grid,.check-grid{grid-template-columns:1fr}
     }
-  </style>
-</head>
-<body>
+</style>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="page-stack">
       <div class="page-head">
@@ -436,5 +434,4 @@
       </section>
     </div>
   </div>
-</body>
-</html>
+@endsection

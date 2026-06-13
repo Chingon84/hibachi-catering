@@ -1,12 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Settings</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    body{background:var(--bg)}
+@extends('layouts.admin')
+
+@section('title', 'Settings')
+
+@push('styles')
+<style>
     .settings-shell{display:grid;gap:20px}
     .settings-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:4px 0 2px}
     .settings-kicker{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -45,15 +42,17 @@
       .highlight-list{grid-template-columns:1fr}
       .utility-row{flex-direction:column;align-items:flex-start}
     }
-  </style>
-</head>
-<body>
-  @php
-    $user = auth()->user();
-    $canManageTeam = (bool) ($user?->hasPermission('team.manage') ?? false);
-    $canViewTeam = (bool) ($user?->hasPermission('team.view') ?? false);
-    $canViewTrash = (bool) ($user?->hasPermission('trash.view') ?? false);
-  @endphp
+</style>
+@endpush
+
+@php
+  $user = auth()->user();
+  $canManageTeam = (bool) ($user?->hasPermission('team.manage') ?? false);
+  $canViewTeam = (bool) ($user?->hasPermission('team.view') ?? false);
+  $canViewTrash = (bool) ($user?->hasPermission('trash.view') ?? false);
+@endphp
+
+@section('content')
   <div class="container">
     <div class="settings-shell">
       <div class="settings-head">
@@ -132,5 +131,4 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+@endsection
