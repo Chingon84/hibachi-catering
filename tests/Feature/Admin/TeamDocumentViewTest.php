@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\TeamMemberDocument;
 use App\Models\User;
+use App\Support\UploadedFiles;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -14,7 +15,7 @@ class TeamDocumentViewTest extends TestCase
 
     public function test_team_document_can_be_viewed_inline(): void
     {
-        Storage::fake('local');
+        Storage::fake(UploadedFiles::disk());
 
         $owner = User::factory()->create([
             'role' => 'owner',
@@ -25,7 +26,7 @@ class TeamDocumentViewTest extends TestCase
             'role' => 'staff',
             'is_active' => true,
         ]);
-        Storage::put('team-documents/' . $staff->id . '/contract.pdf', '%PDF-1.4 test');
+        Storage::disk(UploadedFiles::disk())->put('team-documents/' . $staff->id . '/contract.pdf', '%PDF-1.4 test');
 
         $document = TeamMemberDocument::create([
             'team_member_id' => $staff->id,

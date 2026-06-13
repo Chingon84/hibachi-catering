@@ -212,3 +212,139 @@ git status --short
 
 Expected result: tests and build pass, whitespace check is clean, and the only
 local files left are intentional changes to commit.
+
+## Laravel Cloud Deploy
+
+Use this section when deploying from GitHub to Laravel Cloud instead of a
+traditional SSH server.
+
+### 1. Create The Application
+
+In Laravel Cloud:
+
+- Create a new application from GitHub.
+- Select repository `Chingon84/hibachi-catering`.
+- Select branch `main`.
+- Use PHP 8.2, 8.3, or 8.4.
+- Use Node.js 20.19+ or 22.12+.
+
+### 2. Attach Resources
+
+Add these resources to the production environment:
+
+- Database: MySQL.
+- Object Storage: create an S3-compatible Laravel Object Storage bucket.
+- Queue: create a Managed Queue and mark it as the default queue.
+
+For the Object Storage bucket, use disk name `uploads`. If the bucket is
+private, set `UPLOADS_TEMPORARY_URLS=true` so profile photos and uploaded images
+can render through temporary URLs. If the bucket is public, use
+`UPLOADS_TEMPORARY_URLS=false`.
+
+Laravel Cloud injects database and object-storage credentials automatically when
+resources are attached to the environment. Avoid overriding those generated
+database or AWS variables unless you intentionally use external services.
+
+### 3. Environment Variables
+
+Set these manually in Laravel Cloud environment variables:
+
+```dotenv
+APP_NAME="HIBACHI CATERING"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-laravel-cloud-or-custom-domain.com
+APP_TIMEZONE=America/Los_Angeles
+
+LOG_LEVEL=info
+
+SESSION_DRIVER=database
+CACHE_STORE=database
+
+# Use this after adding a Laravel Cloud Managed Queue.
+QUEUE_CONNECTION=cloud
+
+# Must match the Laravel Cloud Object Storage disk name.
+UPLOADS_DISK=uploads
+UPLOADS_TEMPORARY_URLS=false
+
+MAIL_MAILER=smtp
+MAIL_SCHEME=tls
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=change_me
+MAIL_PASSWORD=change_me
+MAIL_EHLO_DOMAIN=your-domain.com
+MAIL_FROM_ADDRESS=info@your-domain.com
+MAIL_FROM_NAME="${APP_NAME}"
+ADMIN_NOTIFICATION_EMAIL=info@your-domain.com
+
+GOOGLE_MAPS_KEY=change_me
+STRIPE_KEY=change_me
+STRIPE_SECRET=change_me
+STRIPE_PAY_DEBUG=false
+```
+
+Generate `APP_KEY` from Laravel Cloud's environment variables UI or run this
+once in the environment command runner:
+
+```bash
+php artisan key:generate --show
+```
+
+Copy the generated value into `APP_KEY`, then redeploy.
+
+### 4. Build Commands
+
+Use these in Laravel Cloud Deployments > Build Commands:
+
+```bash
+composer install --no-dev --prefer-dist --optimize-autoloader
+npm ci
+npm run build
+php artisan optimize
+```
+
+Laravel Cloud documentation recommends running optimization during build, not
+during deploy.
+
+### 5. Deploy Commands
+
+Use these in Laravel Cloud Deployments > Deploy Commands:
+
+```bash
+php artisan migrate --force
+php artisan app:production-readiness --strict
+```
+
+Do not add these commands in Laravel Cloud deploy commands:
+
+```bash
+php artisan queue:restart
+php artisan optimize:clear
+php artisan storage:link
+```
+
+Laravel Cloud automatically restarts queues after deploys, deploy filesystem
+changes are not persisted, and persistent uploads should use Object Storage.
+
+### 6. After First Deploy
+
+In Laravel Cloud's Commands tab, run:
+
+```bash
+php artisan app:production-readiness --strict
+php artisan migrate:status
+php artisan queue:failed
+```
+
+Then verify:
+
+- Admin login.
+- Reservations table.
+- Invoice create, preview, print, and download.
+- Employee profile photo upload/delete.
+- Team document upload/view/download.
+- Client photo upload/view.
+- Password reset email.
+- Staff dashboard assigned events.

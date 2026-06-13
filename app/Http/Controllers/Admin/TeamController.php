@@ -8,6 +8,7 @@ use App\Models\Complaint;
 use App\Models\GoodFeedback;
 use App\Models\TeamMemberActivity;
 use App\Models\TeamMemberDocument;
+use App\Support\UploadedFiles;
 use App\Models\User;
 use App\Models\VanFeedback;
 use Illuminate\Http\RedirectResponse;
@@ -246,7 +247,8 @@ class TeamController extends Controller
         $extension = $file->getClientOriginalExtension();
         $storedPath = $file->storeAs(
             'team-documents/' . $user->id,
-            now()->format('YmdHis') . '-' . $slug . '.' . $extension
+            now()->format('YmdHis') . '-' . $slug . '.' . $extension,
+            UploadedFiles::disk()
         );
 
         $document = TeamMemberDocument::create([
@@ -291,11 +293,11 @@ class TeamController extends Controller
         $path = $file->storeAs(
             'team-profile-photos/' . $user->id,
             $safeName . '.' . $file->getClientOriginalExtension(),
-            'public'
+            UploadedFiles::disk()
         );
 
         if (!empty($user->profile_photo_path)) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            Storage::disk(UploadedFiles::disk())->delete($user->profile_photo_path);
         }
 
         $user->profile_photo_path = $path;
@@ -321,7 +323,7 @@ class TeamController extends Controller
         $user = User::findOrFail($id);
 
         if (!empty($user->profile_photo_path)) {
-            Storage::disk('public')->delete($user->profile_photo_path);
+            Storage::disk(UploadedFiles::disk())->delete($user->profile_photo_path);
         }
 
         $user->profile_photo_path = null;
@@ -348,7 +350,7 @@ class TeamController extends Controller
             ->where('team_member_id', $user->id)
             ->findOrFail($documentId);
 
-        return Storage::download($document->file_path, basename($document->file_path));
+        return Storage::disk(UploadedFiles::disk())->download($document->file_path, basename($document->file_path));
     }
 
     public function viewDocument($id, $documentId)
@@ -358,7 +360,7 @@ class TeamController extends Controller
             ->where('team_member_id', $user->id)
             ->findOrFail($documentId);
 
-        return Storage::response($document->file_path, basename($document->file_path), [
+        return Storage::disk(UploadedFiles::disk())->response($document->file_path, basename($document->file_path), [
             'Content-Disposition' => 'inline; filename="' . basename($document->file_path) . '"',
         ]);
     }
@@ -370,7 +372,7 @@ class TeamController extends Controller
             ->where('team_member_id', $user->id)
             ->findOrFail($documentId);
 
-        Storage::delete($document->file_path);
+        Storage::disk(UploadedFiles::disk())->delete($document->file_path);
 
         $this->logActivity(
             $user,

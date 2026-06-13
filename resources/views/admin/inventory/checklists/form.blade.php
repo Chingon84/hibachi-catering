@@ -263,7 +263,7 @@
                 </div>
                 @if($record->picture1)
                   <div class="upload-preview">
-                    <a href="{{ Storage::url($record->picture1) }}" target="_blank" rel="noopener"><img src="{{ Storage::url($record->picture1) }}" alt="Picture 1"></a>
+                    <a href="{{ \App\Support\UploadedFiles::url($record->picture1) }}" target="_blank" rel="noopener"><img src="{{ \App\Support\UploadedFiles::url($record->picture1) }}" alt="Picture 1"></a>
                   </div>
                 @endif
                 <input class="input" id="picture1" type="file" name="picture1" accept="image/*">
@@ -279,7 +279,7 @@
                 </div>
                 @if($record->picture2)
                   <div class="upload-preview">
-                    <a href="{{ Storage::url($record->picture2) }}" target="_blank" rel="noopener"><img src="{{ Storage::url($record->picture2) }}" alt="Picture 2"></a>
+                    <a href="{{ \App\Support\UploadedFiles::url($record->picture2) }}" target="_blank" rel="noopener"><img src="{{ \App\Support\UploadedFiles::url($record->picture2) }}" alt="Picture 2"></a>
                   </div>
                 @endif
                 <input class="input" id="picture2" type="file" name="picture2" accept="image/*">

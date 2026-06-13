@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Van;
 use App\Models\VanChecklist;
+use App\Support\UploadedFiles;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -204,7 +205,7 @@ class VanChecklistController extends Controller
 
         foreach (['picture1', 'picture2'] as $field) {
             if ($record->{$field}) {
-                Storage::disk('public')->delete($record->{$field});
+                Storage::disk(UploadedFiles::disk())->delete($record->{$field});
             }
         }
 
@@ -244,13 +245,13 @@ class VanChecklistController extends Controller
         foreach (['picture1', 'picture2'] as $field) {
             if ($request->hasFile($field)) {
                 if ($record && $record->{$field}) {
-                    Storage::disk('public')->delete($record->{$field});
+                    Storage::disk(UploadedFiles::disk())->delete($record->{$field});
                 }
 
-                $data[$field] = $request->file($field)->store('inventory/checklists', 'public');
+                $data[$field] = $request->file($field)->store('inventory/checklists', UploadedFiles::disk());
             } elseif ($request->boolean('remove_' . $field) && $record) {
                 if ($record->{$field}) {
-                    Storage::disk('public')->delete($record->{$field});
+                    Storage::disk(UploadedFiles::disk())->delete($record->{$field});
                 }
                 $data[$field] = null;
             } else {

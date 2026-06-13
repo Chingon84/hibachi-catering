@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\UploadedFiles;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -175,7 +176,7 @@ class OnlineUserPresence
             return $path;
         }
 
-        return asset('storage/' . ltrim($path, '/'));
+        return UploadedFiles::url($path);
     }
 
     private function lastSeenLabel(int $secondsAgo): string

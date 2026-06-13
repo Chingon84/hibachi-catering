@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\ClientPhoto;
+use App\Support\UploadedFiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class ClientPhotoController extends Controller
 
         foreach ($data['photos'] as $file) {
             $safeName = Str::uuid()->toString().'.'.$file->getClientOriginalExtension();
-            $path = $file->storeAs("clients/{$client->id}/photos", $safeName, 'public');
+            $path = $file->storeAs("clients/{$client->id}/photos", $safeName, UploadedFiles::disk());
 
             ClientPhoto::create([
                 'client_id' => $client->id,
@@ -45,7 +46,7 @@ class ClientPhotoController extends Controller
         }
 
         if (!empty($photo->path)) {
-            Storage::disk('public')->delete($photo->path);
+            Storage::disk(UploadedFiles::disk())->delete($photo->path);
         }
 
         $photo->delete();

@@ -272,8 +272,8 @@
               <div class="evidence-card">
                 <div class="evidence-label">{{ $label }}</div>
                 @if($record->{$field})
-                  <a class="evidence-link" href="{{ Storage::url($record->{$field}) }}" target="_blank" rel="noopener">
-                    <img src="{{ Storage::url($record->{$field}) }}" alt="{{ $label }}">
+                  <a class="evidence-link" href="{{ \App\Support\UploadedFiles::url($record->{$field}) }}" target="_blank" rel="noopener">
+                    <img src="{{ \App\Support\UploadedFiles::url($record->{$field}) }}" alt="{{ $label }}">
                   </a>
                 @else
                   <div class="evidence-placeholder">

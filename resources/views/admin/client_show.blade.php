@@ -431,8 +431,8 @@
               <div class="photos-grid">
                 @foreach($photos as $photo)
                   <div class="photo-item">
-                    <a href="{{ asset('storage/'.$photo->path) }}" target="_blank" rel="noopener">
-                      <img class="photo-thumb" src="{{ asset('storage/'.$photo->path) }}" alt="{{ $photo->original_name ?: 'Client photo' }}">
+                    <a href="{{ \App\Support\UploadedFiles::url($photo->path) }}" target="_blank" rel="noopener">
+                      <img class="photo-thumb" src="{{ \App\Support\UploadedFiles::url($photo->path) }}" alt="{{ $photo->original_name ?: 'Client photo' }}">
                     </a>
                     <div style="min-width:0">
                       <div class="photo-name">{{ $photo->original_name ?: basename((string) $photo->path) }}</div>

@@ -19,7 +19,7 @@
     $canManageTeam = (bool) (auth()->user()?->hasPermission('team.manage') ?? false);
     $nameParts = preg_split('/\s+/', trim((string) $user->name)) ?: [];
     $initials = collect($nameParts)->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') ?: 'U';
-    $profilePhotoUrl = $user->profile_photo_path ? \Illuminate\Support\Facades\Storage::url($user->profile_photo_path) : null;
+    $profilePhotoUrl = \App\Support\UploadedFiles::url($user->profile_photo_path);
   @endphp
 
   <div class="mx-auto max-w-7xl px-4 py-4 sm:px-5 lg:px-6">

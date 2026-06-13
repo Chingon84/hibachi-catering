@@ -285,8 +285,8 @@
                     <td><span class="cell-truncate" title="{{ $record->notes ?: '' }}">{{ $record->notes ?: '—' }}</span></td>
                     <td class="media-col">
                       @if($record->picture1)
-                        <a href="{{ Storage::url($record->picture1) }}" target="_blank" rel="noopener">
-                          <img class="thumb" src="{{ Storage::url($record->picture1) }}" alt="Checklist image 1">
+                        <a href="{{ \App\Support\UploadedFiles::url($record->picture1) }}" target="_blank" rel="noopener">
+                          <img class="thumb" src="{{ \App\Support\UploadedFiles::url($record->picture1) }}" alt="Checklist image 1">
                         </a>
                       @else
                         <span class="empty-thumb" aria-label="No image">🖼</span>
@@ -294,8 +294,8 @@
                     </td>
                     <td class="media-col">
                       @if($record->picture2)
-                        <a href="{{ Storage::url($record->picture2) }}" target="_blank" rel="noopener">
-                          <img class="thumb" src="{{ Storage::url($record->picture2) }}" alt="Checklist image 2">
+                        <a href="{{ \App\Support\UploadedFiles::url($record->picture2) }}" target="_blank" rel="noopener">
+                          <img class="thumb" src="{{ \App\Support\UploadedFiles::url($record->picture2) }}" alt="Checklist image 2">
                         </a>
                       @else
                         <span class="empty-thumb" aria-label="No image">🖼</span>
