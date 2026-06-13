@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Support\ReservationTotals;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpClientRequest;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -79,6 +81,64 @@ class PaymentDepositConsistencyTest extends TestCase
         $this->assertSame('deposit', data_get($payload, 'metadata.payment_type'));
         $this->assertSame('visa', data_get($payload, 'payment_intent.payment_method.card.brand'));
         $this->assertNull(data_get($payload, 'metadata.customer_email'));
+    }
+
+    public function test_success_sends_customer_confirmation_to_reservation_email_with_event_details(): void
+    {
+        config()->set('mail.default', 'array');
+        config()->set('mail.from.address', 'info@hibachicater.com');
+        config()->set('mail.from.name', 'Hibachi Catering');
+        config()->set('services.stripe.secret', 'sk_test_123');
+        config()->set('services.stripe.key', 'pk_test_123');
+
+        $reservation = $this->createReservationForDepositScenario();
+        $reservation->forceFill([
+            'customer_name' => 'Correct Recipient',
+            'email' => 'correct-recipient@example.com',
+            'phone' => '951-555-0100',
+            'address' => '9022 Pulsar Ct',
+            'city' => 'Corona',
+            'zip_code' => '92883',
+            'setup_color' => 'Black',
+            'notes' => 'Please arrive through the side gate.',
+        ])->save();
+
+        Http::fake([
+            'https://api.stripe.com/v1/checkout/sessions/cs_test_customer_email*' => Http::response([
+                'id' => 'cs_test_customer_email',
+                'currency' => 'usd',
+                'payment_status' => 'paid',
+                'amount_total' => 54481,
+                'metadata' => [
+                    'reservation_id' => (string) $reservation->id,
+                    'purpose' => 'deposit',
+                    'payment_type' => 'deposit',
+                    'expected_amount_cents' => '54481',
+                ],
+                'payment_intent' => [
+                    'id' => 'pi_test_customer_email',
+                    'amount_received' => 54481,
+                ],
+            ], 200),
+        ]);
+        Event::fake([MessageSending::class]);
+
+        $this->get(route('payments.success', ['session_id' => 'cs_test_customer_email']))
+            ->assertRedirect(route('reservations.step', ['step' => 5]));
+
+        Event::assertDispatched(MessageSending::class, function (MessageSending $event) {
+            $to = collect($event->message->getTo())
+                ->map(fn ($address) => $address->getAddress())
+                ->all();
+            $html = (string) $event->message->getHtmlBody();
+
+            return in_array('correct-recipient@example.com', $to, true)
+                && $event->message->getSubject() === 'Your Reservation Confirmation – Invoice #'.$event->data['reservation']->invoice_number
+                && str_contains($html, 'Correct Recipient')
+                && str_contains($html, '9022 Pulsar Ct Corona 92883')
+                && str_contains($html, 'Please arrive through the side gate.')
+                && str_contains($html, 'Deposit paid');
+        });
     }
 
     public function test_success_is_idempotent_for_same_session_and_does_not_duplicate_payment_rows(): void
