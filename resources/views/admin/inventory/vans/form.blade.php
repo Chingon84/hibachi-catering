@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $van->exists ? 'Edit Van' : 'Add Van' }}</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', $van->exists ? 'Edit Van' : 'Add Van')
+
+@push('styles')
+<style>
     .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
     .panel{padding:22px}
     .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
@@ -18,8 +16,9 @@
     .error{margin-bottom:12px;color:#b91c1c;font-weight:700}
     @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
   </style>
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="wrap">
     <div class="card panel">
       <div class="panel-head">
@@ -74,5 +73,4 @@
       </form>
     </div>
   </div>
-</body>
-</html>
+@endsection

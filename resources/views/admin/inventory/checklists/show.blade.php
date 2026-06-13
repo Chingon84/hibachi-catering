@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Checklist Detail</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Checklist Detail')
+
+@push('styles')
+<style>
     .page{display:grid;gap:14px}
     .breadcrumbs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#64748b}
     .breadcrumbs a{color:#475569;text-decoration:none}
@@ -84,9 +82,9 @@
       .summary-row{display:grid}
     }
   </style>
-</head>
-<body>
-  @php
+@endpush
+
+@php
     $tripStatusClass = match ($record->trip_status) {
         'Complete' => 'complete',
         'Needs Review' => 'review',
@@ -99,6 +97,8 @@
     $needsCleaning = $record->clean === 'NO';
     $tripNeedsAttention = $record->trip_status !== 'Complete';
   @endphp
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="breadcrumbs">
@@ -288,5 +288,4 @@
       </section>
     </div>
   </div>
-</body>
-</html>
+@endsection

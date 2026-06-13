@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $record->exists ? 'Edit Checklist' : 'New Checklist' }}</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', $record->exists ? 'Edit Checklist' : 'New Checklist')
+
+@push('styles')
+<style>
     .page{display:grid;gap:12px}
     .hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
     .hero-copy{display:grid;gap:4px;max-width:760px}
@@ -43,7 +41,7 @@
     .action-card{position:sticky;bottom:0;z-index:5;box-shadow:0 -10px 24px rgba(15,23,42,.06)}
     .footbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .footnote{font-size:11px;line-height:1.45;color:#64748b;max-width:640px}
-    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .form-actions{display:flex;gap:10px;flex-wrap:wrap}
     .btn.soft{background:#fff;border:1px solid #dbe2ea;color:#334155}
     .btn.save{background:#16a34a}
     .btn.save:hover{background:#15803d}
@@ -60,8 +58,9 @@
       .action-card{position:static}
     }
   </style>
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="hero">
@@ -295,7 +294,7 @@
           <div class="section-body">
             <div class="footbar">
               <div class="footnote">This checklist feeds the operational records log. Keep counts accurate, use trip status intentionally, and add photos whenever the van condition needs evidence.</div>
-              <div class="actions">
+              <div class="form-actions">
                 <a class="btn soft" href="{{ route('admin.inventory.checklists.index') }}">Cancel</a>
                 <button class="btn save" type="submit">Save Checklist</button>
               </div>
@@ -305,5 +304,4 @@
       </form>
     </div>
   </div>
-</body>
-</html>
+@endsection

@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Inventory</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Inventory')
+
+@push('styles')
+<style>
     .page{display:grid;gap:14px}
     .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
     .hero-copy{display:grid;gap:6px;max-width:760px}
@@ -71,9 +69,9 @@
       .hero-title{font-size:26px}
     }
   </style>
-</head>
-<body>
-  @php
+@endpush
+
+@php
     $tripClass = fn (?string $value) => 'trip-' . \Illuminate\Support\Str::slug((string) $value);
     $typeClass = fn (?string $value) => 'type-' . \Illuminate\Support\Str::slug((string) $value);
     $cleanClass = fn (?string $value) => match ($value) {
@@ -83,6 +81,8 @@
         default => '',
     };
   @endphp
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="hero">
@@ -295,5 +295,4 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+@endsection

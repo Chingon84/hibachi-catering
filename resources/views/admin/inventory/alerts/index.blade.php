@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Low Stock Alerts</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Low Stock Alerts')
+
+@push('styles')
+<style>
     .page{display:grid;gap:14px}
     .subnav{display:flex;flex-wrap:wrap;gap:8px}
     .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
@@ -25,8 +23,9 @@
     @media (max-width: 900px){.toolbar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width: 760px){.toolbar-grid{grid-template-columns:1fr}}
   </style>
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="header">
@@ -99,5 +98,4 @@
       @include('admin.inventory._pager', ['paginator' => $items->withQueryString()])
     </div>
   </div>
-</body>
-</html>
+@endsection

@@ -1,11 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Record Stock Movement</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Record Stock Movement')
+
+@push('styles')
+<style>
     .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
     .panel{padding:22px}
     .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
@@ -19,8 +17,9 @@
     .hint{font-size:12px;color:#64748b}
     @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
   </style>
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="wrap">
     <div class="card panel">
       <div class="panel-head">
@@ -104,7 +103,9 @@
       </form>
     </div>
   </div>
+@endsection
 
+@push('scripts')
   <script>
     function toggleMovementFields(type) {
       const manualWrap = document.getElementById('adjustment-direction-wrap');
@@ -116,5 +117,4 @@
     }
     toggleMovementFields(document.getElementById('movement_type').value);
   </script>
-</body>
-</html>
+@endpush

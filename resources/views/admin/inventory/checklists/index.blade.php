@@ -1,11 +1,9 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Checklist Records</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Checklist Records')
+
+@push('styles')
+<style>
     .page{display:grid;gap:16px}
     .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
     .hero-copy{display:grid;gap:6px;max-width:760px}                          
@@ -86,9 +84,9 @@
       .sheet-table{min-width:1380px}
     }
   </style>
-</head>
-<body>
-  @php
+@endpush
+
+@php
     $queryBase = request()->except('page');
     $quickPresets = [
         'today' => 'Today',
@@ -104,6 +102,8 @@
     $tripClass = fn (?string $value) => 'trip-' . \Illuminate\Support\Str::slug((string) $value);
     $typeClass = fn (?string $value) => 'type-' . \Illuminate\Support\Str::slug((string) $value);
   @endphp
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="hero">
@@ -419,5 +419,4 @@
       })();
     </script>
   @endif
-</body>
-</html>
+@endsection
