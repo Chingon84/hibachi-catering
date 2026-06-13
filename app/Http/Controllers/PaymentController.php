@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use App\Models\Reservation;
 use App\Models\Payment;
 use App\Services\ClientSyncService;
@@ -198,7 +199,7 @@ class PaymentController extends Controller
         $data = $resp->json();
         $reservationId = (int) data_get($data, 'metadata.reservation_id');
         if ($reservationId) {
-            $reservation = Reservation::find($reservationId);
+            $reservation = $this->findReservationForPayment($reservationId);
             if ($reservation) {
                 $amountCents = $this->extractPaidAmountCents($data);
                 $amountTotal = $this->normalizeStripeAmountToDollars($amountCents);
@@ -246,7 +247,7 @@ class PaymentController extends Controller
                     }
                 }
 
-                $attrs = [
+                $attrs = $this->paymentAttributesForSchema([
                     'reservation_id' => $reservation->id,
                     'provider'       => 'stripe',
                     'type'           => in_array($paymentType, ['deposit', 'full'], true) ? $paymentType : 'deposit',
@@ -256,24 +257,20 @@ class PaymentController extends Controller
                     'stripe_session_id' => $sessionId,
                     'stripe_payment_intent_id' => $txn,
                     'payload_json'   => $this->compactStripeSessionPayload($data),
-                ];
-                // Only include card columns if they exist (in case migration not run yet)
-                try {
-                    if (\Schema::hasColumn('payments', 'card_brand')) {
-                        $attrs['card_brand'] = $brand ?: null;
-                    }
-                    if (\Schema::hasColumn('payments', 'card_last4')) {
-                        $attrs['card_last4'] = $last4 ?: null;
-                    }
-                } catch (\Throwable $e) {}
+                    'card_brand' => $brand ?: null,
+                    'card_last4' => $last4 ?: null,
+                ]);
 
-                $payment = Payment::withTrashed()->firstOrNew([
+                $paymentQuery = $this->paymentColumnExists('deleted_at')
+                    ? Payment::withTrashed()
+                    : Payment::withoutGlobalScopes();
+                $payment = $paymentQuery->firstOrNew([
                     'provider' => 'stripe',
                     'transaction_id' => $txn,
                 ]);
                 $payment->fill($attrs);
                 $payment->transaction_id = $txn;
-                if (method_exists($payment, 'trashed') && $payment->trashed()) {
+                if ($this->paymentColumnExists('deleted_at') && method_exists($payment, 'trashed') && $payment->trashed()) {
                     $payment->restore();
                 }
                 $payment->save();
@@ -319,7 +316,7 @@ class PaymentController extends Controller
 
                     if (!$amountMismatch) {
                         // Ensure invoice number exists
-                        if (empty($reservation->invoice_number)) {
+                        if ($this->reservationColumnExists('invoice_number') && empty($reservation->invoice_number)) {
                             try {
                                 $max = (int) (Reservation::max('invoice_number') ?? 0);
                                 $reservation->invoice_number = $max >= 100 ? ($max + 1) : 100;
@@ -335,11 +332,11 @@ class PaymentController extends Controller
                         }
                         $reservation->status = 'confirmed';
                         // Mark source as Online
-                        if (empty($reservation->booked_by)) {
+                        if ($this->reservationColumnExists('booked_by') && empty($reservation->booked_by)) {
                             $reservation->booked_by = 'Online';
                         }
 
-                        $reservation = app(ReservationPaymentSyncService::class)->recalculate($reservation);
+                        $reservation = $this->markReservationPaid($reservation, $amountTotal);
                     }
 
                     $this->debugPayment('db.update.payment_fields', [
@@ -386,13 +383,14 @@ class PaymentController extends Controller
                     }
 
                     // Prepare invoice attachment (PDF if available; else HTML)
-                    $fresh = $reservation->fresh(['items','payments']);
+                    $fresh = $this->freshReservationForPayment($reservation);
                     $pdf = null;
                     try { $pdf = InvoiceRenderer::renderPdf($fresh); } catch (\Throwable $e) { $pdf = null; }
-                    $htmlInvoice = InvoiceRenderer::renderHtml($fresh);
+                    $htmlInvoice = null;
+                    try { $htmlInvoice = InvoiceRenderer::renderHtml($fresh); } catch (\Throwable $e) { $htmlInvoice = null; }
 
                     // Refresh with relations for emails and session
-                    $fresh = $reservation->fresh(['items','payments']);
+                    $fresh = $this->freshReservationForPayment($reservation);
 
                     // Ensure Step 5 has data even when coming from a signed pay link (no wizard session)
                     try {
@@ -442,7 +440,7 @@ class PaymentController extends Controller
                                 $m->to($to)->subject('New Reservation Paid: '.$code);
                                 if ($pdf) {
                                     $m->attachData($pdf, $invName, ['mime' => 'application/pdf']);
-                                } else {
+                                } elseif ($htmlInvoice) {
                                     $m->attachData($htmlInvoice, str_replace('.pdf','.html',$invName), ['mime' => 'text/html']);
                                 }
                             });
@@ -462,7 +460,7 @@ class PaymentController extends Controller
                                 $m->to($toClient)->subject('Your Reservation Confirmation – Invoice #'.$invNo);
                                 if ($pdf) {
                                     $m->attachData($pdf, 'invoice-'.$invNo.'.pdf', ['mime' => 'application/pdf']);
-                                } else {
+                                } elseif ($htmlInvoice) {
                                     $m->attachData($htmlInvoice, 'invoice-'.$invNo.'.html', ['mime' => 'text/html']);
                                 }
                             });
@@ -536,6 +534,170 @@ class PaymentController extends Controller
             array_filter($compact, fn ($value) => !is_array($value) || !empty($value)),
             JSON_UNESCAPED_SLASHES
         ) ?: null;
+    }
+
+    private function findReservationForPayment(int $reservationId): ?Reservation
+    {
+        try {
+            if ($this->reservationColumnExists('deleted_at')) {
+                return Reservation::find($reservationId);
+            }
+
+            return Reservation::withoutGlobalScopes()->find($reservationId);
+        } catch (\Throwable $e) {
+            \Log::error('payment.success.reservation_lookup_failed', [
+                'reservation_id' => $reservationId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    private function markReservationPaid(Reservation $reservation, float $amountTotal): Reservation
+    {
+        if (
+            $this->reservationColumnExists('amount_paid_total')
+            && $this->reservationColumnExists('balance')
+            && $this->reservationColumnExists('invoice_status')
+            && $this->paymentColumnExists('deleted_at')
+        ) {
+            try {
+                return app(ReservationPaymentSyncService::class)->recalculate($reservation);
+            } catch (\Throwable $e) {
+                \Log::error('payment.success.recalculate_failed', [
+                    'reservation_id' => $reservation->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        try {
+            $total = max(0, (float) ($reservation->total ?? 0));
+            $depositDue = max(0, (float) ($reservation->deposit_due ?? 0));
+            if ($depositDue <= 0 && $total > 0) {
+                $depositDue = round($total * 0.20, 2);
+            }
+
+            $paidTotal = max(
+                max(0, (float) ($reservation->amount_paid_total ?? 0)),
+                max(0, (float) ($reservation->deposit_paid ?? 0)),
+                max(0, $amountTotal)
+            );
+            $depositPaid = $depositDue > 0
+                ? min($depositDue, $paidTotal)
+                : $paidTotal;
+            $balance = $total > 0 ? max(0, round($total - $paidTotal, 2)) : 0;
+
+            if ($this->reservationColumnExists('deposit_due') && $depositDue > 0) {
+                $reservation->deposit_due = $depositDue;
+            }
+            if ($this->reservationColumnExists('deposit_paid')) {
+                $reservation->deposit_paid = round($depositPaid, 2);
+            }
+            if ($this->reservationColumnExists('amount_paid_total')) {
+                $reservation->amount_paid_total = round($paidTotal, 2);
+            }
+            if ($this->reservationColumnExists('balance')) {
+                $reservation->balance = $balance;
+            }
+            if ($this->reservationColumnExists('invoice_status')) {
+                $reservation->invoice_status = $balance <= 0.0 && $total > 0 ? 'paid' : 'partial';
+            }
+            if ($this->reservationColumnExists('status')) {
+                $reservation->status = 'confirmed';
+            }
+
+            $reservation->save();
+        } catch (\Throwable $e) {
+            \Log::error('payment.success.minimal_reservation_update_failed', [
+                'reservation_id' => $reservation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->freshReservationForPayment($reservation);
+    }
+
+    private function freshReservationForPayment(Reservation $reservation): Reservation
+    {
+        $fresh = $this->findReservationForPayment((int) $reservation->id) ?: $reservation;
+        $relations = [];
+
+        if ($this->reservationItemColumnExists('deleted_at')) {
+            $relations[] = 'items';
+        }
+        if ($this->paymentColumnExists('deleted_at')) {
+            $relations[] = 'payments';
+        }
+
+        if (!empty($relations)) {
+            try {
+                $fresh->load($relations);
+            } catch (\Throwable $e) {
+                \Log::error('payment.success.relation_refresh_failed', [
+                    'reservation_id' => $reservation->id,
+                    'relations' => $relations,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $fresh;
+    }
+
+    private function paymentAttributesForSchema(array $attrs): array
+    {
+        return array_filter(
+            $attrs,
+            fn ($value, string $column) => $this->paymentColumnExists($column),
+            ARRAY_FILTER_USE_BOTH
+        );
+    }
+
+    private function reservationColumnExists(string $column): bool
+    {
+        static $columns = [];
+
+        if (!array_key_exists($column, $columns)) {
+            try {
+                $columns[$column] = Schema::hasColumn('reservations', $column);
+            } catch (\Throwable $e) {
+                $columns[$column] = false;
+            }
+        }
+
+        return $columns[$column];
+    }
+
+    private function paymentColumnExists(string $column): bool
+    {
+        static $columns = [];
+
+        if (!array_key_exists($column, $columns)) {
+            try {
+                $columns[$column] = Schema::hasColumn('payments', $column);
+            } catch (\Throwable $e) {
+                $columns[$column] = false;
+            }
+        }
+
+        return $columns[$column];
+    }
+
+    private function reservationItemColumnExists(string $column): bool
+    {
+        static $columns = [];
+
+        if (!array_key_exists($column, $columns)) {
+            try {
+                $columns[$column] = Schema::hasColumn('reservation_items', $column);
+            } catch (\Throwable $e) {
+                $columns[$column] = false;
+            }
+        }
+
+        return $columns[$column];
     }
 
     private function debugPayment(string $event, array $context = []): void
