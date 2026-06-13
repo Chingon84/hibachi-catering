@@ -1,12 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Feedback Center</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Feedback Center')
+
+@push('styles')
+<style>
     :root{
       --panel-border:#e2e8f0;
       --panel-shadow:0 10px 30px rgba(15,23,42,.06);
@@ -21,9 +18,6 @@
       --accent-red:#dc2626;
       --accent-violet:#7c3aed;
     }
-    html{-webkit-text-size-adjust:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    *,*::before,*::after{box-sizing:border-box}
-    body{background:#f8fafc;color:#0f172a;line-height:1.5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
     .container{width:100%;max-width:none;margin:0;padding:20px 24px}
     .dashboard-stack{display:grid;gap:16px}
     .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:0}
@@ -33,8 +27,6 @@
     .subtitle{margin:0;color:#64748b;font-size:14px;line-height:1.55;max-width:700px}
     .surface-card{background:#fff;border:1px solid var(--panel-border);border-radius:20px;box-shadow:var(--panel-shadow)}
     .surface-body{padding:20px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:12px;text-decoration:none;box-shadow:0 10px 24px rgba(178,30,39,.18);font-family:inherit;font-size:14px;line-height:1.2;-webkit-appearance:none;appearance:none}
-    .btn.secondary{box-shadow:none}
     .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
     .header-slot{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:12px;border:1px dashed #cbd5e1;background:#fff;color:#64748b;font-size:12px;font-weight:700}
     .module-switch{display:inline-flex;gap:6px;padding:6px;border-radius:999px;background:#eef3fa;border:1px solid #d9e2ef}
@@ -214,10 +206,10 @@
       .page-head{gap:12px}
       .header-actions>*{width:100%}
     }
-  </style>
-</head>
-<body>
-  @php
+</style>
+@endpush
+
+@php
     $queryBase = array_filter([
       'view' => $activeView,
       'tab' => $activeTab,
@@ -299,6 +291,8 @@
     $workflowBackUrl = request()->fullUrl();
     $workflowUpdateRoute = route('admin.feedback.workflow.update');
   @endphp
+
+@section('content')
   <div class="container">
     @if (session('ok'))
       <div class="surface-card" style="margin-bottom:12px">
@@ -1265,7 +1259,9 @@
       </div>
     </div>
   @endif
+@endsection
 
+@push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -1646,5 +1642,4 @@
       mountChart('operationalIncidentsTrendChart', 'line', charts.operationalIncidentsTrend, lineOptions);
     });
   </script>
-</body>
-</html>
+@endpush

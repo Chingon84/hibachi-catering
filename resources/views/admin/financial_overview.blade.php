@@ -1,56 +1,57 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Financial Overview</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    .page{display:grid;gap:14px}
-    .subnav{display:flex;flex-wrap:wrap;gap:8px}
-    .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
-    .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
-    .toolbar-grid{display:grid;grid-template-columns:180px 160px 160px auto auto;gap:12px;align-items:end}
-    .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-    .kpi-card,.panel-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
-    .kpi-label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
-    .kpi-value{margin-top:10px;font-size:28px;font-weight:800;line-height:1.05;color:#0f172a}
-    .kpi-note{margin-top:8px;font-size:12px;color:#94a3b8}
-    .kpi-card.positive{background:linear-gradient(180deg,#f8fffb 0%,#ecfdf5 100%);border-color:#bbf7d0}
-    .kpi-card.positive .kpi-value{color:#166534}
-    .kpi-card.negative{background:linear-gradient(180deg,#fff8f8 0%,#fef2f2 100%);border-color:#fecaca}
-    .kpi-card.negative .kpi-value{color:#b91c1c}
-    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-    .panel-title{margin:0;font-size:18px;line-height:1.2}
-    .panel-copy{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .layout-two{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr);gap:14px}
-    .table-wrap{overflow:auto}
-    .finance-table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
-    .finance-table th,.finance-table td{padding:13px 14px;text-align:left;vertical-align:top}
-    .finance-table thead th{background:#f8fafc;border-bottom:1px solid #e5e7eb;color:#64748b;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-    .finance-table tbody tr + tr td{border-top:1px solid #eef2f7}
-    .finance-table tbody tr:hover{background:#fafcff}
-    .breakdown-list{display:grid;gap:10px}
-    .breakdown-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
-    .breakdown-label{font-weight:700;color:#0f172a}
-    .breakdown-amount{font-weight:800}
-    .tone-positive{color:#166534}
-    .tone-negative{color:#b91c1c}
-    .tone-neutral{color:#475569}
-    .empty-state{padding:26px;border:1px dashed #d6dce8;border-radius:16px;background:#fafcff;color:#64748b;text-align:center}
-    @media (max-width: 1180px){.kpi-grid,.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.layout-two{grid-template-columns:1fr}.toolbar-grid{grid-template-columns:1fr 1fr 1fr auto auto}}
-    @media (max-width: 760px){.kpi-grid,.mini-grid,.toolbar-grid{grid-template-columns:1fr}.finance-table{min-width:860px}}
-  </style>
-  @php
-    $money = fn($value) => '$' . number_format((float) $value, 2);
-    $profitTone = $kpis['profit'] > 0 ? 'positive' : ($kpis['profit'] < 0 ? 'negative' : '');
-    $marginTone = $kpis['margin'] > 0 ? 'positive' : ($kpis['margin'] < 0 ? 'negative' : '');
-    $ratioTone = $kpis['expense_ratio'] > 65 ? 'tone-negative' : ($kpis['expense_ratio'] > 0 ? 'tone-neutral' : 'tone-neutral');
-    $canManageFinancial = auth()->user()?->hasPermission('financial.manage');
-  @endphp
-</head>
-<body>
+@extends('layouts.admin')
+
+@section('title', 'Financial Overview')
+
+@push('styles')
+<style>
+  /* Page-specific financial overview layout. Core chrome from app.css. */
+  .page{display:grid;gap:14px}
+  .subnav{display:flex;flex-wrap:wrap;gap:8px}
+  .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
+  .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
+  .toolbar-grid{display:grid;grid-template-columns:180px 160px 160px auto auto;gap:12px;align-items:end}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .kpi-card,.panel-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(15,23,42,.04)}
+  .kpi-label{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
+  .kpi-value{margin-top:10px;font-size:28px;font-weight:800;line-height:1.05;color:#0f172a}
+  .kpi-note{margin-top:8px;font-size:12px;color:#94a3b8}
+  .kpi-card.positive{background:linear-gradient(180deg,#f8fffb 0%,#ecfdf5 100%);border-color:#bbf7d0}
+  .kpi-card.positive .kpi-value{color:#166534}
+  .kpi-card.negative{background:linear-gradient(180deg,#fff8f8 0%,#fef2f2 100%);border-color:#fecaca}
+  .kpi-card.negative .kpi-value{color:#b91c1c}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .panel-title{margin:0;font-size:18px;line-height:1.2}
+  .panel-copy{margin:6px 0 0;color:var(--muted);font-size:13px}
+  .layout-two{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr);gap:14px}
+  .table-wrap{overflow:auto}
+  .finance-table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+  .finance-table th,.finance-table td{padding:13px 14px;text-align:left;vertical-align:top}
+  .finance-table thead th{background:#f8fafc;border-bottom:1px solid #e5e7eb;color:#64748b;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+  .finance-table tbody tr + tr td{border-top:1px solid #eef2f7}
+  .finance-table tbody tr:hover{background:#fafcff}
+  .breakdown-list{display:grid;gap:10px}
+  .breakdown-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+  .breakdown-label{font-weight:700;color:#0f172a}
+  .breakdown-amount{font-weight:800}
+  .tone-positive{color:#166534}
+  .tone-negative{color:#b91c1c}
+  .tone-neutral{color:#475569}
+  .empty-state{padding:26px;border:1px dashed #d6dce8;border-radius:16px;background:#fafcff;color:#64748b;text-align:center}
+  @media (max-width: 1180px){.kpi-grid,.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.layout-two{grid-template-columns:1fr}.toolbar-grid{grid-template-columns:1fr 1fr 1fr auto auto}}
+  @media (max-width: 760px){.kpi-grid,.mini-grid,.toolbar-grid{grid-template-columns:1fr}.finance-table{min-width:860px}}
+</style>
+@endpush
+
+@php
+  $money = fn($value) => '$' . number_format((float) $value, 2);
+  $profitTone = $kpis['profit'] > 0 ? 'positive' : ($kpis['profit'] < 0 ? 'negative' : '');
+  $marginTone = $kpis['margin'] > 0 ? 'positive' : ($kpis['margin'] < 0 ? 'negative' : '');
+  $ratioTone = $kpis['expense_ratio'] > 65 ? 'tone-negative' : ($kpis['expense_ratio'] > 0 ? 'tone-neutral' : 'tone-neutral');
+  $canManageFinancial = auth()->user()?->hasPermission('financial.manage');
+@endphp
+
+@section('content')
   <div class="container">
     <div class="page">
       <div class="header">
@@ -233,7 +234,9 @@
       </div>
     </div>
   </div>
+@endsection
 
+@push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     function toggleFinancialCustom(value) {
@@ -279,5 +282,4 @@
       }
     });
   </script>
-</body>
-</html>
+@endpush

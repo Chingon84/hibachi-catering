@@ -1,30 +1,30 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $expense->exists ? 'Edit Expense' : 'Add Expense' }}</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
-    .panel{padding:22px}
-    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
-    .title{margin:0;font-size:28px;line-height:1.08}
-    .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field.span-2{grid-column:1 / -1}
-    .error{margin-bottom:12px;color:#b91c1c;font-weight:700}
-    .row{display:flex;gap:10px;margin-top:20px}
-    @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
-  </style>
-</head>
-<body>
+@extends('layouts.admin')
+
+@section('title', $expense->exists ? 'Edit Expense' : 'Add Expense')
+
+@push('styles')
+<style>
+  /* Page-specific expense form layout. Core chrome from app.css. */
+  .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
+  .panel{padding:22px}
+  .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px}
+  .expense-title{margin:0;font-size:28px;line-height:1.08}
+  .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.span-2{grid-column:1 / -1}
+  .error{margin-bottom:12px;color:#b91c1c;font-weight:700}
+  .expense-row{display:flex;gap:10px;margin-top:20px}
+  @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
+</style>
+@endpush
+
+@section('content')
   <div class="wrap">
     <div class="card panel">
       <div class="panel-head">
         <div>
-          <h1 class="title">{{ $expense->exists ? 'Edit Expense' : 'Add Expense' }}</h1>
+          <h1 class="expense-title">{{ $expense->exists ? 'Edit Expense' : 'Add Expense' }}</h1>
           <p class="subtitle">Manage manual expense entries used by the Financial Overview profit and loss dashboard.</p>
         </div>
         <a class="btn secondary" href="{{ $backUrl }}">Back to Financial Overview</a>
@@ -64,12 +64,11 @@
             <textarea class="input" id="notes" name="notes" rows="5" style="min-height:140px">{{ old('notes', $expense->notes) }}</textarea>
           </div>
         </div>
-        <div class="row">
+        <div class="expense-row">
           <a class="btn secondary" href="{{ $backUrl }}">Cancel</a>
           <button class="btn" type="submit">{{ $expense->exists ? 'Save Changes' : 'Save Expense' }}</button>
         </div>
       </form>
     </div>
   </div>
-</body>
-</html>
+@endsection

@@ -1,21 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Orders Breakdown</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
+@extends('layouts.admin')
+
+@section('title', 'Orders Breakdown')
+
+@push('styles')
+<style>
     :root{--bg:#f7f7f9;--surface:#fff;--surface-soft:#f8fafc;--border:#e5e7eb;--text:#111827;--muted:#6b7280;--brand:#b21e27;--brand-hover:#991b1b;--shadow:0 8px 26px rgba(15,23,42,.06)}
-    body{background:var(--bg)}
     .page-wrap{width:100%;max-width:none;margin:0;padding:20px 24px}
-    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .title{font-size:30px;font-weight:800;letter-spacing:-.02em}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--text);font-weight:700;font-size:13px;transition:all .15s ease}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,23,42,.08);border-color:#cbd5e1}
-    .btn.secondary{background:#fff}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
-    .card-body{padding:22px}
     .layout-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:20px}
     @media (max-width:1050px){.layout-grid{grid-template-columns:1fr}}
     @media (max-width:768px){.page-wrap{padding:16px}}
@@ -109,12 +99,14 @@
     .totals-card .table tbody td.lbs-col .text-input{font-weight:700;color:#b21e27}
     .totals-card .table tbody td .is-locked{background:#f1f5f9;border-color:#e2e8f0;color:#64748b;box-shadow:none;cursor:not-allowed}
     .totals-card .table tbody td .is-locked:focus-visible{outline:none;box-shadow:none;border-color:#e2e8f0}
-  </style>
-</head>
+</style>
+@endpush
+
 @php
   $items = \App\Support\MenuLabel::primaryItems();
 @endphp
-<body>
+
+@section('content')
   <div class="page-wrap">
     <div class="header">
       <a href="{{ route('admin.dashboard') }}" class="btn secondary">Dashboard</a>
@@ -211,6 +203,9 @@
       </div>
     </div>
   </div>
+@endsection
+
+@push('scripts')
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const SEARCH_URL = "{{ route('admin.orders.breakdown.search') }}";
@@ -1051,5 +1046,4 @@
       }
     });
   </script>
-</body>
-</html>
+@endpush

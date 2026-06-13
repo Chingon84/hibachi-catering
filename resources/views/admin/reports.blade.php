@@ -1,36 +1,37 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Reports</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    .subnav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-    .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
-    .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
-    .reports-filter-bar{display:grid;grid-template-columns:minmax(180px,3fr) minmax(150px,2fr) minmax(150px,2fr) minmax(180px,3fr) auto;gap:10px;align-items:center}
-    .reports-filter-bar .input,
-    .reports-filter-bar .select,
-    .reports-filter-bar .btn{width:100%;min-height:40px}
-    .reports-filter-bar .btn{justify-content:center;white-space:nowrap}
-    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
-    @media (max-width: 1100px){.reports-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.reports-filter-bar .apply-btn{grid-column:span 1}}
-    @media (max-width: 1100px){.cards{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width: 760px){.reports-filter-bar{grid-template-columns:1fr}}
-    @media (max-width: 640px){.cards{grid-template-columns:1fr}}
-    .metric{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
-    .metric .label{color:#6b7280;font-size:12px}
-    .metric .value{font-size:22px;font-weight:700}
-    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
-  </style>
-  @php
-    $fmt = fn($n)=>'$'.number_format((float)$n,2);
-    $canViewFinancial = (bool) ($canViewFinancial ?? auth()->user()?->hasPermission('financial.view'));
-    $canViewOrders = auth()->user()?->hasPermission('orders.view');
-  @endphp
-</head>
-<body>
+@extends('layouts.admin')
+
+@section('title', 'Reports')
+
+@push('styles')
+<style>
+  /* Page-specific reports layout. Core chrome from app.css. */
+  .subnav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .subnav a{display:inline-flex;align-items:center;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#334155;text-decoration:none;font-size:12px;font-weight:700}
+  .subnav a.active{background:#0f172a;border-color:#0f172a;color:#fff}
+  .reports-filter-bar{display:grid;grid-template-columns:minmax(180px,3fr) minmax(150px,2fr) minmax(150px,2fr) minmax(180px,3fr) auto;gap:10px;align-items:center}
+  .reports-filter-bar .input,
+  .reports-filter-bar .select,
+  .reports-filter-bar .btn{width:100%;min-height:40px}
+  .reports-filter-bar .btn{justify-content:center;white-space:nowrap}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+  @media (max-width: 1100px){.reports-filter-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.reports-filter-bar .apply-btn{grid-column:span 1}}
+  @media (max-width: 1100px){.cards{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width: 760px){.reports-filter-bar{grid-template-columns:1fr}}
+  @media (max-width: 640px){.cards{grid-template-columns:1fr}}
+  .metric{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+  .metric .label{color:#6b7280;font-size:12px}
+  .metric .value{font-size:22px;font-weight:700}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+</style>
+@endpush
+
+@php
+  $fmt = fn($n)=>'$'.number_format((float)$n,2);
+  $canViewFinancial = (bool) ($canViewFinancial ?? auth()->user()?->hasPermission('financial.view'));
+  $canViewOrders = auth()->user()?->hasPermission('orders.view');
+@endphp
+
+@section('content')
   <div class="container">
     <div class="header">
       <a href="{{ route('admin.reservations') }}" class="btn secondary" style="margin-left:auto">Back</a>
@@ -138,7 +139,9 @@
       </div>
     @endif
   </div>
+@endsection
 
+@push('scripts')
   @if($canViewFinancial)
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -168,5 +171,4 @@
       });
     </script>
   @endif
-</body>
-</html>
+@endpush
