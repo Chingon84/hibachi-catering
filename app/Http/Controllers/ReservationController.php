@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Models\Timeslot;
@@ -274,22 +275,30 @@ private function selectedMenuItems(array $menu, ?Reservation $reservation, array
                 $reservation = new Reservation();
                 $reservation->code = 'RSV-'.Str::upper(Str::random(6));
                 $reservation->status = 'draft';
-                $reservation->invoice_status = 'pending';
                 $reservation->deposit_due = 0;
                 $reservation->deposit_paid = 0;
-                $reservation->amount_paid_total = 0;
-                $reservation->balance = 0;
+                if ($this->reservationColumnExists('invoice_status')) {
+                    $reservation->invoice_status = 'pending';
+                }
+                if ($this->reservationColumnExists('amount_paid_total')) {
+                    $reservation->amount_paid_total = 0;
+                }
+                if ($this->reservationColumnExists('balance')) {
+                    $reservation->balance = 0;
+                }
                 // Assign next invoice number starting at 100
-                try {
-                    $max = (int) (Reservation::max('invoice_number') ?? 0);
-                    $reservation->invoice_number = $max >= 100 ? ($max + 1) : 100;
-                } catch (\Throwable $e) {
-                    $reservation->invoice_number = null; // fallback
+                if ($this->reservationColumnExists('invoice_number')) {
+                    try {
+                        $max = (int) (Reservation::max('invoice_number') ?? 0);
+                        $reservation->invoice_number = $max >= 100 ? ($max + 1) : 100;
+                    } catch (\Throwable $e) {
+                        $reservation->invoice_number = null; // fallback
+                    }
                 }
             }
 
             // Ensure invoice number exists (if this reservation predates invoices)
-            if (empty($reservation->invoice_number)) {
+            if ($this->reservationColumnExists('invoice_number') && empty($reservation->invoice_number)) {
                 try {
                     $max = (int) (Reservation::max('invoice_number') ?? 0);
                     $reservation->invoice_number = $max >= 100 ? ($max + 1) : 100;
@@ -765,5 +774,20 @@ private function selectedMenuItems(array $menu, ?Reservation $reservation, array
         }
 
         Log::info($event, $context);
+    }
+
+    private function reservationColumnExists(string $column): bool
+    {
+        static $columns = [];
+
+        if (!array_key_exists($column, $columns)) {
+            try {
+                $columns[$column] = Schema::hasColumn('reservations', $column);
+            } catch (\Throwable $e) {
+                $columns[$column] = false;
+            }
+        }
+
+        return $columns[$column];
     }
 }
