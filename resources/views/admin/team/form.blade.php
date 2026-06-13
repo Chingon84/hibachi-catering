@@ -1,69 +1,68 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $user->exists ? 'Edit Member' : 'Add Member' }}</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    body{background:var(--bg)}
-    .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
-    .panel{padding:22px}
-    .title{margin:0;font-size:26px;line-height:1.1}
-    .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
-    .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
-    .form-stack{display:grid;gap:18px}
-    .section-card{border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,#fff,#fcfcfd);padding:18px}
-    .section-head{margin-bottom:14px}
-    .section-title{margin:0;font-size:15px;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
-    .section-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:#475569}
-    .section-copy{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field.span-2{grid-column:1 / -1}
-    .label{font-weight:600;font-size:14px}
-    .input, select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-    .password-group{display:grid;gap:12px}
-    .security-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.9fr);gap:16px;align-items:start}
-    .password-field{position:relative}
-    .password-field .input{width:100%;padding-right:44px}
-    .password-toggle{position:absolute;top:50%;right:12px;transform:translateY(-50%);background:none;border:none;padding:0;margin:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);width:20px;height:20px}
-    .password-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-    .password-toggle svg{width:20px;height:20px}
-    .password-toggle .eye-closed{display:none}
-    .password-toggle[data-visible="true"]{color:var(--brand)}
-    .password-toggle[data-visible="true"] .eye-open{display:none}
-    .password-toggle[data-visible="true"] .eye-closed{display:inline}
-    .row{display:flex;gap:10px;margin-top:18px}
-    .error{color:#b21e27;font-size:14px;margin-bottom:12px}
-    .hint{font-size:11.5px;color:#6b7280;line-height:1.45}
-    .meta-card{padding:6px 0}
-    .meta-kicker{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
-    .meta-list{display:grid;gap:10px}
-    .meta-item{display:flex;justify-content:space-between;gap:14px;padding-bottom:10px;border-bottom:1px solid #eef2f7}
-    .meta-item:last-child{padding-bottom:0;border-bottom:0}
-    .meta-label{font-size:12px;color:#6b7280}
-    .meta-value{font-size:13px;font-weight:600;color:#111827;text-align:right}
-    .meta-value.placeholder{color:#94a3b8;font-weight:500}
-    .photo-panel{display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,#fff,#fcfcfd);padding:18px;margin-bottom:18px}
-    .profile-photo{width:154px;height:154px;border-radius:999px;overflow:hidden;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;box-shadow:0 12px 28px rgba(15,23,42,.16);border:1px solid #dbe3ed}
-    .profile-photo img{width:100%;height:100%;object-fit:cover;display:block}
-    .photo-actions{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
-    .photo-action{appearance:none;border:0;border-radius:10px;background:#dff3ff;color:#1f3b53;min-width:110px;padding:8px 14px;font-size:12px;font-weight:800;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.08)}
-    .photo-action:hover{background:#ccecff}
-    .photo-action.remove{background:#e7f5ff;color:#475569}
-    .photo-action.remove:hover{background:#d8efff}
-    .photo-action svg{width:13px;height:13px}
-    @media (max-width: 860px){.security-layout{grid-template-columns:1fr}}
-    @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
-  </style>
-</head>
-<body>
+@extends('layouts.admin')
+
+@section('title', $user->exists ? 'Edit Member' : 'Add Member')
+
+@push('styles')
+<style>
+  /* Page-specific team form layout. Core chrome from app.css. */
+  .wrap{max-width:980px;margin:24px auto;padding:0 12px 24px}
+  .panel{padding:22px}
+  .team-title{margin:0;font-size:26px;line-height:1.1}
+  .subtitle{margin:8px 0 0;color:var(--muted);font-size:14px}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+  .form-stack{display:grid;gap:18px}
+  .section-card{border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,#fff,#fcfcfd);padding:18px}
+  .section-head{margin-bottom:14px}
+  .section-title{margin:0;font-size:15px;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+  .section-icon{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:#475569}
+  .section-copy{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.span-2{grid-column:1 / -1}
+  .label{font-weight:600;font-size:14px}
+  .input, select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+  .password-group{display:grid;gap:12px}
+  .security-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,.9fr);gap:16px;align-items:start}
+  .password-field{position:relative}
+  .password-field .input{width:100%;padding-right:44px}
+  .password-toggle{position:absolute;top:50%;right:12px;transform:translateY(-50%);background:none;border:none;padding:0;margin:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);width:20px;height:20px}
+  .password-toggle:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .password-toggle svg{width:20px;height:20px}
+  .password-toggle .eye-closed{display:none}
+  .password-toggle[data-visible="true"]{color:var(--brand)}
+  .password-toggle[data-visible="true"] .eye-open{display:none}
+  .password-toggle[data-visible="true"] .eye-closed{display:inline}
+  .team-row{display:flex;gap:10px;margin-top:18px}
+  .error{color:#b21e27;font-size:14px;margin-bottom:12px}
+  .hint{font-size:11.5px;color:#6b7280;line-height:1.45}
+  .meta-card{padding:6px 0}
+  .meta-kicker{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+  .meta-list{display:grid;gap:10px}
+  .meta-item{display:flex;justify-content:space-between;gap:14px;padding-bottom:10px;border-bottom:1px solid #eef2f7}
+  .meta-item:last-child{padding-bottom:0;border-bottom:0}
+  .meta-label{font-size:12px;color:#6b7280}
+  .meta-value{font-size:13px;font-weight:600;color:#111827;text-align:right}
+  .meta-value.placeholder{color:#94a3b8;font-weight:500}
+  .photo-panel{display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,#fff,#fcfcfd);padding:18px;margin-bottom:18px}
+  .profile-photo{width:154px;height:154px;border-radius:999px;overflow:hidden;background:#0f172a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;box-shadow:0 12px 28px rgba(15,23,42,.16);border:1px solid #dbe3ed}
+  .profile-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo-actions{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .photo-action{appearance:none;border:0;border-radius:10px;background:#dff3ff;color:#1f3b53;min-width:110px;padding:8px 14px;font-size:12px;font-weight:800;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+  .photo-action:hover{background:#ccecff}
+  .photo-action.remove{background:#e7f5ff;color:#475569}
+  .photo-action.remove:hover{background:#d8efff}
+  .photo-action svg{width:13px;height:13px}
+  @media (max-width: 860px){.security-layout{grid-template-columns:1fr}}
+  @media (max-width: 760px){.grid{grid-template-columns:1fr}.panel-head{flex-direction:column}}
+</style>
+@endpush
+
+@section('content')
   <div class="wrap">
     <div class="card panel">
       <div class="panel-head">
         <div>
-          <h1 class="title">{{ $user->exists ? 'Edit Team Member' : 'Add Team Member' }}</h1>
+          <h1 class="team-title">{{ $user->exists ? 'Edit Team Member' : 'Add Team Member' }}</h1>
           <p class="subtitle">Manage directory details, operational staff type, and admin access from one record.</p>
         </div>
         <a class="btn secondary" href="{{ route('admin.team.index') }}">Back to Team</a>
@@ -277,13 +276,16 @@
             </div>
           </section>
         </div>
-        <div class="row">
+        <div class="team-row">
           <a class="btn secondary" href="{{ route('admin.team.index') }}">Cancel</a>
           <button class="btn" type="submit">Save Changes</button>
         </div>
       </form>
     </div>
   </div>
+@endsection
+
+@push('scripts')
   <script>
     (function(){
       document.querySelectorAll('.password-toggle').forEach(function(btn){
@@ -304,5 +306,4 @@
       });
     })();
   </script>
-</body>
-</html>
+@endpush

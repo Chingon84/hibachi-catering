@@ -1,13 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $user->name }} · Employee Profile</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="bg-slate-50 text-slate-900">
+@extends('layouts.admin')
+
+@section('title', $user->name . ' · Employee Profile')
+
+@section('content')
   @php
     $tabMeta = [
       'overview' => 'Overview',
@@ -22,7 +17,7 @@
     $profilePhotoUrl = \App\Support\UploadedFiles::url($user->profile_photo_path);
   @endphp
 
-  <div class="mx-auto max-w-7xl px-4 py-4 sm:px-5 lg:px-6">
+  <div class="mx-auto max-w-7xl px-4 py-4 text-slate-900 sm:px-5 lg:px-6">
     <div class="space-y-4">
       <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-start lg:justify-between">
         <div class="space-y-3">
@@ -351,5 +346,4 @@
       @endif
     </div>
   </div>
-</body>
-</html>
+@endsection
