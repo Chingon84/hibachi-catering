@@ -160,6 +160,7 @@ Add Laravel's scheduler to cron:
 Run:
 
 ```bash
+php artisan app:production-readiness --strict
 php artisan about
 php artisan migrate:status
 php artisan queue:failed
@@ -204,6 +205,7 @@ Run these before pushing or deploying:
 composer validate --no-check-publish
 php artisan test
 npm run build
+php artisan app:production-readiness
 git diff --check
 git status --short
 ```
