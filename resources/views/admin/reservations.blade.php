@@ -82,7 +82,7 @@
         <input class="input search-field" type="text" name="q" placeholder="Search name, code, email…" value="{{ $q }}">
         <button class="btn secondary" type="submit">Filter</button>
       </form>
-      <a href="http://127.0.0.1:8000/reservations/1" target="_blank" rel="noopener" class="btn" style="margin-left:auto">Resv Flow</a>
+      <a href="{{ route('reservations.new') }}" target="_blank" rel="noopener" class="btn" style="margin-left:auto">Resv Flow</a>
     </div>
 
     <div class="card">
