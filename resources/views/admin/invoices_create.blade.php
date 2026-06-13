@@ -354,8 +354,8 @@
       </main>
 
       <aside class="preview-pane">
-        <h2 class="preview-title">Preview <span style="font-size:13px;color:#64748b">⚙</span></h2>
-        <div class="preview-tabs"><span class="active">Invoice PDF</span><span>Email</span><span>Payment page</span></div>
+        <h2 class="preview-title">Preview</h2>
+        <div class="preview-tabs"><span class="active">Invoice PDF</span></div>
         <div class="paper">
           <div class="paper-head">
             <div>

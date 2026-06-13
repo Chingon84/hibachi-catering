@@ -47,9 +47,9 @@
     .custom-tax-trigger strong{display:block;font-size:14px;line-height:1.2;color:#0f172a}
     .custom-tax-trigger span{display:block;margin-top:4px;color:#64748b;font-size:12px;font-weight:650;line-height:1.35}
     .custom-tax-count{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:28px;padding:0 10px;border-radius:999px;border:1px solid #dbe4ef;background:#fff;color:#243b53;font-size:12px;font-weight:900}
-    .tax-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.46);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+    .tax-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.46);display:flex;align-items:flex-start;justify-content:center;padding:var(--tax-modal-top-pad,clamp(18px,5vh,48px)) 24px 24px;z-index:50;overflow:auto}
     .tax-modal-backdrop[hidden]{display:none}
-    .tax-modal{width:min(920px,100%);max-height:min(760px,calc(100vh - 48px));display:grid;grid-template-rows:auto auto 1fr auto;border:1px solid #dbe4ef;border-radius:18px;background:#fff;box-shadow:0 26px 70px rgba(15,23,42,.24);overflow:hidden}
+    .tax-modal{width:min(920px,100%);max-height:calc(var(--tax-modal-visible-height,100vh) - (var(--tax-modal-gap,24px) * 2));display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:1px solid #dbe4ef;border-radius:18px;background:#fff;box-shadow:0 26px 70px rgba(15,23,42,.24);overflow:hidden}
     .tax-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid #e8edf4}
     .tax-modal-title{margin:0;font-size:20px;line-height:1.2;color:#0f172a}
     .tax-modal-copy{margin:5px 0 0;color:#64748b;font-size:13px;line-height:1.5}
@@ -75,8 +75,8 @@
     @media (max-width: 980px){
       .page-head{flex-direction:column}
       .hero-grid,.section-grid,.field-grid{grid-template-columns:1fr}
-      .tax-modal-backdrop{align-items:stretch;padding:12px}
-      .tax-modal{max-height:calc(100vh - 24px)}
+      .tax-modal-backdrop{align-items:flex-start;padding:var(--tax-modal-top-pad,12px) 12px 12px}
+      .tax-modal{max-height:calc(var(--tax-modal-visible-height,100vh) - 24px)}
     }
   </style>
 </head>
@@ -376,6 +376,33 @@
         message.className = `tax-modal-message ${tone}`.trim();
       };
 
+      const syncModalViewport = () => {
+        let visibleTop = 0;
+        let visibleHeight = window.innerHeight || document.documentElement.clientHeight || 720;
+
+        try {
+          if (window.frameElement && window.parent) {
+            const frameRect = window.frameElement.getBoundingClientRect();
+            const parentHeight = window.parent.innerHeight || visibleHeight;
+            const visibleStart = Math.max(frameRect.top, 0);
+            const visibleEnd = Math.min(frameRect.bottom, parentHeight);
+            const frameVisibleHeight = Math.max(0, visibleEnd - visibleStart);
+
+            if (frameVisibleHeight > 0) {
+              visibleTop = Math.max(0, -frameRect.top);
+              visibleHeight = frameVisibleHeight;
+            }
+          }
+        } catch (e) {
+          visibleTop = 0;
+        }
+
+        const gap = Math.min(48, Math.max(12, Math.round(visibleHeight * 0.05)));
+        modal.style.setProperty('--tax-modal-top-pad', `${visibleTop + gap}px`);
+        modal.style.setProperty('--tax-modal-visible-height', `${visibleHeight}px`);
+        modal.style.setProperty('--tax-modal-gap', `${gap}px`);
+      };
+
       const markDirty = () => {
         dirty = true;
         setMessage('');
@@ -451,10 +478,17 @@
       };
 
       trigger.addEventListener('click', () => {
+        syncModalViewport();
         modal.hidden = false;
         setMessage('');
         render();
       });
+
+      window.addEventListener('resize', syncModalViewport);
+      try {
+        window.parent?.addEventListener('scroll', syncModalViewport, {passive: true});
+        window.parent?.addEventListener('resize', syncModalViewport);
+      } catch (e) {}
 
       document.querySelectorAll('[data-custom-tax-close]').forEach(button => {
         button.addEventListener('click', closeModal);

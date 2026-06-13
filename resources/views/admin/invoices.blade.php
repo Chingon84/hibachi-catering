@@ -12,15 +12,12 @@
     .global-search{position:relative;width:min(360px,100%)}
     .global-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#64748b}
     .global-search .input{padding-left:38px;background:#f8fafc;border-color:#eef2f7}
-    .top-icons{display:flex;align-items:center;gap:12px;color:#334155}
-    .top-icons span{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center}
     .title-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
     .title-row.actions-only{justify-content:flex-end;margin-bottom:12px}
     .title{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;color:#2f3340}
     .header-actions{display:flex;align-items:center;gap:8px}
     .create-btn{display:inline-flex;align-items:center;gap:8px;background:#4f35ff;color:#fff;text-decoration:none;border:0;border-radius:8px;padding:9px 14px;font-weight:800;line-height:1;box-shadow:0 8px 18px rgba(79,53,255,.16)}
     .create-btn:hover{background:#432de1}
-    .ghost-icon{width:34px;height:34px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#334155;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
     .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:10px}
     .tab{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #d6ddea;background:#fff;border-radius:9px;padding:12px 14px;text-decoration:none;color:#1f2937;font-weight:650;min-height:44px}
     .tab.active{border-color:#5339ff;box-shadow:0 0 0 1px #5339ff;color:#4230d8}
@@ -71,9 +68,6 @@
         <input class="input" type="search" name="q" placeholder="Search" value="{{ $q }}">
         <input type="hidden" name="status" value="{{ $status }}">
       </form>
-      <div class="top-icons" aria-hidden="true">
-        <span>⌘</span><span>?</span><span>♢</span><span>⚙</span><span style="background:#5438ff;color:#fff;border-radius:999px">+</span>
-      </div>
     </div>
 
     <div class="title-row actions-only">
@@ -81,7 +75,6 @@
         @if(auth()->user()?->hasPermission('reservations.manage'))
           <a class="create-btn" href="{{ route('admin.invoices.create') }}">+ Create invoice</a>
         @endif
-        <span class="ghost-icon">...</span>
       </div>
     </div>
 
