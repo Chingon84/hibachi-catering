@@ -1,50 +1,42 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Staff Bookings (Summary)</title>
-  <link rel="stylesheet" href="/assets/admin.css">
+@extends('layouts.admin')
+
+@section('title', 'Staff Bookings — Summary')
+
+@push('styles')
   <style>
-    :root{--brand:#b21e27;--brand-hover:#9a1a22}
-    .container{max-width:1200px;margin:20px 12px;padding:0 8px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04);margin-bottom:12px}
-    .card-body{padding:16px}
-    .title{font-size:22px;margin:0 0 8px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:8px 6px;border-bottom:1px solid var(--border);font-size:14px}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
-    .btn.secondary{background:#4b5563}
-    .muted{color:var(--muted)}
     .info-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     @media (max-width: 900px){.info-cols{grid-template-columns:1fr}}
     .info-list{display:grid;gap:6px}
     .info-row{font-size:14px;color:#6b7280}
     .info-row b{color:#374151}
   </style>
-  @php
-    $d = $data ?? [];
-    $lines = (array) ($d['selected_items'] ?? []);
-    $calc = (array) ($d['calc'] ?? []);
-    $fmt = fn($n)=>'$'.number_format((float)$n,2);
-    $name = trim((($d['first_name'] ?? '') . ' ' . ($d['last_name'] ?? '')));
-    $company = trim((string)($d['company'] ?? ''));
-    $phone = $d['phone'] ?? '';
-    $email = $d['email'] ?? '';
-    $addrParts = array_filter([ trim((string)($d['address'] ?? '')), trim((string)($d['city'] ?? '')), trim((string)($d['zip'] ?? '')) ]);
-    $fullAddr = implode(', ', $addrParts);
-    $dateFmt = !empty($d['event_date'] ?? null) ? \Carbon\Carbon::parse($d['event_date'])->format('m/d/Y') : '—';
-    $timeFmt = !empty($d['event_time'] ?? null) ? \Carbon\Carbon::parse($d['event_time'])->format('g:i A') : '—';
-    $guests = (int)($d['guest_count'] ?? 0);
-    $serving = ucfirst((string)($d['serving_style'] ?? ''));
-    $eventT = $d['event_type'] ?? '';
-    $color = $d['setup_color'] ?? '';
-    $stairs = strtolower((string)($d['stairs'] ?? 'no')) === 'yes' ? 'Yes' : 'No';
-    $heard = $d['heard_about'] ?? '';
-    $handled = $d['handled_by'] ?? '';
-  @endphp
-</head>
-<body>
+@endpush
+
+@php
+  $d = $data ?? [];
+  $lines = (array) ($d['selected_items'] ?? []);
+  $calc = (array) ($d['calc'] ?? []);
+  $fmt = fn($n)=>'$'.number_format((float)$n,2);
+  $name = trim((($d['first_name'] ?? '') . ' ' . ($d['last_name'] ?? '')));
+  $company = trim((string)($d['company'] ?? ''));
+  $phone = $d['phone'] ?? '';
+  $email = $d['email'] ?? '';
+  $addrParts = array_filter([ trim((string)($d['address'] ?? '')), trim((string)($d['city'] ?? '')), trim((string)($d['zip'] ?? '')) ]);
+  $fullAddr = implode(', ', $addrParts);
+  $dateFmt = !empty($d['event_date'] ?? null) ? \Carbon\Carbon::parse($d['event_date'])->format('m/d/Y') : '—';
+  $timeFmt = !empty($d['event_time'] ?? null) ? \Carbon\Carbon::parse($d['event_time'])->format('g:i A') : '—';
+  $guests = (int)($d['guest_count'] ?? 0);
+  $serving = ucfirst((string)($d['serving_style'] ?? ''));
+  $eventT = $d['event_type'] ?? '';
+  $color = $d['setup_color'] ?? '';
+  $stairs = strtolower((string)($d['stairs'] ?? 'no')) === 'yes' ? 'Yes' : 'No';
+  $heard = $d['heard_about'] ?? '';
+  $handled = $d['handled_by'] ?? '';
+@endphp
+
+@section('content')
   <div class="container">
     <div class="card"><div class="card-body">
       <div style="margin-bottom:10px;color:#6b7280">Review customer details, menu items, fees and totals.</div>
@@ -119,5 +111,4 @@
       </div>
     </div></div>
   </div>
-</body>
-</html>
+@endsection

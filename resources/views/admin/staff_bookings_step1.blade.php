@@ -1,35 +1,20 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Staff Bookings (Step 1)</title>
-  <link rel="stylesheet" href="/assets/admin.css">
+@extends('layouts.admin')
+
+@section('title', 'Staff Bookings — Step 1')
+
+@push('styles')
   <style>
-    :root{--brand:#b21e27;--brand-hover:#9a1a22}
-    .title{font-size:22px;margin:0}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
-    .card-body{padding:16px}
     .grid{display:grid;gap:12px}
     .grid.cols-2{grid-template-columns:1fr 1fr}
     .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
     @media (max-width: 760px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
-    .label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
-    .input,.select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600}
-    .btn:hover{background:var(--brand-hover)}
-    .btn.secondary{background:#4b5563}
-    .btn.secondary:hover{background:#374151}
-    .muted{color:var(--muted);font-size:13px}
-    .alert{border-radius:10px;padding:10px 12px;font-size:14px}
-    .alert.error{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}
-    .input[type=number]{text-align:center;padding:6px 8px}
+    .header.actions-only{justify-content:flex-end}
   </style>
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="container">
-    <div class="header">
-      <div></div>
+    <div class="header actions-only">
       <a
         href="{{ route('admin.dashboard') }}"
         class="btn secondary"
@@ -158,5 +143,4 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+@endsection

@@ -1,11 +1,8 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Notifications</title>
-  <link rel="stylesheet" href="{{ asset('assets/admin.css') }}">
+@extends('layouts.admin')
+
+@section('title', 'Notifications')
+
+@push('styles')
   <style>
     .notifications-page{padding:24px;background:#f8fafc;min-height:100vh}
     .notifications-shell{display:flex;flex-direction:column;gap:14px}
@@ -40,9 +37,10 @@
       .notification-row-actions{grid-column:2;justify-content:flex-start}
     }
   </style>
-</head>
-<body>
-  <main class="notifications-page">
+@endpush
+
+@section('content')
+  <div class="notifications-page">
     <div class="notifications-shell">
       <header class="notifications-header">
         <div>
@@ -154,6 +152,5 @@
 
       @include('admin.partials.pagination', ['paginator' => $notifications])
     </div>
-  </main>
-</body>
-</html>
+  </div>
+@endsection

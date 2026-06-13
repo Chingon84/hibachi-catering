@@ -1,17 +1,15 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ $title ?? 'Coming soon' }}</title>
-  <link rel="stylesheet" href="/assets/admin.css">
+@extends('layouts.admin')
+
+@section('title', $title ?? 'Coming soon')
+
+@push('styles')
   <style>
     .placeholder-note{color:var(--muted);font-size:14px}
     .placeholder-card{max-width:560px}
   </style>
-  
-</head>
-<body>
+@endpush
+
+@section('content')
   <div class="container">
     <div class="card placeholder-card">
       <div class="card-body">
@@ -20,5 +18,4 @@
       </div>
     </div>
   </div>
-</body>
-</html>
+@endsection

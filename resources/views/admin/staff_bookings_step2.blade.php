@@ -1,56 +1,41 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Staff Bookings (Menu)</title>
-  <link rel="stylesheet" href="/assets/admin.css">
+@extends('layouts.admin')
+
+@section('title', 'Staff Bookings — Menu')
+
+@push('styles')
   <style>
-    :root{--brand:#b21e27;--brand-hover:#9a1a22}
-    body{font-size:15px}
-    .title{font-size:22px;margin:0}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
-    .card-body{padding:16px}
     .grid{display:grid;gap:12px}
     .grid.cols-2{grid-template-columns:2fr 1fr}
     @media (max-width: 900px){.grid.cols-2{grid-template-columns:1fr}}
-    .label{display:block;font-weight:600;margin-bottom:6px}
-    .input,.select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-    .btn{appearance:none;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;text-decoration:none;display:inline-block}
-    .btn:hover{background:var(--brand-hover)}
-    .btn.secondary{background:#4b5563}
-    .muted{color:var(--muted)}
     .mi-name{font-weight:600;font-size:14px}
     .mi-price{font-weight:600;font-size:14px;margin-right:10px}
-    /* Small icon button (hover/click effects) */
-    .icon-btn{appearance:none;border:1px solid #e5e7eb;background:#fff;color:#b21e27;border-radius:10px;width:34px;height:34px;line-height:1;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease}
-    .icon-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(178,30,39,.15);border-color:#d1d5db;background:#fff}
-    .icon-btn:active{transform:translateY(0) scale(.98);box-shadow:0 2px 6px rgba(178,30,39,.15)}
   </style>
-  @php
-    $cats = $menuCategories ?? [];
-    $TRAVEL = (float) ($travel_fee ?? 0);
-    $GRAT = (float) ($constants['GRATUITY'] ?? 0.18);
-    $TAX  = (float) ($constants['TAX'] ?? 0.1025);
-    $guests = (int) ($guests ?? 0);
-    $name = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
-    $dateFmt = !empty($data['event_date'] ?? null) ? \Carbon\Carbon::parse($data['event_date'])->format('m/d/Y') : '—';
-    $timeFmt = !empty($data['event_time'] ?? null)
-      ? \Carbon\Carbon::parse($data['event_time'])->format('g:i A')
-      : '—';
-    $calc  = (array) ($data['calc'] ?? []);
-    $selected = (array) ($data['selected_items'] ?? []);
-    $valTravel = number_format((float)($calc['travel'] ?? $TRAVEL), 2, '.', '');
-    $valDisc   = number_format((float)($calc['discount'] ?? 0), 2, '.', '');
-    $valGrat   = number_format((float)($calc['gratuity'] ?? 0), 2, '.', '');
-    $valTax    = number_format((float)($calc['tax'] ?? 0), 2, '.', '');
-    $valPaid   = number_format((float)($calc['paid'] ?? 0), 2, '.', '');
-    $pmInit    = $calc['payment_method'] ?? old('payment_method');
-    $pdInit    = $calc['payment_date'] ?? '';
-    $extrasInit= (array) ($calc['extras'] ?? []);
-  @endphp
-</head>
-<body>
+@endpush
+
+@php
+  $cats = $menuCategories ?? [];
+  $TRAVEL = (float) ($travel_fee ?? 0);
+  $GRAT = (float) ($constants['GRATUITY'] ?? 0.18);
+  $TAX  = (float) ($constants['TAX'] ?? 0.1025);
+  $guests = (int) ($guests ?? 0);
+  $name = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
+  $dateFmt = !empty($data['event_date'] ?? null) ? \Carbon\Carbon::parse($data['event_date'])->format('m/d/Y') : '—';
+  $timeFmt = !empty($data['event_time'] ?? null)
+    ? \Carbon\Carbon::parse($data['event_time'])->format('g:i A')
+    : '—';
+  $calc  = (array) ($data['calc'] ?? []);
+  $selected = (array) ($data['selected_items'] ?? []);
+  $valTravel = number_format((float)($calc['travel'] ?? $TRAVEL), 2, '.', '');
+  $valDisc   = number_format((float)($calc['discount'] ?? 0), 2, '.', '');
+  $valGrat   = number_format((float)($calc['gratuity'] ?? 0), 2, '.', '');
+  $valTax    = number_format((float)($calc['tax'] ?? 0), 2, '.', '');
+  $valPaid   = number_format((float)($calc['paid'] ?? 0), 2, '.', '');
+  $pmInit    = $calc['payment_method'] ?? old('payment_method');
+  $pdInit    = $calc['payment_date'] ?? '';
+  $extrasInit= (array) ($calc['extras'] ?? []);
+@endphp
+
+@section('content')
   <div class="container">
     <div class="header"></div>
 
@@ -222,7 +207,9 @@
       </div>
     </form>
   </div>
+@endsection
 
+@push('scripts')
   <script>
     (function(){
       const GRAT = {{ $GRAT }};
@@ -376,5 +363,4 @@
       recalc();
     })();
   </script>
-</body>
-</html>
+@endpush
