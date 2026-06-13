@@ -1,723 +1,705 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin - Client</title>
-  <link rel="stylesheet" href="/assets/admin.css">
-  <style>
-    :root{
-      --bg:#f3f5f9;
-      --surface:#ffffff;
-      --surface-soft:#f8fafc;
-      --border:#e5e7eb;
-      --text:#0f172a;
-      --muted:#64748b;
-      --brand:#243b53;
-      --brand-hover:#172b40;
-      --brand-soft:#eef5fb;
-      --brand-ring:#c7d6e8;
-      --shadow:0 10px 30px rgba(15,23,42,.06);
-    }
-    body{background:var(--bg);color:var(--text)}
-    .dashboard-wrap{max-width:1680px;margin:0 auto;padding:16px}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow)}
-    .card-body{padding:22px}
-    .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
-    .hero-id{display:flex;align-items:flex-start;gap:14px;min-width:280px}
-    .avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#111827,#334155);color:#fff;font-weight:800;letter-spacing:.4px;flex-shrink:0}
-    .title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .title-lg{font-size:30px;line-height:1.1;font-weight:800;margin:0}
-    .sub{color:var(--muted);font-size:13px;margin-top:4px}
-    .status-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;border:1px solid #dbe3ef;background:#f8fbff;color:#1e3a8a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+@extends('layouts.admin')
 
-    .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .btn-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 14px;border:1px solid #d9e1ec;border-radius:12px;background:linear-gradient(180deg,#fff,#f8fafc);color:#1f2937;text-decoration:none;font-size:13px;font-weight:750;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.04)}
-    .btn-link:hover{transform:translateY(-1px);border-color:#c5d0dd;background:#fff;box-shadow:0 10px 22px rgba(15,23,42,.10)}
-    .btn-link:focus-visible{outline:2px solid var(--brand-ring);outline-offset:2px}
-    .btn-brand{background:linear-gradient(180deg,#2f4863,#243b53);border-color:#243b53;color:#fff;box-shadow:0 8px 18px rgba(36,59,83,.20)}
-    .btn-brand:hover{background:linear-gradient(180deg,#284059,#172b40);border-color:#172b40;box-shadow:0 12px 24px rgba(36,59,83,.24)}
+@section('title', 'Client')
 
-    .client-shell{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:20px;align-items:start;margin-top:16px}
-    @media (max-width:1320px){.client-shell{grid-template-columns:300px minmax(0,1fr)}}
-    @media (max-width:1120px){.client-shell{grid-template-columns:1fr}}
+@push('styles')
+<style>
+  /* Page-specific client-detail layout. Core chrome (cards, inputs, buttons,
+     status pills, tables) comes from the shared app.css. Brand accents use the
+     shared red tokens; only the bespoke modal system + task modal are local. */
+  :root{ --surface-soft:#f8fafc; }
+  .dashboard-wrap{max-width:1680px;margin:0 auto;padding:16px}
+  .hero{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .hero-id{display:flex;align-items:flex-start;gap:14px;min-width:280px}
+  .avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1b2030,#334155);color:#fff;font-weight:800;letter-spacing:.4px;flex-shrink:0}
+  .title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .title-lg{font-size:26px;line-height:1.1;font-weight:800;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .status-pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--slate);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 
-    .section-title{margin:0 0 14px;font-size:17px;font-weight:800}
-    .group-title{font-size:11px;font-weight:800;letter-spacing:.8px;color:#64748b;text-transform:uppercase;margin:16px 0 8px}
-    .key-list{display:grid;gap:8px}
-    .key-row{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed #edf1f5}
-    .key-row:last-child{border-bottom:0}
-    .key-label{font-size:12px;color:#64748b}
-    .key-value{font-size:13px;font-weight:600;color:#111827;word-break:break-word}
-    .key-empty{color:#94a3b8;font-weight:500}
+  .client-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .btn-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:9px 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--slate);text-decoration:none;font-size:13px;font-weight:700;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease;cursor:pointer;box-shadow:var(--shadow-sm)}
+  .btn-link:hover{transform:translateY(-1px);border-color:#cbd5e1;background:var(--surface-2);color:var(--text);box-shadow:var(--shadow)}
+  .btn-link:focus-visible{outline:2px solid var(--brand-ring);outline-offset:2px}
+  .btn-brand{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 1px 2px rgba(178,30,39,.22)}
+  .btn-brand:hover{background:var(--brand-hover);border-color:var(--brand-hover);color:#fff;box-shadow:0 3px 10px rgba(178,30,39,.26)}
 
-    .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
-    .tab{display:inline-flex;padding:8px 14px;border:1px solid #dbe3ef;border-radius:999px;background:#fff;color:#334155;text-decoration:none;font-weight:700;font-size:13px;transition:.16s ease}
-    .tab:hover{border-color:#c8d3e5;background:#f8fafc}
-    .tab.active{background:#e8eefc;border-color:#b8c7e8;color:#1e3a8a}
+  .client-shell{display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:20px;align-items:start;margin-top:16px}
+  @media (max-width:1320px){.client-shell{grid-template-columns:300px minmax(0,1fr)}}
+  @media (max-width:1120px){.client-shell{grid-template-columns:1fr}}
 
-    .kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-    @media (max-width:900px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:640px){.kpi-grid{grid-template-columns:1fr}}
-    .kpi{min-height:140px;border:1px solid #e7ebf1;border-radius:16px;background:linear-gradient(180deg,#ffffff 0%,#fbfcfe 100%);padding:16px}
-    .kpi-label{font-size:12px;color:#64748b;margin-bottom:10px;font-weight:600}
-    .kpi-val{font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.01em}
-    .kpi-sub{font-size:12px;color:#64748b;margin-top:12px}
+  .section-title{margin:0 0 14px;font-size:17px;font-weight:800}
+  .group-title{font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin:16px 0 8px}
+  .key-list{display:grid;gap:8px}
+  .key-row{display:grid;grid-template-columns:120px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border-soft)}
+  .key-row:last-child{border-bottom:0}
+  .key-label{font-size:12px;color:var(--muted)}
+  .key-value{font-size:13px;font-weight:600;color:var(--text);word-break:break-word}
+  .key-empty{color:#94a3b8;font-weight:500}
 
-    .hs-wrap{background:var(--surface-soft);border:1px solid #e8edf3;border-radius:16px;padding:14px}
-    .hs-subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-    .hs-subtab{display:inline-flex;align-items:center;padding:7px 12px;border:1px solid #d6dfeb;border-radius:999px;background:#fff;color:#334155;text-decoration:none;font-weight:700;font-size:12px;transition:.16s ease}
-    .hs-subtab:hover{background:#f8fafc}
-    .hs-subtab.active{background:#ebf1ff;border-color:#b9c9ee;color:#1d4ed8}
-    .hs-topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-    .hs-search{position:relative;min-width:240px;flex:1 1 260px;max-width:440px}
-    .hs-search .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none}
-    .hs-search .input{padding-left:34px;width:100%}
-    .hs-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .hs-dropdown{position:relative}
-    .hs-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:170px;background:#fff;border:1px solid #d8e0ea;border-radius:10px;box-shadow:0 12px 20px rgba(15,23,42,.08);padding:6px;display:none;z-index:30}
-    .hs-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
-    .hs-menu button:hover{background:#f1f5f9}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+  .tab{display:inline-flex;padding:8px 14px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--slate);text-decoration:none;font-weight:700;font-size:13px;transition:.16s ease}
+  .tab:hover{border-color:#cbd5e1;background:var(--surface-2)}
+  .tab.active{background:var(--brand-soft);border-color:#f1c4c8;color:var(--brand)}
 
-    .hs-month{margin:18px 0 10px;font-size:12px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.6px}
-    .timeline{position:relative;padding-left:20px}
-    .timeline:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:#e2e8f0;border-radius:2px}
-    .activity-card{position:relative;background:#fff;border:1px solid #dbe5ef;border-radius:14px;margin-bottom:10px;transition:.16s ease}
-    .activity-card:hover{border-color:#c9d7e8;box-shadow:0 8px 16px rgba(15,23,42,.05)}
-    .activity-card:before{content:"";position:absolute;left:-17px;top:18px;width:10px;height:10px;border-radius:50%;background:#94a3b8;border:2px solid #fff;box-shadow:0 0 0 2px #dbe5ef}
-    .activity-head{display:flex;align-items:center;gap:10px;padding:11px 12px}
-    .activity-toggle{width:24px;height:24px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer;color:#475569;display:inline-flex;align-items:center;justify-content:center}
-    .activity-toggle .chev{transition:transform .12s ease}
-    .activity-toggle[aria-expanded="true"] .chev{transform:rotate(90deg)}
-    .activity-title{font-weight:700;color:#0f172a;font-size:14px}
-    .activity-meta{margin-left:auto;font-size:11px;color:#64748b;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .type-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid #dbeafe;background:#eff6ff;color:#1d4ed8;font-weight:800;letter-spacing:.3px}
-    .activity-body{padding:0 12px 12px 46px}
-    .activity-body[hidden]{display:none}
-    .meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
-    @media (max-width:640px){.meta-grid{grid-template-columns:1fr}}
-    .meta-cell{font-size:13px}
-    .meta-cell b{display:block;font-size:11px;color:#64748b;font-weight:700;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
-    .status{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
-    .status.confirmed{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
-    .status.draft{background:#f3f4f6;color:#374151;border-color:#e5e7eb}
-    .status.pending_payment{background:#fff7ed;color:#92400e;border-color:#fed7aa}
-    .status.canceled{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    .status.paid{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media (max-width:900px){.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:640px){.kpi-grid{grid-template-columns:1fr}}
+  .kpi{min-height:140px;border:1px solid var(--border);border-radius:var(--r-lg);background:linear-gradient(180deg,#ffffff 0%,var(--surface-2) 100%);padding:16px}
+  .kpi-label{font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:600}
+  .kpi-val{font-size:26px;font-weight:800;line-height:1.1;letter-spacing:-.01em}
+  .kpi-sub{font-size:12px;color:var(--muted);margin-top:12px}
 
-    .panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .panel-title{margin:0;font-size:16px;font-weight:800}
-    .photos-grid{display:grid;grid-template-columns:1fr;gap:10px}
-    .photo-item{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #e6ebf2;border-radius:12px;padding:8px;background:#fff}
-    .photo-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#f3f4f6;border:1px solid var(--border)}
-    .photo-name{font-size:13px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .photo-meta{font-size:11px;color:#64748b;margin-top:4px}
-    .btn-danger-ghost{color:#475569;border-color:#d9e1ec;background:#fff}
-    .btn-danger-ghost:hover{background:#f8fafc;border-color:#cbd5e1;color:#1f2937}
-    .notes-list{display:grid;gap:10px}
-    .note-preview{border:1px solid #e6ebf2;border-radius:12px;background:#fff;padding:10px}
-    .note-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#64748b;font-size:11px;margin-bottom:7px}
-    .note-author{font-weight:800;color:#334155}
-    .note-assignee{margin-bottom:8px;font-size:12px;color:#64748b}
-    .note-assignee b{display:block;margin-bottom:2px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#475569}
-    .note-body{white-space:pre-wrap;font-size:13px;line-height:1.45;color:#1f2937}
+  .hs-wrap{background:var(--surface-soft);border:1px solid var(--border-soft);border-radius:var(--r-lg);padding:14px}
+  .hs-subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .hs-subtab{display:inline-flex;align-items:center;padding:7px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--slate);text-decoration:none;font-weight:700;font-size:12px;transition:.16s ease}
+  .hs-subtab:hover{background:var(--surface-2)}
+  .hs-subtab.active{background:var(--brand-soft);border-color:#f1c4c8;color:var(--brand)}
+  .hs-topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .hs-search{position:relative;min-width:240px;flex:1 1 260px;max-width:440px}
+  .hs-search .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .hs-search .input{padding-left:34px;width:100%}
+  .hs-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hs-dropdown{position:relative}
+  .hs-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:170px;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:6px;display:none;z-index:30}
+  .hs-menu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px}
+  .hs-menu button:hover{background:var(--surface-2)}
 
-    .empty-state{padding:14px;border:1px dashed #d1d9e6;border-radius:12px;background:#f8fafc;color:#64748b;font-size:13px;text-align:center}
+  .hs-month{margin:18px 0 10px;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .timeline{position:relative;padding-left:20px}
+  .timeline:before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:#e2e8f0;border-radius:2px}
+  .activity-card{position:relative;background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;transition:.16s ease}
+  .activity-card:hover{border-color:#cbd5e1;box-shadow:var(--shadow)}
+  .activity-card:before{content:"";position:absolute;left:-17px;top:18px;width:10px;height:10px;border-radius:50%;background:#94a3b8;border:2px solid #fff;box-shadow:0 0 0 2px var(--border)}
+  .activity-head{display:flex;align-items:center;gap:10px;padding:11px 12px}
+  .activity-toggle{width:24px;height:24px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;color:var(--slate);display:inline-flex;align-items:center;justify-content:center}
+  .activity-toggle .chev{transition:transform .12s ease}
+  .activity-toggle[aria-expanded="true"] .chev{transform:rotate(90deg)}
+  .activity-title{font-weight:700;color:var(--text);font-size:14px}
+  .activity-meta{margin-left:auto;font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .type-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:var(--slate);font-weight:800;letter-spacing:.3px}
+  .activity-body{padding:0 12px 12px 46px}
+  .activity-body[hidden]{display:none}
+  .meta-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+  @media (max-width:640px){.meta-grid{grid-template-columns:1fr}}
+  .meta-cell{font-size:13px}
+  .meta-cell b{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+  .status.paid{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
 
-    .modal{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;height:100vh;min-height:100dvh;padding:clamp(28px,7vh,72px) 20px 24px;z-index:50;background:rgba(15,23,42,.45);overflow-y:auto}
-    .modal.show{display:flex}
-    .modal-card{width:min(620px, 100%);max-height:calc(100vh - 48px);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.2);display:flex;flex-direction:column}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
-    .modal-body{padding:16px;overflow-y:auto}
-    .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 16px 16px}
-    .input,.select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff}
-    .field{margin-bottom:12px}
-    .field label{display:block;font-size:12px;font-weight:700;color:#475569;margin-bottom:6px}
-    .task-modal{padding:0;align-items:flex-start;background:rgba(15,23,42,.38)}
-    .task-modal .modal-card{width:min(650px,100%);max-height:calc(100vh - 20px);border-radius:0;border-color:#cbd5e1}
-    .task-head{display:flex;align-items:center;gap:12px;background:#4f7195;color:#fff;padding:14px 18px;font-weight:800}
-    .task-grip{font-size:20px;line-height:.8;letter-spacing:-4px;color:rgba(255,255,255,.72)}
-    .task-chevron{border:0;background:transparent;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0}
-    .task-close{margin-left:auto;border:0;background:transparent;color:#fff;font-size:30px;line-height:1;cursor:pointer;padding:0 2px}
-    .task-form{display:flex;min-height:0;flex-direction:column}
-    .task-body{padding:18px 22px 0;overflow-y:auto}
-    .task-title-input{width:100%;border:0;border-bottom:1px solid transparent;padding:2px 4px 20px 4px;font-size:15px;color:#243b53;outline:0}
-    .task-title-input:focus{border-bottom-color:#d8e0ea}
-    .task-split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(180px,.75fr);gap:24px;margin-top:8px}
-    .task-label{display:block;margin-bottom:8px;font-size:12px;color:#345277;font-weight:500}
-    .task-pick-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .task-select-link{appearance:none;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;max-width:240px;padding:0 18px 0 0;cursor:pointer}
-    .task-select-link:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
-    .task-time{width:96px;border:0;background:transparent;color:#243b53;font-size:14px;padding:0}
-    .task-checkbox{display:inline-flex;align-items:center;gap:8px;margin-top:24px;color:#243b53;font-size:14px}
-    .task-checkbox input{width:16px;height:16px}
-    .task-divider{height:1px;background:#d9e1ec;margin:18px 0 0}
-    .task-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:16px 0 18px;border-bottom:1px solid #d9e1ec}
-    .task-meta-label{display:block;font-size:12px;color:#345277;margin-bottom:8px}
-    .task-meta-select{appearance:none;width:100%;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;padding:0 16px 0 0;cursor:pointer}
-    .task-meta-select:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
-    .priority-dot{display:inline-flex;width:10px;height:10px;border-radius:999px;background:#e7edf4;margin-right:7px;vertical-align:middle}
-    .task-notes{display:flex;min-height:170px;flex-direction:column;border-bottom:1px solid #d9e1ec}
-    .task-notes textarea{min-height:126px;border:0;border-radius:0;padding:16px 0;resize:vertical;font-size:14px;outline:0}
-    .task-toolbar{display:flex;align-items:center;gap:16px;color:#243b53;font-size:14px;padding:8px 0}
-    .task-toolbar strong,.task-toolbar em,.task-toolbar span{line-height:1}
-    .task-associated{margin-left:auto;color:#008aa8;font-weight:800}
-    .task-foot{display:flex;justify-content:flex-start;border-top:1px solid #d9e1ec;padding:14px 20px}
-    .task-create-btn{border:0;border-radius:4px;background:#ff795f;color:#fff;font-weight:700;padding:10px 17px;cursor:pointer}
-    .task-create-btn:hover{background:#f0644c}
-    @media (max-width:760px){
-      .task-split,.task-meta-grid{grid-template-columns:1fr}
-      .task-modal .modal-card{max-height:100vh}
-      .task-associated{display:none}
-    }
-  </style>
-  @php
-    $money = fn($v) => '$'.number_format((float)$v, 2);
-    $fmtDate = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('M d, Y') : '-';
-    $displayName = $client->full_name ?: ($client->company ?: 'Unnamed client');
-    $statusText = ucfirst((string) ($client->status ?: 'regular'));
-    $initials = collect(explode(' ', trim($displayName)))->filter()->take(2)->map(fn($part) => strtoupper(substr($part, 0, 1)))->implode('');
-    if ($initials === '') { $initials = 'CL'; }
-    $f = $activityFilters ?? ['search'=>''];
-    $activityTab = $activityTab ?? 'ACTIVITY';
-    $groupedActivities = $activities->getCollection()->groupBy(function($a){ return optional($a->occurred_at)->format('F Y') ?: 'Unknown'; });
-    $photos = $client->photos ?? collect();
-    $latestNotes = $latestNotes ?? collect();
-    $emptyMark = fn($v) => filled($v) ? $v : '—';
-    $selectedAssignedTo = (string) old('assigned_to', '');
-    $taskUserIds = ($taskUsers ?? collect())->pluck('id')->map(fn($id) => (string) $id)->all();
-    $defaultTaskAssignedTo = in_array((string) auth()->id(), $taskUserIds, true) ? (string) auth()->id() : '';
-    $selectedTaskAssignedTo = (string) old('assigned_to', $defaultTaskAssignedTo);
-  @endphp
-</head>
-<body>
-  <div class="dashboard-wrap">
-    @if(session('ok'))
-      <div class="card" style="margin-bottom:12px"><div class="card-body" style="color:#065f46;background:#ecfdf5;border-radius:14px">{{ session('ok') }}</div></div>
-    @endif
-    @if($errors->any())
-      <div class="card" style="margin-bottom:12px"><div class="card-body" style="color:#7f1d1d;background:#fee2e2;border-radius:14px">{{ $errors->first() }}</div></div>
-    @endif
+  .panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .panel-title{margin:0;font-size:16px;font-weight:800}
+  .photos-grid{display:grid;grid-template-columns:1fr;gap:10px}
+  .photo-item{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--border);border-radius:12px;padding:8px;background:#fff}
+  .photo-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;background:#f3f4f6;border:1px solid var(--border)}
+  .photo-name{font-size:13px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .photo-meta{font-size:11px;color:var(--muted);margin-top:4px}
+  .btn-danger-ghost{color:var(--slate);border-color:var(--border);background:#fff}
+  .btn-danger-ghost:hover{background:var(--surface-2);border-color:#cbd5e1;color:var(--text)}
+  .notes-list{display:grid;gap:10px}
+  .note-preview{border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px}
+  .note-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;color:var(--muted);font-size:11px;margin-bottom:7px}
+  .note-author{font-weight:800;color:var(--slate)}
+  .note-assignee{margin-bottom:8px;font-size:12px;color:var(--muted)}
+  .note-assignee b{display:block;margin-bottom:2px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--slate)}
+  .note-body{white-space:pre-wrap;font-size:13px;line-height:1.45;color:var(--text)}
 
-    <div class="card">
-      <div class="card-body hero">
-        <div class="hero-id">
-          <div class="avatar">{{ $initials }}</div>
-          <div>
-            <div class="title-row">
-              <h1 class="title-lg">{{ $displayName }}</h1>
-              <span class="status-pill">{{ $statusText }}</span>
-            </div>
-            <div class="sub">{{ $client->email_primary ?: 'No primary email' }}</div>
+  .empty-state{padding:14px;border:1px dashed #d1d9e6;border-radius:12px;background:var(--surface-2);color:var(--muted);font-size:13px;text-align:center}
+
+  /* Bespoke modal system: own overlay + card. Overrides shared .modal on this page. */
+  .modal{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;height:100vh;min-height:100dvh;padding:clamp(28px,7vh,72px) 20px 24px;z-index:50;background:rgba(15,23,42,.45);overflow-y:auto}
+  .modal.show{display:flex}
+  .modal-card{width:min(620px, 100%);max-height:calc(100vh - 48px);background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .modal-body{padding:16px;overflow-y:auto}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 16px 16px}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--slate);margin-bottom:6px}
+  .task-modal{padding:0;align-items:flex-start;background:rgba(15,23,42,.38)}
+  .task-modal .modal-card{width:min(650px,100%);max-height:calc(100vh - 20px);border-radius:0;border-color:#cbd5e1}
+  .task-head{display:flex;align-items:center;gap:12px;background:#4f7195;color:#fff;padding:14px 18px;font-weight:800}
+  .task-grip{font-size:20px;line-height:.8;letter-spacing:-4px;color:rgba(255,255,255,.72)}
+  .task-chevron{border:0;background:transparent;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:0}
+  .task-close{margin-left:auto;border:0;background:transparent;color:#fff;font-size:30px;line-height:1;cursor:pointer;padding:0 2px}
+  .task-form{display:flex;min-height:0;flex-direction:column}
+  .task-body{padding:18px 22px 0;overflow-y:auto}
+  .task-title-input{width:100%;border:0;border-bottom:1px solid transparent;padding:2px 4px 20px 4px;font-size:15px;color:#243b53;outline:0}
+  .task-title-input:focus{border-bottom-color:#d8e0ea}
+  .task-split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(180px,.75fr);gap:24px;margin-top:8px}
+  .task-label{display:block;margin-bottom:8px;font-size:12px;color:#345277;font-weight:500}
+  .task-pick-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .task-select-link{appearance:none;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;max-width:240px;padding:0 18px 0 0;cursor:pointer}
+  .task-select-link:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
+  .task-time{width:96px;border:0;background:transparent;color:#243b53;font-size:14px;padding:0}
+  .task-checkbox{display:inline-flex;align-items:center;gap:8px;margin-top:24px;color:#243b53;font-size:14px}
+  .task-checkbox input{width:16px;height:16px}
+  .task-divider{height:1px;background:#d9e1ec;margin:18px 0 0}
+  .task-meta-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;padding:16px 0 18px;border-bottom:1px solid #d9e1ec}
+  .task-meta-label{display:block;font-size:12px;color:#345277;margin-bottom:8px}
+  .task-meta-select{appearance:none;width:100%;border:0;background:transparent;color:#008aa8;font-weight:800;font-size:15px;padding:0 16px 0 0;cursor:pointer}
+  .task-meta-select:focus{outline:2px solid #bde4ee;outline-offset:3px;border-radius:4px}
+  .priority-dot{display:inline-flex;width:10px;height:10px;border-radius:999px;background:#e7edf4;margin-right:7px;vertical-align:middle}
+  .task-notes{display:flex;min-height:170px;flex-direction:column;border-bottom:1px solid #d9e1ec}
+  .task-notes textarea{min-height:126px;border:0;border-radius:0;padding:16px 0;resize:vertical;font-size:14px;outline:0}
+  .task-toolbar{display:flex;align-items:center;gap:16px;color:#243b53;font-size:14px;padding:8px 0}
+  .task-toolbar strong,.task-toolbar em,.task-toolbar span{line-height:1}
+  .task-associated{margin-left:auto;color:#008aa8;font-weight:800}
+  .task-foot{display:flex;justify-content:flex-start;border-top:1px solid #d9e1ec;padding:14px 20px}
+  .task-create-btn{border:0;border-radius:4px;background:#ff795f;color:#fff;font-weight:700;padding:10px 17px;cursor:pointer}
+  .task-create-btn:hover{background:#f0644c}
+  @media (max-width:760px){
+    .task-split,.task-meta-grid{grid-template-columns:1fr}
+    .task-modal .modal-card{max-height:100vh}
+    .task-associated{display:none}
+  }
+</style>
+@endpush
+
+@section('content')
+@php
+  $money = fn($v) => '$'.number_format((float)$v, 2);
+  $fmtDate = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('M d, Y') : '-';
+  $displayName = $client->full_name ?: ($client->company ?: 'Unnamed client');
+  $statusText = ucfirst((string) ($client->status ?: 'regular'));
+  $initials = collect(explode(' ', trim($displayName)))->filter()->take(2)->map(fn($part) => strtoupper(substr($part, 0, 1)))->implode('');
+  if ($initials === '') { $initials = 'CL'; }
+  $f = $activityFilters ?? ['search'=>''];
+  $activityTab = $activityTab ?? 'ACTIVITY';
+  $groupedActivities = $activities->getCollection()->groupBy(function($a){ return optional($a->occurred_at)->format('F Y') ?: 'Unknown'; });
+  $photos = $client->photos ?? collect();
+  $latestNotes = $latestNotes ?? collect();
+  $emptyMark = fn($v) => filled($v) ? $v : '—';
+  $selectedAssignedTo = (string) old('assigned_to', '');
+  $taskUserIds = ($taskUsers ?? collect())->pluck('id')->map(fn($id) => (string) $id)->all();
+  $defaultTaskAssignedTo = in_array((string) auth()->id(), $taskUserIds, true) ? (string) auth()->id() : '';
+  $selectedTaskAssignedTo = (string) old('assigned_to', $defaultTaskAssignedTo);
+@endphp
+<div class="dashboard-wrap">
+  @if(session('ok'))
+    <div class="card" style="margin-bottom:12px"><div class="card-body"><div class="alert success">{{ session('ok') }}</div></div></div>
+  @endif
+  @if($errors->any())
+    <div class="card" style="margin-bottom:12px"><div class="card-body"><div class="alert error">{{ $errors->first() }}</div></div></div>
+  @endif
+
+  <div class="card">
+    <div class="card-body hero">
+      <div class="hero-id">
+        <div class="avatar">{{ $initials }}</div>
+        <div>
+          <div class="title-row">
+            <h1 class="title-lg">{{ $displayName }}</h1>
+            <span class="status-pill">{{ $statusText }}</span>
           </div>
-        </div>
-        <div class="actions">
-          <a class="btn-link" href="{{ route('admin.clients') }}">Back</a>
-          <a class="btn-link" href="{{ route('admin.clients.edit', ['id' => $client->id]) }}">Edit</a>
-          <button type="button" class="btn-link" data-open-modal="noteModal">Add Note</button>
-          <a class="btn-link btn-brand" href="{{ route('admin.staff_bookings.step1') }}">Create Event</a>
-          <a class="btn-link" href="{{ route('admin.reservations', ['q' => $client->email_primary]) }}">Send Invoice</a>
+          <div class="sub">{{ $client->email_primary ?: 'No primary email' }}</div>
         </div>
       </div>
-    </div>
-
-    <div class="client-shell">
-      <aside>
-        <div class="card">
-          <div class="card-body">
-            <h3 class="section-title">Key information</h3>
-
-            <div class="group-title">Contact</div>
-            <div class="key-list">
-              <div class="key-row"><span class="key-label">Primary phone</span><span class="key-value {{ $client->phone_primary ? '' : 'key-empty' }}">{{ $emptyMark($client->phone_primary) }}</span></div>
-              <div class="key-row"><span class="key-label">Alternate phone</span><span class="key-value {{ $client->phone_alt ? '' : 'key-empty' }}">{{ $emptyMark($client->phone_alt) }}</span></div>
-              <div class="key-row"><span class="key-label">Primary email</span><span class="key-value {{ $client->email_primary ? '' : 'key-empty' }}">{{ $emptyMark($client->email_primary) }}</span></div>
-              <div class="key-row"><span class="key-label">Alternate email</span><span class="key-value {{ $client->email_alt ? '' : 'key-empty' }}">{{ $emptyMark($client->email_alt) }}</span></div>
-            </div>
-
-            <div class="group-title">Address</div>
-            <div class="key-list">
-              <div class="key-row"><span class="key-label">Street</span><span class="key-value {{ $client->address1_street ? '' : 'key-empty' }}">{{ $emptyMark($client->address1_street) }}</span></div>
-              <div class="key-row"><span class="key-label">City / State / ZIP</span><span class="key-value {{ trim(collect([$client->address1_city, $client->address1_state, $client->address1_zip])->filter()->join(', ')) ? '' : 'key-empty' }}">{{ $emptyMark(trim(collect([$client->address1_city, $client->address1_state, $client->address1_zip])->filter()->join(', '))) }}</span></div>
-            </div>
-
-            <div class="group-title">Meta</div>
-            <div class="key-list">
-              <div class="key-row"><span class="key-label">Referral source</span><span class="key-value {{ $client->referral_source ? '' : 'key-empty' }}">{{ $emptyMark($client->referral_source) }}</span></div>
-              <div class="key-row"><span class="key-label">Status</span><span class="key-value">{{ $statusText }}</span></div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <main>
-        <div class="card">
-          <div class="card-body">
-            <div class="tabs">
-              <a class="tab {{ $tab === 'activities' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'activities', 'activity_tab'=>$activityTab, 'search'=>$f['search'] ?? '']) }}">Activities</a>
-              <a class="tab {{ $tab === 'overview' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'overview']) }}">Overview</a>
-            </div>
-
-            @if($tab === 'overview')
-              <div class="kpi-grid">
-                <div class="kpi">
-                  <div class="kpi-label">Total Events</div>
-                  <div class="kpi-val">{{ $overview['total_events'] }}</div>
-                  <div class="kpi-sub">Total events booked: {{ $overview['total_events_booked'] }}</div>
-                </div>
-                <div class="kpi">
-                  <div class="kpi-label">Total Spent</div>
-                  <div class="kpi-val">{{ $money($overview['total_spent']) }}</div>
-                  <div class="kpi-sub">No. of cancelled events: {{ $overview['cancelled_events'] }}</div>
-                </div>
-                <div class="kpi">
-                  <div class="kpi-label">Outstanding Balance</div>
-                  <div class="kpi-val">{{ $money($overview['outstanding_balance']) }}</div>
-                  <div class="kpi-sub">Unpaid balances &gt; $0</div>
-                </div>
-                <div class="kpi">
-                  <div class="kpi-label">Last Event Date</div>
-                  <div class="kpi-val" style="font-size:22px">{{ $fmtDate($overview['last_event_at']) }}</div>
-                  <div class="kpi-sub">Days since last event: {{ $overview['days_since_last_event'] ?? '—' }}</div>
-                </div>
-                <div class="kpi">
-                  <div class="kpi-label">Next Event Date</div>
-                  <div class="kpi-val" style="font-size:22px">{{ $fmtDate($overview['next_event_at']) }}</div>
-                  <div class="kpi-sub">Future events only</div>
-                </div>
-                <div class="kpi">
-                  <div class="kpi-label">Events Not Booked Since Becoming Client</div>
-                  <div class="kpi-val" style="font-size:22px">{{ $overview['days_since_client'] ?? '—' }} days</div>
-                  <div class="kpi-sub">Client since: {{ $fmtDate($overview['client_since']) }}</div>
-                </div>
-              </div>
-            @else
-              <section class="hs-wrap">
-                <div class="hs-subtabs">
-                  <a class="hs-subtab {{ $activityTab==='ACTIVITY'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'ACTIVITY','search'=>$f['search'] ?? '']) }}">Activity</a>
-                  <a class="hs-subtab {{ $activityTab==='NOTES'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'NOTES','search'=>$f['search'] ?? '']) }}">Notes ({{ $activityCounts['notes'] ?? 0 }})</a>
-                  <a class="hs-subtab {{ $activityTab==='TASKS'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'TASKS','search'=>$f['search'] ?? '']) }}">Tasks ({{ $activityCounts['tasks'] ?? 0 }})</a>
-                  <a class="hs-subtab {{ $activityTab==='EVENTS'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'EVENTS','search'=>$f['search'] ?? '']) }}">Events History ({{ $activityCounts['events'] ?? 0 }})</a>
-                </div>
-
-                <form method="get">
-                  <input type="hidden" name="tab" value="activities">
-                  <input type="hidden" name="activity_tab" value="{{ $activityTab }}">
-                  <div class="hs-topbar">
-                    <div class="hs-search">
-                      <span class="search-icon">&#128269;</span>
-                      <input class="input" name="search" value="{{ $f['search'] ?? '' }}" placeholder="Search activities">
-                    </div>
-                    <div class="hs-right">
-                      <button type="button" class="btn-link btn-brand" data-open-modal="noteModal">Create Note</button>
-                      @if($activityTab === 'TASKS')
-                        <button type="button" class="btn-link" data-open-modal="taskModal">Create Task</button>
-                      @endif
-                      <div class="hs-dropdown">
-                        <button type="button" class="btn-link" id="collapseAllBtn">Collapse all v</button>
-                        <div class="hs-menu" id="collapseAllMenu">
-                          <button type="button" data-collapse-mode="collapse">Collapse all</button>
-                          <button type="button" data-collapse-mode="expand">Expand all</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </form>
-
-                <div>
-                  @php $cardIndex = 0; @endphp
-                  @forelse($groupedActivities as $month => $monthItems)
-                    <h4 class="hs-month">{{ $month }}</h4>
-                    <div class="timeline">
-                      @foreach($monthItems as $item)
-                        @php
-                          $cardId = $item->feed_key;
-                          $isFirstCard = $cardIndex === 0;
-                          $cardIndex++;
-                        @endphp
-                        <article class="activity-card">
-                          <div class="activity-head">
-                            <button type="button" class="activity-toggle" data-toggle-target="{{ $cardId }}" aria-expanded="{{ $isFirstCard ? 'true' : 'false' }}">
-                              <span class="chev">&gt;</span>
-                            </button>
-                            <div>
-                              <div class="activity-title">{{ $item->title }}</div>
-                              <div class="sub">{{ optional($item->occurred_at)->format('M d, Y g:i A') }}</div>
-                            </div>
-                            <div class="activity-meta">
-                              <span class="type-badge">{{ $item->type }}</span>
-                              @if($item->status)
-                                <span class="status {{ $item->status_key }}">{{ $item->status }}</span>
-                              @endif
-                            </div>
-                          </div>
-
-                          <div class="activity-body" id="{{ $cardId }}" @if(!$isFirstCard) hidden @endif>
-                            @if(!empty($item->body))
-                              <div style="white-space:pre-wrap;font-size:14px;margin-bottom:8px">{{ $item->body }}</div>
-                            @endif
-
-                            @if($item->type === 'TASK')
-                              @php
-                                $taskMeta = (array) ($item->meta ?? []);
-                                $taskTypeLabel = ucfirst(str_replace('_', '-', (string) ($taskMeta['task_type'] ?? 'to_do')));
-                                $taskPriorityLabel = ucfirst((string) ($taskMeta['priority'] ?? 'none'));
-                                $taskQueueLabel = filled($taskMeta['queue'] ?? '') ? $taskMeta['queue'] : 'None';
-                                $taskReminderLabel = ucfirst(str_replace('_', ' ', (string) ($taskMeta['reminder'] ?? 'none')));
-                              @endphp
-                              <div class="meta-grid">
-                                <div class="meta-cell"><b>Due</b>{{ $item->due_at ? \Carbon\Carbon::parse($item->due_at)->format('M d, Y g:i A') : '—' }}</div>
-                                <div class="meta-cell"><b>Assigned to</b>{{ $item->assigned_to_name ?: 'Unassigned' }}</div>
-                                <div class="meta-cell"><b>Task type</b>{{ $taskTypeLabel }}</div>
-                                <div class="meta-cell"><b>Priority</b>{{ $taskPriorityLabel }}</div>
-                                <div class="meta-cell"><b>Queue</b>{{ $taskQueueLabel }}</div>
-                                <div class="meta-cell"><b>Reminder</b>{{ $taskReminderLabel }}</div>
-                              </div>
-                            @endif
-
-                            @if($item->type === 'NOTE' && $item->assigned_to_name)
-                              <div class="meta-grid">
-                                <div class="meta-cell"><b>Activity assigned to</b>{{ $item->assigned_to_name }}</div>
-                              </div>
-                            @endif
-
-                            @if($item->type === 'EVENT')
-                              <div class="meta-grid">
-                                <div class="meta-cell"><b>Guests</b>{{ $item->guests ?? '—' }}</div>
-                                <div class="meta-cell"><b>Total</b>{{ $money($item->total ?? 0) }}</div>
-                                <div class="meta-cell"><b>Paid</b>{{ $money($item->paid ?? 0) }}</div>
-                                <div class="meta-cell"><b>Balance</b>{{ $money($item->balance ?? 0) }}</div>
-                                <div class="meta-cell"><b>Invoice #</b>{{ $item->invoice_number ?: '—' }}</div>
-                                <div class="meta-cell"><b>Event code</b>{{ $item->event_code ?: '—' }}</div>
-                              </div>
-                              <div class="row" style="margin-top:10px">
-                                <a class="btn-link" href="{{ route('admin.reservations.show', ['id' => $item->event_id]) }}">View reservation</a>
-                                @if($item->invoice_number)
-                                  <a class="btn-link" href="{{ route('admin.reservations.invoice', ['id' => $item->event_id]) }}">View invoice</a>
-                                @endif
-                              </div>
-                            @endif
-                          </div>
-                        </article>
-                      @endforeach
-                    </div>
-                  @empty
-                    <div class="empty-state">No activities found for current filters.</div>
-                  @endforelse
-                </div>
-
-                <div style="margin-top:12px">{{ $activities->links() }}</div>
-              </section>
-            @endif
-          </div>
-        </div>
-      </main>
-
-      <aside>
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-body">
-            <div class="panel-head">
-              <h3 class="panel-title">Photos</h3>
-              <form id="uploadPhotosForm" method="post" action="{{ route('admin.clients.photos.store', ['client' => $client->id]) }}" enctype="multipart/form-data">
-                @csrf
-                <input id="photosInput" type="file" name="photos[]" accept=".jpg,.jpeg,.png,.webp,.heic" multiple style="display:none">
-                <button type="button" class="btn-link btn-brand" id="uploadPhotosBtn">Upload Photos</button>
-              </form>
-            </div>
-
-            @if($photos->isEmpty())
-              <div class="empty-state">No photos yet.</div>
-            @else
-              <div class="photos-grid">
-                @foreach($photos as $photo)
-                  <div class="photo-item">
-                    <a href="{{ \App\Support\UploadedFiles::url($photo->path) }}" target="_blank" rel="noopener">
-                      <img class="photo-thumb" src="{{ \App\Support\UploadedFiles::url($photo->path) }}" alt="{{ $photo->original_name ?: 'Client photo' }}">
-                    </a>
-                    <div style="min-width:0">
-                      <div class="photo-name">{{ $photo->original_name ?: basename((string) $photo->path) }}</div>
-                      <div class="photo-meta">{{ $photo->created_at?->format('M d, Y g:i A') ?: '—' }}</div>
-                    </div>
-                    <form method="post" action="{{ route('admin.clients.photos.destroy', ['client' => $client->id, 'photo' => $photo->id]) }}" onsubmit="return confirm('Delete this photo?');">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="btn-link btn-danger-ghost">Delete</button>
-                    </form>
-                  </div>
-                @endforeach
-              </div>
-            @endif
-          </div>
-        </div>
-
-        <div class="card" id="notes">
-          <div class="card-body">
-            <div class="panel-head" style="margin-bottom:8px">
-              <h3 class="panel-title">Notes</h3>
-            </div>
-            @if($latestNotes->isNotEmpty())
-              <div class="notes-list">
-                @foreach($latestNotes as $note)
-                  <article class="note-preview">
-                    <div class="note-meta">
-                      <span class="note-author">{{ $note->creator?->name ?: 'System' }}</span>
-                      <span>{{ $note->created_at?->format('M d, Y') ?: '—' }}</span>
-                    </div>
-                    @if($note->assignee)
-                      <div class="note-assignee">
-                        <b>Activity assigned to</b>
-                        {{ $note->assignee->name }}
-                      </div>
-                    @endif
-                    <div class="note-body">{{ $note->body ?: '—' }}</div>
-                  </article>
-                @endforeach
-              </div>
-            @else
-              <div class="empty-state">No notes yet.</div>
-            @endif
-          </div>
-        </div>
-      </aside>
+      <div class="client-actions">
+        <a class="btn-link" href="{{ route('admin.clients') }}">Back</a>
+        <a class="btn-link" href="{{ route('admin.clients.edit', ['id' => $client->id]) }}">Edit</a>
+        <button type="button" class="btn-link" data-open-modal="noteModal">Add Note</button>
+        <a class="btn-link btn-brand" href="{{ route('admin.staff_bookings.step1') }}">Create Event</a>
+        <a class="btn-link" href="{{ route('admin.reservations', ['q' => $client->email_primary]) }}">Send Invoice</a>
+      </div>
     </div>
   </div>
 
-  <div class="modal" id="noteModal" aria-hidden="true">
-    <div class="modal-card">
-      <div class="modal-head">
-        <strong>Note</strong>
-        <button type="button" class="btn-link" data-close-modal>&times;</button>
-      </div>
-      <form method="post" action="{{ route('admin.clients.notes.store', ['id' => $client->id]) }}">
-        @csrf
-        <div class="modal-body">
-          <div class="field">
-            <label>For {{ $displayName }}</label>
-            <div class="sub">{{ $client->email_primary ?: 'No email' }}</div>
+  <div class="client-shell">
+    <aside>
+      <div class="card">
+        <div class="card-body">
+          <h3 class="section-title">Key information</h3>
+
+          <div class="group-title">Contact</div>
+          <div class="key-list">
+            <div class="key-row"><span class="key-label">Primary phone</span><span class="key-value {{ $client->phone_primary ? '' : 'key-empty' }}">{{ $emptyMark($client->phone_primary) }}</span></div>
+            <div class="key-row"><span class="key-label">Alternate phone</span><span class="key-value {{ $client->phone_alt ? '' : 'key-empty' }}">{{ $emptyMark($client->phone_alt) }}</span></div>
+            <div class="key-row"><span class="key-label">Primary email</span><span class="key-value {{ $client->email_primary ? '' : 'key-empty' }}">{{ $emptyMark($client->email_primary) }}</span></div>
+            <div class="key-row"><span class="key-label">Alternate email</span><span class="key-value {{ $client->email_alt ? '' : 'key-empty' }}">{{ $emptyMark($client->email_alt) }}</span></div>
           </div>
-          <div class="field">
-            <label for="note_assigned_to">Activity assigned to</label>
-            <select class="select" id="note_assigned_to" name="assigned_to">
-              <option value="">No assigned team</option>
-              @foreach(($activityUsers ?? []) as $u)
-                <option value="{{ $u->id }}" {{ $selectedAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+
+          <div class="group-title">Address</div>
+          <div class="key-list">
+            <div class="key-row"><span class="key-label">Street</span><span class="key-value {{ $client->address1_street ? '' : 'key-empty' }}">{{ $emptyMark($client->address1_street) }}</span></div>
+            <div class="key-row"><span class="key-label">City / State / ZIP</span><span class="key-value {{ trim(collect([$client->address1_city, $client->address1_state, $client->address1_zip])->filter()->join(', ')) ? '' : 'key-empty' }}">{{ $emptyMark(trim(collect([$client->address1_city, $client->address1_state, $client->address1_zip])->filter()->join(', '))) }}</span></div>
+          </div>
+
+          <div class="group-title">Meta</div>
+          <div class="key-list">
+            <div class="key-row"><span class="key-label">Referral source</span><span class="key-value {{ $client->referral_source ? '' : 'key-empty' }}">{{ $emptyMark($client->referral_source) }}</span></div>
+            <div class="key-row"><span class="key-label">Status</span><span class="key-value">{{ $statusText }}</span></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="card">
+        <div class="card-body">
+          <div class="tabs">
+            <a class="tab {{ $tab === 'activities' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'activities', 'activity_tab'=>$activityTab, 'search'=>$f['search'] ?? '']) }}">Activities</a>
+            <a class="tab {{ $tab === 'overview' ? 'active' : '' }}" href="{{ route('admin.clients.show', ['id'=>$client->id, 'tab'=>'overview']) }}">Overview</a>
+          </div>
+
+          @if($tab === 'overview')
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="kpi-label">Total Events</div>
+                <div class="kpi-val">{{ $overview['total_events'] }}</div>
+                <div class="kpi-sub">Total events booked: {{ $overview['total_events_booked'] }}</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Total Spent</div>
+                <div class="kpi-val">{{ $money($overview['total_spent']) }}</div>
+                <div class="kpi-sub">No. of cancelled events: {{ $overview['cancelled_events'] }}</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Outstanding Balance</div>
+                <div class="kpi-val">{{ $money($overview['outstanding_balance']) }}</div>
+                <div class="kpi-sub">Unpaid balances &gt; $0</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Last Event Date</div>
+                <div class="kpi-val" style="font-size:22px">{{ $fmtDate($overview['last_event_at']) }}</div>
+                <div class="kpi-sub">Days since last event: {{ $overview['days_since_last_event'] ?? '—' }}</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Next Event Date</div>
+                <div class="kpi-val" style="font-size:22px">{{ $fmtDate($overview['next_event_at']) }}</div>
+                <div class="kpi-sub">Future events only</div>
+              </div>
+              <div class="kpi">
+                <div class="kpi-label">Events Not Booked Since Becoming Client</div>
+                <div class="kpi-val" style="font-size:22px">{{ $overview['days_since_client'] ?? '—' }} days</div>
+                <div class="kpi-sub">Client since: {{ $fmtDate($overview['client_since']) }}</div>
+              </div>
+            </div>
+          @else
+            <section class="hs-wrap">
+              <div class="hs-subtabs">
+                <a class="hs-subtab {{ $activityTab==='ACTIVITY'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'ACTIVITY','search'=>$f['search'] ?? '']) }}">Activity</a>
+                <a class="hs-subtab {{ $activityTab==='NOTES'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'NOTES','search'=>$f['search'] ?? '']) }}">Notes ({{ $activityCounts['notes'] ?? 0 }})</a>
+                <a class="hs-subtab {{ $activityTab==='TASKS'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'TASKS','search'=>$f['search'] ?? '']) }}">Tasks ({{ $activityCounts['tasks'] ?? 0 }})</a>
+                <a class="hs-subtab {{ $activityTab==='EVENTS'?'active':'' }}" href="{{ route('admin.clients.show', ['id'=>$client->id,'tab'=>'activities','activity_tab'=>'EVENTS','search'=>$f['search'] ?? '']) }}">Events History ({{ $activityCounts['events'] ?? 0 }})</a>
+              </div>
+
+              <form method="get">
+                <input type="hidden" name="tab" value="activities">
+                <input type="hidden" name="activity_tab" value="{{ $activityTab }}">
+                <div class="hs-topbar">
+                  <div class="hs-search">
+                    <span class="search-icon">&#128269;</span>
+                    <input class="input" name="search" value="{{ $f['search'] ?? '' }}" placeholder="Search activities">
+                  </div>
+                  <div class="hs-right">
+                    <button type="button" class="btn-link btn-brand" data-open-modal="noteModal">Create Note</button>
+                    @if($activityTab === 'TASKS')
+                      <button type="button" class="btn-link" data-open-modal="taskModal">Create Task</button>
+                    @endif
+                    <div class="hs-dropdown">
+                      <button type="button" class="btn-link" id="collapseAllBtn">Collapse all v</button>
+                      <div class="hs-menu" id="collapseAllMenu">
+                        <button type="button" data-collapse-mode="collapse">Collapse all</button>
+                        <button type="button" data-collapse-mode="expand">Expand all</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+
+              <div>
+                @php $cardIndex = 0; @endphp
+                @forelse($groupedActivities as $month => $monthItems)
+                  <h4 class="hs-month">{{ $month }}</h4>
+                  <div class="timeline">
+                    @foreach($monthItems as $item)
+                      @php
+                        $cardId = $item->feed_key;
+                        $isFirstCard = $cardIndex === 0;
+                        $cardIndex++;
+                      @endphp
+                      <article class="activity-card">
+                        <div class="activity-head">
+                          <button type="button" class="activity-toggle" data-toggle-target="{{ $cardId }}" aria-expanded="{{ $isFirstCard ? 'true' : 'false' }}">
+                            <span class="chev">&gt;</span>
+                          </button>
+                          <div>
+                            <div class="activity-title">{{ $item->title }}</div>
+                            <div class="sub">{{ optional($item->occurred_at)->format('M d, Y g:i A') }}</div>
+                          </div>
+                          <div class="activity-meta">
+                            <span class="type-badge">{{ $item->type }}</span>
+                            @if($item->status)
+                              <span class="status {{ $item->status_key }}">{{ $item->status }}</span>
+                            @endif
+                          </div>
+                        </div>
+
+                        <div class="activity-body" id="{{ $cardId }}" @if(!$isFirstCard) hidden @endif>
+                          @if(!empty($item->body))
+                            <div style="white-space:pre-wrap;font-size:14px;margin-bottom:8px">{{ $item->body }}</div>
+                          @endif
+
+                          @if($item->type === 'TASK')
+                            @php
+                              $taskMeta = (array) ($item->meta ?? []);
+                              $taskTypeLabel = ucfirst(str_replace('_', '-', (string) ($taskMeta['task_type'] ?? 'to_do')));
+                              $taskPriorityLabel = ucfirst((string) ($taskMeta['priority'] ?? 'none'));
+                              $taskQueueLabel = filled($taskMeta['queue'] ?? '') ? $taskMeta['queue'] : 'None';
+                              $taskReminderLabel = ucfirst(str_replace('_', ' ', (string) ($taskMeta['reminder'] ?? 'none')));
+                            @endphp
+                            <div class="meta-grid">
+                              <div class="meta-cell"><b>Due</b>{{ $item->due_at ? \Carbon\Carbon::parse($item->due_at)->format('M d, Y g:i A') : '—' }}</div>
+                              <div class="meta-cell"><b>Assigned to</b>{{ $item->assigned_to_name ?: 'Unassigned' }}</div>
+                              <div class="meta-cell"><b>Task type</b>{{ $taskTypeLabel }}</div>
+                              <div class="meta-cell"><b>Priority</b>{{ $taskPriorityLabel }}</div>
+                              <div class="meta-cell"><b>Queue</b>{{ $taskQueueLabel }}</div>
+                              <div class="meta-cell"><b>Reminder</b>{{ $taskReminderLabel }}</div>
+                            </div>
+                          @endif
+
+                          @if($item->type === 'NOTE' && $item->assigned_to_name)
+                            <div class="meta-grid">
+                              <div class="meta-cell"><b>Activity assigned to</b>{{ $item->assigned_to_name }}</div>
+                            </div>
+                          @endif
+
+                          @if($item->type === 'EVENT')
+                            <div class="meta-grid">
+                              <div class="meta-cell"><b>Guests</b>{{ $item->guests ?? '—' }}</div>
+                              <div class="meta-cell"><b>Total</b>{{ $money($item->total ?? 0) }}</div>
+                              <div class="meta-cell"><b>Paid</b>{{ $money($item->paid ?? 0) }}</div>
+                              <div class="meta-cell"><b>Balance</b>{{ $money($item->balance ?? 0) }}</div>
+                              <div class="meta-cell"><b>Invoice #</b>{{ $item->invoice_number ?: '—' }}</div>
+                              <div class="meta-cell"><b>Event code</b>{{ $item->event_code ?: '—' }}</div>
+                            </div>
+                            <div class="row" style="margin-top:10px">
+                              <a class="btn-link" href="{{ route('admin.reservations.show', ['id' => $item->event_id]) }}">View reservation</a>
+                              @if($item->invoice_number)
+                                <a class="btn-link" href="{{ route('admin.reservations.invoice', ['id' => $item->event_id]) }}">View invoice</a>
+                              @endif
+                            </div>
+                          @endif
+                        </div>
+                      </article>
+                    @endforeach
+                  </div>
+                @empty
+                  <div class="empty-state">No activities found for current filters.</div>
+                @endforelse
+              </div>
+
+              <div style="margin-top:12px">{{ $activities->links() }}</div>
+            </section>
+          @endif
+        </div>
+      </div>
+    </main>
+
+    <aside>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-body">
+          <div class="panel-head">
+            <h3 class="panel-title">Photos</h3>
+            <form id="uploadPhotosForm" method="post" action="{{ route('admin.clients.photos.store', ['client' => $client->id]) }}" enctype="multipart/form-data">
+              @csrf
+              <input id="photosInput" type="file" name="photos[]" accept=".jpg,.jpeg,.png,.webp,.heic" multiple style="display:none">
+              <button type="button" class="btn-link btn-brand" id="uploadPhotosBtn">Upload Photos</button>
+            </form>
+          </div>
+
+          @if($photos->isEmpty())
+            <div class="empty-state">No photos yet.</div>
+          @else
+            <div class="photos-grid">
+              @foreach($photos as $photo)
+                <div class="photo-item">
+                  <a href="{{ \App\Support\UploadedFiles::url($photo->path) }}" target="_blank" rel="noopener">
+                    <img class="photo-thumb" src="{{ \App\Support\UploadedFiles::url($photo->path) }}" alt="{{ $photo->original_name ?: 'Client photo' }}">
+                  </a>
+                  <div style="min-width:0">
+                    <div class="photo-name">{{ $photo->original_name ?: basename((string) $photo->path) }}</div>
+                    <div class="photo-meta">{{ $photo->created_at?->format('M d, Y g:i A') ?: '—' }}</div>
+                  </div>
+                  <form method="post" action="{{ route('admin.clients.photos.destroy', ['client' => $client->id, 'photo' => $photo->id]) }}" onsubmit="return confirm('Delete this photo?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn-link btn-danger-ghost">Delete</button>
+                  </form>
+                </div>
+              @endforeach
+            </div>
+          @endif
+        </div>
+      </div>
+
+      <div class="card" id="notes">
+        <div class="card-body">
+          <div class="panel-head" style="margin-bottom:8px">
+            <h3 class="panel-title">Notes</h3>
+          </div>
+          @if($latestNotes->isNotEmpty())
+            <div class="notes-list">
+              @foreach($latestNotes as $note)
+                <article class="note-preview">
+                  <div class="note-meta">
+                    <span class="note-author">{{ $note->creator?->name ?: 'System' }}</span>
+                    <span>{{ $note->created_at?->format('M d, Y') ?: '—' }}</span>
+                  </div>
+                  @if($note->assignee)
+                    <div class="note-assignee">
+                      <b>Activity assigned to</b>
+                      {{ $note->assignee->name }}
+                    </div>
+                  @endif
+                  <div class="note-body">{{ $note->body ?: '—' }}</div>
+                </article>
+              @endforeach
+            </div>
+          @else
+            <div class="empty-state">No notes yet.</div>
+          @endif
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal" id="noteModal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <strong>Note</strong>
+      <button type="button" class="btn-link" data-close-modal>&times;</button>
+    </div>
+    <form method="post" action="{{ route('admin.clients.notes.store', ['id' => $client->id]) }}">
+      @csrf
+      <div class="modal-body">
+        <div class="field">
+          <label>For {{ $displayName }}</label>
+          <div class="sub">{{ $client->email_primary ?: 'No email' }}</div>
+        </div>
+        <div class="field">
+          <label for="note_assigned_to">Activity assigned to</label>
+          <select class="select" id="note_assigned_to" name="assigned_to">
+            <option value="">No assigned team</option>
+            @foreach(($activityUsers ?? []) as $u)
+              <option value="{{ $u->id }}" {{ $selectedAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+            @endforeach
+          </select>
+        </div>
+        <div class="field">
+          <label>Note</label>
+          <textarea name="body" rows="7" placeholder="Start typing to leave a note..." required>{{ old('body') }}</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-link" data-close-modal>Cancel</button>
+        <button type="submit" class="btn-link btn-brand">Create note</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal task-modal" id="taskModal" aria-hidden="true">
+  <div class="modal-card">
+    <form class="task-form" method="post" action="{{ route('admin.clients.tasks.store', ['id' => $client->id]) }}">
+      @csrf
+      @php
+        $duePreset = old('due_date_preset', '3_business_days');
+        $dueTime = old('due_time', '08:00');
+        $reminder = old('reminder', 'none');
+        $taskType = old('task_type', 'to_do');
+        $priority = old('priority', 'none');
+      @endphp
+      <div class="task-head">
+        <span class="task-grip" aria-hidden="true">&#8942;&#8942;</span>
+        <button type="button" class="task-chevron" aria-label="Collapse task modal">&#8964;</button>
+        <strong>Task</strong>
+        <button type="button" class="task-close" data-close-modal aria-label="Close task modal">&times;</button>
+      </div>
+
+      <div class="task-body">
+        <input class="task-title-input" name="title" value="{{ old('title') }}" placeholder="Task title" required>
+
+        <div class="task-split">
+          <div>
+            <span class="task-label">Activity date</span>
+            <div class="task-pick-row">
+              <select class="task-select-link" name="due_date_preset" aria-label="Activity date">
+                <option value="today" {{ $duePreset === 'today' ? 'selected' : '' }}>Today</option>
+                <option value="tomorrow" {{ $duePreset === 'tomorrow' ? 'selected' : '' }}>Tomorrow</option>
+                <option value="1_business_day" {{ $duePreset === '1_business_day' ? 'selected' : '' }}>In 1 business day</option>
+                <option value="2_business_days" {{ $duePreset === '2_business_days' ? 'selected' : '' }}>In 2 business days</option>
+                <option value="3_business_days" {{ $duePreset === '3_business_days' ? 'selected' : '' }}>In 3 business days</option>
+                <option value="1_week" {{ $duePreset === '1_week' ? 'selected' : '' }}>In 1 week</option>
+              </select>
+              <input class="task-time" type="time" name="due_time" value="{{ $dueTime }}" aria-label="Activity time">
+            </div>
+          </div>
+          <div>
+            <span class="task-label">Send reminder</span>
+            <select class="task-select-link" name="reminder" aria-label="Send reminder">
+              <option value="none" {{ $reminder === 'none' ? 'selected' : '' }}>No reminder</option>
+              <option value="at_due_time" {{ $reminder === 'at_due_time' ? 'selected' : '' }}>At task due time</option>
+              <option value="30_minutes_before" {{ $reminder === '30_minutes_before' ? 'selected' : '' }}>30 minutes before</option>
+              <option value="1_hour_before" {{ $reminder === '1_hour_before' ? 'selected' : '' }}>1 hour before</option>
+              <option value="1_day_before" {{ $reminder === '1_day_before' ? 'selected' : '' }}>1 day before</option>
+              <option value="1_week_before" {{ $reminder === '1_week_before' ? 'selected' : '' }}>1 week before</option>
+              <option value="custom_date" {{ $reminder === 'custom_date' ? 'selected' : '' }}>Custom Date</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="task-checkbox">
+          <input type="checkbox" name="repeat" value="1" {{ old('repeat') ? 'checked' : '' }}>
+          Set to repeat
+        </label>
+
+        <div class="task-divider"></div>
+
+        <div class="task-meta-grid">
+          <div>
+            <span class="task-meta-label">Task Type</span>
+            <select class="task-meta-select" name="task_type" aria-label="Task Type">
+              <option value="to_do" {{ $taskType === 'to_do' ? 'selected' : '' }}>To-do</option>
+              <option value="call" {{ $taskType === 'call' ? 'selected' : '' }}>Call</option>
+              <option value="email" {{ $taskType === 'email' ? 'selected' : '' }}>Email</option>
+            </select>
+          </div>
+          <div>
+            <span class="task-meta-label">Priority</span>
+            <select class="task-meta-select" name="priority" aria-label="Priority">
+              <option value="none" {{ $priority === 'none' ? 'selected' : '' }}>None</option>
+              <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
+              <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
+              <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High</option>
+            </select>
+          </div>
+          <div>
+            <span class="task-meta-label">Queue</span>
+            <select class="task-meta-select" name="queue" aria-label="Queue">
+              <option value="" {{ old('queue', '') === '' ? 'selected' : '' }}>None</option>
+              <option value="Sales follow-up" {{ old('queue') === 'Sales follow-up' ? 'selected' : '' }}>Sales follow-up</option>
+              <option value="Event planning" {{ old('queue') === 'Event planning' ? 'selected' : '' }}>Event planning</option>
+              <option value="Customer service" {{ old('queue') === 'Customer service' ? 'selected' : '' }}>Customer service</option>
+            </select>
+          </div>
+          <div>
+            <span class="task-meta-label">Activity assigned to</span>
+            <select class="task-meta-select" name="assigned_to" aria-label="Activity assigned to">
+              <option value="">Unassigned</option>
+              @foreach(($taskUsers ?? []) as $u)
+                <option value="{{ $u->id }}" {{ $selectedTaskAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
               @endforeach
             </select>
           </div>
-          <div class="field">
-            <label>Note</label>
-            <textarea name="body" rows="7" placeholder="Start typing to leave a note..." required>{{ old('body') }}</textarea>
+        </div>
+
+        <div class="task-notes">
+          <textarea name="description" rows="6" placeholder="Notes...">{{ old('description') }}</textarea>
+          <div class="task-toolbar" aria-hidden="true">
+            <strong>B</strong>
+            <em>I</em>
+            <u>U</u>
+            <span>More&#9662;</span>
+            <span>&#128279;</span>
+            <span>&#9638;</span>
+            <span>&#8801;</span>
+            <span class="task-associated">Associated with 1 record&#9662;</span>
           </div>
         </div>
-        <div class="modal-foot">
-          <button type="button" class="btn-link" data-close-modal>Cancel</button>
-          <button type="submit" class="btn-link btn-brand">Create note</button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="task-foot">
+        <button type="submit" class="task-create-btn">Create</button>
+      </div>
+    </form>
   </div>
+</div>
+@endsection
 
-  <div class="modal task-modal" id="taskModal" aria-hidden="true">
-    <div class="modal-card">
-      <form class="task-form" method="post" action="{{ route('admin.clients.tasks.store', ['id' => $client->id]) }}">
-        @csrf
-        @php
-          $duePreset = old('due_date_preset', '3_business_days');
-          $dueTime = old('due_time', '08:00');
-          $reminder = old('reminder', 'none');
-          $taskType = old('task_type', 'to_do');
-          $priority = old('priority', 'none');
-        @endphp
-        <div class="task-head">
-          <span class="task-grip" aria-hidden="true">&#8942;&#8942;</span>
-          <button type="button" class="task-chevron" aria-label="Collapse task modal">&#8964;</button>
-          <strong>Task</strong>
-          <button type="button" class="task-close" data-close-modal aria-label="Close task modal">&times;</button>
-        </div>
-
-        <div class="task-body">
-          <input class="task-title-input" name="title" value="{{ old('title') }}" placeholder="Task title" required>
-
-          <div class="task-split">
-            <div>
-              <span class="task-label">Activity date</span>
-              <div class="task-pick-row">
-                <select class="task-select-link" name="due_date_preset" aria-label="Activity date">
-                  <option value="today" {{ $duePreset === 'today' ? 'selected' : '' }}>Today</option>
-                  <option value="tomorrow" {{ $duePreset === 'tomorrow' ? 'selected' : '' }}>Tomorrow</option>
-                  <option value="1_business_day" {{ $duePreset === '1_business_day' ? 'selected' : '' }}>In 1 business day</option>
-                  <option value="2_business_days" {{ $duePreset === '2_business_days' ? 'selected' : '' }}>In 2 business days</option>
-                  <option value="3_business_days" {{ $duePreset === '3_business_days' ? 'selected' : '' }}>In 3 business days</option>
-                  <option value="1_week" {{ $duePreset === '1_week' ? 'selected' : '' }}>In 1 week</option>
-                </select>
-                <input class="task-time" type="time" name="due_time" value="{{ $dueTime }}" aria-label="Activity time">
-              </div>
-            </div>
-            <div>
-              <span class="task-label">Send reminder</span>
-              <select class="task-select-link" name="reminder" aria-label="Send reminder">
-                <option value="none" {{ $reminder === 'none' ? 'selected' : '' }}>No reminder</option>
-                <option value="at_due_time" {{ $reminder === 'at_due_time' ? 'selected' : '' }}>At task due time</option>
-                <option value="30_minutes_before" {{ $reminder === '30_minutes_before' ? 'selected' : '' }}>30 minutes before</option>
-                <option value="1_hour_before" {{ $reminder === '1_hour_before' ? 'selected' : '' }}>1 hour before</option>
-                <option value="1_day_before" {{ $reminder === '1_day_before' ? 'selected' : '' }}>1 day before</option>
-                <option value="1_week_before" {{ $reminder === '1_week_before' ? 'selected' : '' }}>1 week before</option>
-                <option value="custom_date" {{ $reminder === 'custom_date' ? 'selected' : '' }}>Custom Date</option>
-              </select>
-            </div>
-          </div>
-
-          <label class="task-checkbox">
-            <input type="checkbox" name="repeat" value="1" {{ old('repeat') ? 'checked' : '' }}>
-            Set to repeat
-          </label>
-
-          <div class="task-divider"></div>
-
-          <div class="task-meta-grid">
-            <div>
-              <span class="task-meta-label">Task Type</span>
-              <select class="task-meta-select" name="task_type" aria-label="Task Type">
-                <option value="to_do" {{ $taskType === 'to_do' ? 'selected' : '' }}>To-do</option>
-                <option value="call" {{ $taskType === 'call' ? 'selected' : '' }}>Call</option>
-                <option value="email" {{ $taskType === 'email' ? 'selected' : '' }}>Email</option>
-              </select>
-            </div>
-            <div>
-              <span class="task-meta-label">Priority</span>
-              <select class="task-meta-select" name="priority" aria-label="Priority">
-                <option value="none" {{ $priority === 'none' ? 'selected' : '' }}>None</option>
-                <option value="low" {{ $priority === 'low' ? 'selected' : '' }}>Low</option>
-                <option value="medium" {{ $priority === 'medium' ? 'selected' : '' }}>Medium</option>
-                <option value="high" {{ $priority === 'high' ? 'selected' : '' }}>High</option>
-              </select>
-            </div>
-            <div>
-              <span class="task-meta-label">Queue</span>
-              <select class="task-meta-select" name="queue" aria-label="Queue">
-                <option value="" {{ old('queue', '') === '' ? 'selected' : '' }}>None</option>
-                <option value="Sales follow-up" {{ old('queue') === 'Sales follow-up' ? 'selected' : '' }}>Sales follow-up</option>
-                <option value="Event planning" {{ old('queue') === 'Event planning' ? 'selected' : '' }}>Event planning</option>
-                <option value="Customer service" {{ old('queue') === 'Customer service' ? 'selected' : '' }}>Customer service</option>
-              </select>
-            </div>
-            <div>
-              <span class="task-meta-label">Activity assigned to</span>
-              <select class="task-meta-select" name="assigned_to" aria-label="Activity assigned to">
-                <option value="">Unassigned</option>
-                @foreach(($taskUsers ?? []) as $u)
-                  <option value="{{ $u->id }}" {{ $selectedTaskAssignedTo === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                @endforeach
-              </select>
-            </div>
-          </div>
-
-          <div class="task-notes">
-            <textarea name="description" rows="6" placeholder="Notes...">{{ old('description') }}</textarea>
-            <div class="task-toolbar" aria-hidden="true">
-              <strong>B</strong>
-              <em>I</em>
-              <u>U</u>
-              <span>More&#9662;</span>
-              <span>&#128279;</span>
-              <span>&#9638;</span>
-              <span>&#8801;</span>
-              <span class="task-associated">Associated with 1 record&#9662;</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="task-foot">
-          <button type="submit" class="task-create-btn">Create</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      var collapseBtn = document.getElementById('collapseAllBtn');
-      var collapseMenu = document.getElementById('collapseAllMenu');
-      if (collapseBtn && collapseMenu) {
-        collapseBtn.addEventListener('click', function () {
-          collapseMenu.style.display = collapseMenu.style.display === 'block' ? 'none' : 'block';
-        });
-        document.addEventListener('click', function (e) {
-          if (!collapseMenu.contains(e.target) && !collapseBtn.contains(e.target)) {
-            collapseMenu.style.display = 'none';
-          }
-        });
-        collapseMenu.querySelectorAll('[data-collapse-mode]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var expand = btn.getAttribute('data-collapse-mode') === 'expand';
-            document.querySelectorAll('.activity-toggle').forEach(function (toggle) {
-              var id = toggle.getAttribute('data-toggle-target');
-              var body = document.getElementById(id);
-              if (!body) return;
-              toggle.setAttribute('aria-expanded', expand ? 'true' : 'false');
-              if (expand) body.removeAttribute('hidden');
-              else body.setAttribute('hidden', 'hidden');
-            });
-            collapseMenu.style.display = 'none';
+@push('scripts')
+<script>
+  (function () {
+    var collapseBtn = document.getElementById('collapseAllBtn');
+    var collapseMenu = document.getElementById('collapseAllMenu');
+    if (collapseBtn && collapseMenu) {
+      collapseBtn.addEventListener('click', function () {
+        collapseMenu.style.display = collapseMenu.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', function (e) {
+        if (!collapseMenu.contains(e.target) && !collapseBtn.contains(e.target)) {
+          collapseMenu.style.display = 'none';
+        }
+      });
+      collapseMenu.querySelectorAll('[data-collapse-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var expand = btn.getAttribute('data-collapse-mode') === 'expand';
+          document.querySelectorAll('.activity-toggle').forEach(function (toggle) {
+            var id = toggle.getAttribute('data-toggle-target');
+            var body = document.getElementById(id);
+            if (!body) return;
+            toggle.setAttribute('aria-expanded', expand ? 'true' : 'false');
+            if (expand) body.removeAttribute('hidden');
+            else body.setAttribute('hidden', 'hidden');
           });
-        });
-      }
-
-      document.querySelectorAll('.activity-toggle').forEach(function (toggle) {
-        toggle.addEventListener('click', function () {
-          var id = toggle.getAttribute('data-toggle-target');
-          var body = document.getElementById(id);
-          if (!body) return;
-          var expanded = toggle.getAttribute('aria-expanded') === 'true';
-          toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-          if (expanded) body.setAttribute('hidden', 'hidden');
-          else body.removeAttribute('hidden');
+          collapseMenu.style.display = 'none';
         });
       });
+    }
 
-      var uploadBtn = document.getElementById('uploadPhotosBtn');
-      var uploadInput = document.getElementById('photosInput');
-      var uploadForm = document.getElementById('uploadPhotosForm');
-      if (uploadBtn && uploadInput && uploadForm) {
-        uploadBtn.addEventListener('click', function () {
-          uploadInput.click();
-        });
-        uploadInput.addEventListener('change', function () {
-          if (uploadInput.files && uploadInput.files.length > 0) {
-            uploadForm.submit();
-          }
-        });
-      }
-
-      function closeModal(el) {
-        el.classList.remove('show');
-        el.setAttribute('aria-hidden', 'true');
-      }
-      function openModal(el) {
-        el.classList.add('show');
-        el.setAttribute('aria-hidden', 'false');
-      }
-
-      document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = btn.getAttribute('data-open-modal');
-          var modal = document.getElementById(id);
-          if (modal) openModal(modal);
-        });
+    document.querySelectorAll('.activity-toggle').forEach(function (toggle) {
+      toggle.addEventListener('click', function () {
+        var id = toggle.getAttribute('data-toggle-target');
+        var body = document.getElementById(id);
+        if (!body) return;
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        if (expanded) body.setAttribute('hidden', 'hidden');
+        else body.removeAttribute('hidden');
       });
+    });
 
-      document.querySelectorAll('.modal').forEach(function (modal) {
-        modal.addEventListener('click', function (e) {
-          if (e.target === modal) closeModal(modal);
-        });
+    var uploadBtn = document.getElementById('uploadPhotosBtn');
+    var uploadInput = document.getElementById('photosInput');
+    var uploadForm = document.getElementById('uploadPhotosForm');
+    if (uploadBtn && uploadInput && uploadForm) {
+      uploadBtn.addEventListener('click', function () {
+        uploadInput.click();
       });
-      document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var modal = btn.closest('.modal');
-          if (modal) closeModal(modal);
-        });
+      uploadInput.addEventListener('change', function () {
+        if (uploadInput.files && uploadInput.files.length > 0) {
+          uploadForm.submit();
+        }
       });
-    })();
-  </script>
-</body>
-</html>
+    }
+
+    function closeModal(el) {
+      el.classList.remove('show');
+      el.setAttribute('aria-hidden', 'true');
+    }
+    function openModal(el) {
+      el.classList.add('show');
+      el.setAttribute('aria-hidden', 'false');
+    }
+
+    document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-open-modal');
+        var modal = document.getElementById(id);
+        if (modal) openModal(modal);
+      });
+    });
+
+    document.querySelectorAll('.modal').forEach(function (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal(modal);
+      });
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var modal = btn.closest('.modal');
+        if (modal) closeModal(modal);
+      });
+    });
+  })();
+</script>
+@endpush
