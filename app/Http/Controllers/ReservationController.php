@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 use App\Models\Reservation;
 use App\Models\Timeslot;
@@ -310,7 +311,29 @@ private function selectedMenuItems(array $menu, ?Reservation $reservation, array
             $reservation->guests = (int) $data['guests'];
             $reservation->date   = $data['date'];
             $reservation->time   = $data['time'].':00';
-            $reservation->save();
+            try {
+                $reservation->save();
+            } catch (QueryException $e) {
+                if ($reservation->exists) {
+                    throw $e;
+                }
+
+                Log::error('reservation.step1.create_failed_retrying_minimal_payload', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                $fallback = new Reservation();
+                $fallback->code = $reservation->code ?: 'RSV-'.Str::upper(Str::random(6));
+                $fallback->status = 'draft';
+                $fallback->deposit_due = 0;
+                $fallback->deposit_paid = 0;
+                $fallback->guests = (int) $data['guests'];
+                $fallback->date = $data['date'];
+                $fallback->time = $data['time'].':00';
+                $fallback->save();
+
+                $reservation = $fallback;
+            }
 
             // After saving, if capacity reaches zero, auto-close the slot
             try {
