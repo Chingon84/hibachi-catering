@@ -44,6 +44,18 @@
           trim((string) ($r?->zip_code ?? '')),
       ]))) ?: $missing;
       $logoUrl = asset('assets/brand/logo.png');
+
+      $business = [];
+      try {
+          if (class_exists(\App\Models\AdminSetting::class)) {
+              $business = \App\Models\AdminSetting::valuesForGroup('business_profile', []);
+          }
+      } catch (\Throwable $e) {
+          $business = [];
+      }
+      $businessPhone   = trim((string) ($business['business_phone'] ?? ''));
+      $businessEmail   = trim((string) ($business['business_email'] ?? ''));
+      $businessAddress = trim((string) ($business['address'] ?? ''));
     @endphp
 
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
@@ -247,7 +259,11 @@
                   <tr>
                     <td align="center" style="padding:17px 18px;color:#cbd5e1;font-size:12px;line-height:1.6;">
                       <strong style="display:block;color:#ffffff;font-size:13px;">Hibachi Catering</strong>
-                      9022 Pulsar Ct, Corona, CA 92883 · info@hibachicater.com · 951-326-9602
+                      @if($businessAddress || $businessEmail || $businessPhone)
+                        {{ implode(' · ', array_filter([$businessAddress, $businessEmail, $businessPhone])) }}
+                      @else
+                        info@hibachicater.com · 951-326-9602
+                      @endif
                     </td>
                   </tr>
                 </table>
