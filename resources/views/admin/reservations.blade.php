@@ -51,6 +51,11 @@
   .toast.success{color:#065f46;border-color:#a7f3d0;background:#ecfdf5}
   .toast.warn{color:#92400e;border-color:#fcd34d;background:#fffbeb}
   .toast.error{color:#991b1b;border-color:#fecaca;background:#fef2f2}
+  .reservation-row.is-canceled{background:#fff7f7}
+  .reservation-row.is-canceled:hover{background:#fef2f2}
+  .date-cell{white-space:nowrap}
+  .date-day{display:block;font-size:11px;font-weight:700;color:#6b7280;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+  .date-main{display:block;font-size:13px;line-height:1.4}
 </style>
 @endpush
 
@@ -103,9 +108,13 @@
         </thead>
         <tbody>
           @forelse($rows as $r)
-            <tr class="reservation-row" data-href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" tabindex="0" aria-label="Open reservation {{ $r->invoice_number ?? $r->code ?? $r->id }}">
+            @php $rowStatus = strtolower((string) ($r->status ?? '')); @endphp
+            <tr class="reservation-row {{ str_contains($rowStatus, 'cancel') ? 'is-canceled' : '' }}" data-href="{{ route('admin.reservations.show',['id'=>$r->id]) }}" tabindex="0" aria-label="Open reservation {{ $r->invoice_number ?? $r->code ?? $r->id }}">
               <td>{{ $r->invoice_number ?? "—" }}</td>
-              <td>{{ $r->date?->format('m/d/Y') }}</td>
+              <td class="date-cell">
+                <span class="date-day">{{ $r->date?->format('D') }}</span>
+                <span class="date-main">{{ $r->date?->format('m/d/Y') }}</span>
+              </td>
               <td>{{ \Carbon\Carbon::parse($r->time)->format('g:i A') }}</td>
               <td>{{ $r->guests }}</td>
               <td>

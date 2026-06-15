@@ -13,7 +13,6 @@ use App\Services\TaxRateResolver;
 use App\Support\AdminMenuCatalog;
 use App\Support\CaliforniaCateringTax;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Support\MenuLabel;
 use App\Support\ReservationTotals;
@@ -140,7 +139,7 @@ class ReservationAdminController extends Controller
             'notes'         => 'nullable|string|max:500',
             'date'          => 'required|date',
             'time'          => 'required',
-            'guests'        => 'required|integer|min:1',
+            'guests'        => 'required|integer|min:1|max:500',
             'status'        => 'nullable|string|in:confirmed,pending,pending_payment,canceled',
             'event_markers' => 'nullable|array',
             'event_markers.*' => 'string|in:' . implode(',', array_keys(Reservation::eventMarkerOptions())),
@@ -442,7 +441,9 @@ class ReservationAdminController extends Controller
                     return response()->json(['ok'=>false,'error'=>'Duplicate transaction id'], 422);
                 }
             }
-            try { if (\App\Models\Payment::query()->where('transaction_id',$tx)->exists()) return response()->json(['ok'=>false,'error'=>'Duplicate transaction id'], 422); } catch (\Throwable $e) {}
+            if (\App\Models\Payment::query()->where('transaction_id', $tx)->exists()) {
+                return response()->json(['ok' => false, 'error' => 'Duplicate transaction id'], 422);
+            }
         }
 
         $amount = round((float)$data['amount'], 2);
@@ -875,15 +876,12 @@ class ReservationAdminController extends Controller
             ->values()
             ->all();
 
-        $linkedByPivot = [];
-        if (Schema::hasTable('client_reservations')) {
-            $linkedByPivot = ClientReservation::query()
-                ->whereIn('reservation_id', $reservationIds)
-                ->pluck('reservation_id')
-                ->map(fn ($id) => (int) $id)
-                ->flip()
-                ->all();
-        }
+        $linkedByPivot = ClientReservation::query()
+            ->whereIn('reservation_id', $reservationIds)
+            ->pluck('reservation_id')
+            ->map(fn ($id) => (int) $id)
+            ->flip()
+            ->all();
 
         $existingClients = Client::query()
             ->select(['id', 'email_primary', 'email_alt', 'phone_primary', 'phone_alt', 'created_from_reservation_id'])

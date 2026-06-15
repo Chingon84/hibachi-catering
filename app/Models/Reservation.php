@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Support\ReservationTotals;
 
@@ -153,23 +152,19 @@ public function staffPaymentSummary(): array
 protected static function booted()
 {
     static::creating(function (Reservation $r) {
-        if (Schema::hasColumn($r->getTable(), 'public_invoice_token') && empty($r->public_invoice_token)) {
+        if (empty($r->public_invoice_token)) {
             $r->public_invoice_token = static::generatePublicInvoiceToken();
         }
     });
 
-    static::deleting(function(Reservation $r){
-        try { $r->items()->delete(); } catch (\Throwable $e) {}
-        try { $r->payments()->delete(); } catch (\Throwable $e) {}
+    static::deleting(function (Reservation $r) {
+        $r->items()->delete();
+        $r->payments()->delete();
     });
 }
 
 public function ensurePublicInvoiceToken(): string
 {
-    if (!Schema::hasColumn($this->getTable(), 'public_invoice_token')) {
-        return '';
-    }
-
     if (!empty($this->public_invoice_token)) {
         return (string) $this->public_invoice_token;
     }
