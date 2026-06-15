@@ -97,7 +97,7 @@
                     </td>
                     <td style="text-align:right">
                       <div class="price-wrap">
-                        <input class="input price track" data-init="{{ number_format((float)($it['price'] ?? 0),2,'.','') }}" type="number" step="0.01" name="items[{{ $cat }}][{{ $i }}][price]" value="{{ old("items.$cat.$i.price", $it['price'] ?? 0) }}">
+                        <input class="input price track" data-init="{{ number_format((float)($it['price'] ?? 0),2,'.','') }}" type="number" step="0.01" name="items[{{ $cat }}][{{ $i }}][price]" value="{{ old("items.$cat.$i.price", number_format((float)($it['price'] ?? 0),2,'.','')) }}">
                         <button type="button" class="icon-btn remove-item" title="Remove item" aria-label="Remove item">−</button>
                       </div>
                     </td>

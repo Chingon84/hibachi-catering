@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\Models\Reservation;
 use App\Services\TaxRateResolver;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Utility helpers to derive consistent totals/balance figures
@@ -170,17 +169,9 @@ class ReservationTotals
             return [0.0, 0.0, 0.0];
         }
 
-        try {
-            $columns = ['amount', 'payload_json'];
-            if (Schema::hasColumn('payments', 'type')) {
-                $columns[] = 'type';
-            }
-            $payments = $reservation->payments()
-                ->where('status', 'succeeded')
-                ->get($columns);
-        } catch (\Throwable $e) {
-            return [0.0, 0.0, 0.0];
-        }
+        $payments = $reservation->payments()
+            ->where('status', 'succeeded')
+            ->get(['amount', 'payload_json', 'type']);
 
         $deposit = 0.0;
         $extra   = 0.0;

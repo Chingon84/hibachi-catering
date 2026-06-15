@@ -5,7 +5,6 @@ namespace App\Support;
 use App\Models\Menu;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminMenuCatalog
@@ -94,14 +93,10 @@ class AdminMenuCatalog
 
     public function replaceFromGrouped(array $items): void
     {
-        if (!Schema::hasTable('menus')) {
-            throw new \RuntimeException('Menus table is not available.');
-        }
-
         DB::transaction(function () use ($items) {
-            Menu::query()->delete();
-
+            $submittedKeys = [];
             $categorySort = 0;
+
             foreach ($items as $category => $rows) {
                 $categoryName = trim((string) $category);
                 if ($categoryName === '') {
@@ -123,51 +118,50 @@ class AdminMenuCatalog
                         $name = MenuLabel::standardizeText($key);
                     }
 
-                    Menu::query()->create([
-                        'item_key' => $key,
-                        'name' => $name,
-                        'description' => MenuLabel::standardizeText(trim((string) ($row['desc'] ?? $row['description'] ?? ''))),
-                        'category' => $categoryName,
-                        'category_sort' => $categorySort,
-                        'price' => round((float) ($row['price'] ?? 0), 2),
-                        'is_active' => true,
-                        'sort' => $rowSort,
-                    ]);
+                    Menu::query()->updateOrCreate(
+                        ['item_key' => $key],
+                        [
+                            'name' => $name,
+                            'description' => MenuLabel::standardizeText(trim((string) ($row['desc'] ?? $row['description'] ?? ''))),
+                            'category' => $categoryName,
+                            'category_sort' => $categorySort,
+                            'price' => round((float) ($row['price'] ?? 0), 2),
+                            'is_active' => true,
+                            'sort' => $rowSort,
+                        ]
+                    );
 
+                    $submittedKeys[] = $key;
                     $rowSort++;
                 }
 
                 $categorySort++;
+            }
+
+            // Items removed from the form are deactivated (not hard-deleted)
+            // so historical references and IDs are preserved.
+            if (!empty($submittedKeys)) {
+                Menu::query()
+                    ->whereNotIn('item_key', $submittedKeys)
+                    ->update(['is_active' => false]);
             }
         });
     }
 
     private function databaseRows(bool $activeOnly): Collection
     {
-        if (!Schema::hasTable('menus')) {
-            return collect();
-        }
-
         $query = Menu::query();
 
-        if ($activeOnly && Schema::hasColumn('menus', 'is_active')) {
+        if ($activeOnly) {
             $query->where('is_active', true);
         }
 
-        $query->orderBy($this->hasColumn('category_sort') ? 'category_sort' : 'category')
+        $query->orderBy('category_sort')
             ->orderBy('category')
-            ->orderBy($this->hasColumn('sort') ? 'sort' : 'name')
+            ->orderBy('sort')
             ->orderBy('name');
 
-        $select = ['id', 'name', 'category', 'price'];
-        if ($this->hasColumn('item_key')) {
-            $select[] = 'item_key';
-        }
-        if ($this->hasColumn('description')) {
-            $select[] = 'description';
-        }
-
-        return $query->get($select);
+        return $query->get(['id', 'item_key', 'name', 'description', 'category', 'price']);
     }
 
     private function configRows(): array
@@ -182,16 +176,4 @@ class AdminMenuCatalog
         }
     }
 
-    private function hasColumn(string $column): bool
-    {
-        static $columns = null;
-
-        if ($columns === null) {
-            $columns = Schema::hasTable('menus')
-                ? collect(Schema::getColumnListing('menus'))->flip()
-                : collect();
-        }
-
-        return $columns->has($column);
-    }
 }
