@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Services\ReportRevenueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use App\Models\Reservation;
 use Carbon\Carbon;
 
@@ -87,9 +86,7 @@ class ReportsController extends Controller
                 $display = ($key === 'online') ? 'Online' : $n;
                 if (!array_key_exists($key, $map)) $map[$key] = $display;
             };
-            if (Schema::hasTable('users')) {
-                foreach (DB::table('users')->select('name')->pluck('name') as $n) { $push($n); }
-            }
+            foreach (DB::table('users')->select('name')->pluck('name') as $n) { $push($n); }
             foreach (Reservation::query()->distinct()->whereNotNull('booked_by')->where('booked_by','!=','')->pluck('booked_by') as $n) { $push($n); }
             $push('Online'); // ensure present
             $agentOptions = array_values($map);

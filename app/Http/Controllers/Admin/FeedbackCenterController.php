@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class FeedbackCenterController extends Controller
@@ -58,9 +57,6 @@ class FeedbackCenterController extends Controller
                     ->values()
                     ->all();
                 $validated['chef'] = (string) collect($validated['team_members'])->first();
-                if (!Schema::hasColumn('complaints', 'team_members')) {
-                    unset($validated['team_members']);
-                }
                 $record = Complaint::create($validated);
                 $routeParams['item'] = $record->complaint_id;
                 break;
@@ -128,7 +124,7 @@ class FeedbackCenterController extends Controller
             ->whereIn('staff_type', TeamController::STAFF_TYPES)
             ->orderBy('name')
             ->get(['name', 'staff_type']);
-        $complaintsHasTeamMembers = Schema::hasColumn('complaints', 'team_members');
+        $complaintsHasTeamMembers = true;
 
         $staffTypeLookup = $staffDirectory
             ->pluck('staff_type', 'name')
@@ -229,24 +225,22 @@ class FeedbackCenterController extends Controller
             }
         };
 
-        $daysOff = (Schema::hasTable('days_off_requests')
-            ? DaysOffRequest::query()
-                ->orderByDesc('start_date')
-                ->orderByDesc('id')
-                ->get()
-                ->map(fn ($row) => [
-                    'request_id' => $row->request_id,
-                    'chef' => $row->chef,
-                    'staff_type' => $staffTypeLookup->get($row->chef),
-                    'start_date' => optional($row->start_date)->toDateString(),
-                    'end_date' => optional($row->end_date)->toDateString(),
-                    'status' => $row->status,
-                    'days' => $row->days,
-                    'approved_by' => $row->approved_by ?: 'Pending',
-                    'notes' => $row->notes,
-                    'unauthorized_days' => $row->unauthorized_days,
-                ])
-            : collect())
+        $daysOff = DaysOffRequest::query()
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn ($row) => [
+                'request_id' => $row->request_id,
+                'chef' => $row->chef,
+                'staff_type' => $staffTypeLookup->get($row->chef),
+                'start_date' => optional($row->start_date)->toDateString(),
+                'end_date' => optional($row->end_date)->toDateString(),
+                'status' => $row->status,
+                'days' => $row->days,
+                'approved_by' => $row->approved_by ?: 'Pending',
+                'notes' => $row->notes,
+                'unauthorized_days' => $row->unauthorized_days,
+            ])
             ->map(function (array $row) use ($inclusiveDaysBetween) {
                 $overrides = Cache::get($this->feedbackWorkflowCacheKey('days-off', (string) $row['request_id']), []);
                 if (is_array($overrides) && $overrides !== []) {
@@ -1651,9 +1645,7 @@ class FeedbackCenterController extends Controller
                     }
                     if ($teamMembers->isNotEmpty()) {
                         $model->chef = (string) $teamMembers->first();
-                        if (Schema::hasColumn('complaints', 'team_members')) {
-                            $model->team_members = $teamMembers->all();
-                        }
+                        $model->team_members = $teamMembers->all();
                     }
                     $model->action_taken = $internalNote;
                     $model->save();
@@ -1665,26 +1657,24 @@ class FeedbackCenterController extends Controller
                 if ($startDate !== '' && $endDate !== '') {
                     $daysValue = \Carbon\Carbon::parse($startDate)->diffInDays(\Carbon\Carbon::parse($endDate)) + 1;
                 }
-                if (Schema::hasTable('days_off_requests')) {
-                    if ($model = DaysOffRequest::query()->where('request_id', $itemId)->first()) {
-                        if ($status !== '') {
-                            $model->status = $status;
-                        }
-                        if ($approvedBy !== '') {
-                            $model->approved_by = $approvedBy;
-                        }
-                        if ($startDate !== '') {
-                            $model->start_date = $startDate;
-                        }
-                        if ($endDate !== '') {
-                            $model->end_date = $endDate;
-                        }
-                        if ($daysValue !== null) {
-                            $model->days = $daysValue;
-                        }
-                        $model->notes = $internalNote;
-                        $model->save();
+                if ($model = DaysOffRequest::query()->where('request_id', $itemId)->first()) {
+                    if ($status !== '') {
+                        $model->status = $status;
                     }
+                    if ($approvedBy !== '') {
+                        $model->approved_by = $approvedBy;
+                    }
+                    if ($startDate !== '') {
+                        $model->start_date = $startDate;
+                    }
+                    if ($endDate !== '') {
+                        $model->end_date = $endDate;
+                    }
+                    if ($daysValue !== null) {
+                        $model->days = $daysValue;
+                    }
+                    $model->notes = $internalNote;
+                    $model->save();
                 }
                 break;
         }

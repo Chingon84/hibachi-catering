@@ -30,21 +30,24 @@ class TrashController extends Controller
     {
         $r = Reservation::onlyTrashed()->findOrFail($id);
         $r->restore();
-        try { $r->items()->withTrashed()->restore(); } catch (\Throwable $e) {}
-        try { $r->payments()->withTrashed()->restore(); } catch (\Throwable $e) {}
-        return redirect()->route('admin.trash')->with('ok','Reservation restored');
+        $r->items()->withTrashed()->restore();
+        $r->payments()->withTrashed()->restore();
+
+        return redirect()->route('admin.trash')->with('ok', 'Reservation restored');
     }
 
     public function forceDelete(int $id)
     {
         $r = Reservation::onlyTrashed()->findOrFail($id);
+
         try {
-            try { $r->items()->withTrashed()->forceDelete(); } catch (\Throwable $e) {}
-            try { $r->payments()->withTrashed()->forceDelete(); } catch (\Throwable $e) {}
+            $r->items()->withTrashed()->forceDelete();
+            $r->payments()->withTrashed()->forceDelete();
             $r->forceDelete();
         } catch (\Throwable $e) {
-            return redirect()->route('admin.trash')->withErrors(['trash'=>'Could not delete permanently']);
+            return redirect()->route('admin.trash')->withErrors(['trash' => 'Could not delete permanently']);
         }
-        return redirect()->route('admin.trash')->with('ok','Reservation deleted permanently');
+
+        return redirect()->route('admin.trash')->with('ok', 'Reservation deleted permanently');
     }
 }
