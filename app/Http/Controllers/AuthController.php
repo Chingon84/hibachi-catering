@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,34 +13,16 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $request->validate([
-            'login' => ['required','string'],
-            'password' => ['required','string'],
-        ]);
+        $request->authenticate();
+        $request->session()->regenerate();
 
-        $login = trim((string) $request->input('login'));
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        $creds = [
-            $field => $login,
-            'password' => $request->input('password'),
-        ];
-
-        if (Auth::attempt($creds, $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
-            if ($request->user()?->isStaffPortalUser()) {
-                return redirect()->route('staff.dashboard');
-            }
-
-            return redirect()->intended(route('admin.dashboard'));
+        if ($request->user()?->isStaffPortalUser()) {
+            return redirect()->route('staff.dashboard');
         }
 
-        return back()->withErrors([
-            'login' => 'We could not sign you in with those credentials.',
-        ])->onlyInput('login');
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function logout(Request $request)

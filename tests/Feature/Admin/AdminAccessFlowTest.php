@@ -20,10 +20,23 @@ class AdminAccessFlowTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_active_staff_without_admin_access_gets_403_on_admin_dashboard(): void
+    public function test_active_staff_without_admin_access_is_redirected_to_staff_portal(): void
     {
         $user = User::factory()->create([
             'role' => 'staff',
+            'can_access_admin' => false,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user, 'web')->get('/admin');
+
+        $response->assertRedirect(route('staff.dashboard'));
+    }
+
+    public function test_active_user_with_unknown_role_without_admin_access_gets_403(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'unknown-role',
             'can_access_admin' => false,
             'is_active' => true,
         ]);
@@ -540,5 +553,108 @@ class AdminAccessFlowTest extends TestCase
         $this->actingAs($user, 'web')
             ->get('/admin/feedback-center')
             ->assertOk();
+    }
+
+    // -----------------------------------------------------------------------
+    // Login rate limiting
+    // -----------------------------------------------------------------------
+
+    public function test_login_is_blocked_after_five_failed_attempts(): void
+    {
+        $throttleKey = 'baduser@example.com|127.0.0.1';
+        \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login', [
+                'login'    => 'baduser@example.com',
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $response = $this->post('/login', [
+            'login'    => 'baduser@example.com',
+            'password' => 'any-password',
+        ]);
+
+        $response->assertSessionHasErrors('login');
+        $this->assertStringContainsString(
+            'Too many login attempts',
+            session('errors')->first('login')
+        );
+
+        \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
+    }
+
+    // -----------------------------------------------------------------------
+    // TeamPolicy — role elevation protection
+    // -----------------------------------------------------------------------
+
+    public function test_non_owner_admin_cannot_assign_owner_role_to_new_member(): void
+    {
+        $admin = User::factory()->create([
+            'role'             => 'admin',
+            'can_access_admin' => true,
+            'is_active'        => true,
+        ]);
+
+        $response = $this->actingAs($admin, 'web')->post('/admin/team', [
+            '_token'               => csrf_token(),
+            'name'                 => 'New Owner Attempt',
+            'email'                => 'ownertry@example.com',
+            'role'                 => 'owner',
+            'password'             => 'secret12345',
+            'password_confirmation'=> 'secret12345',
+        ]);
+
+        // FormRequest withValidator blocks this with a validation error (422)
+        // or a redirect back with errors — not a 200.
+        $this->assertFalse(User::query()->where('email', 'ownertry@example.com')->exists());
+    }
+
+    public function test_non_owner_admin_cannot_edit_owner_account(): void
+    {
+        $owner = User::factory()->create([
+            'role'             => 'owner',
+            'can_access_admin' => true,
+            'is_active'        => true,
+        ]);
+
+        $admin = User::factory()->create([
+            'role'             => 'admin',
+            'can_access_admin' => true,
+            'is_active'        => true,
+        ]);
+
+        $response = $this->actingAs($admin, 'web')->post('/admin/team/' . $owner->id, [
+            '_token'   => csrf_token(),
+            'name'     => 'Hacked Name',
+            'email'    => $owner->email,
+            'role'     => 'admin',
+            'password' => '',
+        ]);
+
+        // TeamPolicy::update() denies this → 403
+        $response->assertForbidden();
+        $this->assertDatabaseHas('users', ['id' => $owner->id, 'name' => $owner->name]);
+    }
+
+    public function test_owner_can_create_another_owner(): void
+    {
+        $owner = User::factory()->create([
+            'role'             => 'owner',
+            'can_access_admin' => true,
+            'is_active'        => true,
+        ]);
+
+        $this->actingAs($owner, 'web')->post('/admin/team', [
+            '_token'               => csrf_token(),
+            'name'                 => 'Second Owner',
+            'email'                => 'owner2@example.com',
+            'role'                 => 'owner',
+            'password'             => 'securepass99',
+            'password_confirmation'=> 'securepass99',
+        ]);
+
+        $this->assertDatabaseHas('users', ['email' => 'owner2@example.com', 'role' => 'owner']);
     }
 }

@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Reservation;
+use App\Models\User;
 use App\Observers\ReservationObserver;
+use App\Policies\TeamPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Reservation::observe(ReservationObserver::class);
+        Gate::policy(User::class, TeamPolicy::class);
     }
 }

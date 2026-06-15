@@ -49,6 +49,7 @@ Route::get('/presence/ping', fn () => response()->noContent())
     ->name('presence.ping');
 
 Route::get('/invoice/status/{token}', [InvoiceStatusController::class, 'show'])
+    ->middleware('throttle:30,1')
     ->name('invoice.status.public');
 
 Route::middleware(['auth', 'presence'])->prefix('staff')->name('staff.')->group(function () {
@@ -57,7 +58,7 @@ Route::middleware(['auth', 'presence'])->prefix('staff')->name('staff.')->group(
     Route::post('/events/{reservation}/confirm', [StaffDashboardController::class, 'confirm'])->name('events.confirm');
 });
 
-Route::middleware(['auth', 'presence'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['admin', 'presence'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');

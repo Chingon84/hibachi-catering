@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\Team\StoreTeamMemberRequest;
+use App\Http\Requests\Admin\Team\UpdateTeamMemberRequest;
 use App\Models\AttendanceIncident;
 use App\Models\Complaint;
 use App\Models\GoodFeedback;
@@ -89,35 +91,10 @@ class TeamController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreTeamMemberRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'username' => ['nullable', 'string', 'max:255', 'unique:users,username'],
-            'position' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:40'],
-            'employee_number' => ['nullable', 'string', 'max:40'],
-            'employee_type' => ['nullable', 'string', 'max:40', Rule::in(self::EMPLOYEE_TYPES)],
-            'hire_date' => ['nullable', 'date'],
-            'staff_type' => ['nullable', 'string', 'max:40', Rule::in(self::STAFF_TYPES)],
-            'role' => ['required', 'string', 'max:50', Rule::in(['owner', 'admin', 'manager', 'staff', 'readonly', 'office'])],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
-            'can_access_admin' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        $data = $validator->validated();
-
-        if (($data['role'] ?? '') === 'owner' && !Auth::user()->isOwner()) {
-            abort(403, 'Only owner can assign owner role');
-        }
-
-        unset($data['password_confirmation']);
         $data['password'] = Hash::make($data['password']);
         $data['can_access_admin'] = (bool) ($data['can_access_admin'] ?? false);
         $data['is_active'] = (bool) ($data['is_active'] ?? true);
@@ -176,53 +153,19 @@ class TeamController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateTeamMemberRequest $request, $id)
     {
         $user = User::findOrFail($id);
-        if ((string) $request->input('password', '') === self::PASSWORD_PLACEHOLDER) {
-            $request->merge([
-                'password' => '',
-                'password_confirmation' => '',
-            ]);
-        }
+        $data = $request->validated();
 
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
-            'position' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:40'],
-            'employee_number' => ['nullable', 'string', 'max:40'],
-            'employee_type' => ['nullable', 'string', 'max:40', Rule::in(self::EMPLOYEE_TYPES)],
-            'hire_date' => ['nullable', 'date'],
-            'staff_type' => ['nullable', 'string', 'max:40', Rule::in(self::STAFF_TYPES)],
-            'role' => ['required', 'string', 'max:50', Rule::in(['owner', 'admin', 'manager', 'staff', 'readonly', 'office'])],
-            'password' => ['nullable', 'string', 'min:6', 'confirmed'],
-            'can_access_admin' => ['sometimes', 'boolean'],
-            'is_active' => ['sometimes', 'boolean'],
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        $data = $validator->validated();
-
-        if ($user->isOwner() && !Auth::user()->isOwner()) {
-            abort(403, 'Only owner can modify owner');
-        }
-        if (($data['role'] ?? '') === 'owner' && !Auth::user()->isOwner()) {
-            abort(403, 'Only owner can assign owner role');
-        }
-
+        // Hash the new password if one was provided (placeholder already replaced by FormRequest).
         $passwordInput = (string) ($data['password'] ?? '');
-        if ($passwordInput !== '' && $passwordInput !== self::PASSWORD_PLACEHOLDER) {
+        if ($passwordInput !== '') {
             $data['password'] = Hash::make($data['password']);
             $this->logActivity($user, 'password_changed', 'Password updated', 'Account password was changed from the team management workflow.');
         } else {
             unset($data['password']);
         }
-        unset($data['password_confirmation']);
 
         $data['can_access_admin'] = (bool) ($data['can_access_admin'] ?? false);
         $data['is_active'] = (bool) ($data['is_active'] ?? true);
