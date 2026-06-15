@@ -121,6 +121,7 @@ Route::middleware(['admin', 'presence'])->group(function () {
     Route::get('/admin/invoices/{invoice}/review', [InvoiceAdminController::class, 'review'])->middleware('perm:reservations.view')->name('admin.invoices.review');
     Route::post('/admin/invoices/{invoice}/finalize', [InvoiceAdminController::class, 'finalize'])->middleware('perm:reservations.manage')->name('admin.invoices.finalize');
     Route::post('/admin/invoices/{invoice}/void', [InvoiceAdminController::class, 'void'])->middleware('perm:reservations.manage')->name('admin.invoices.void');
+    Route::post('/admin/invoices/{invoice}/delete', [InvoiceAdminController::class, 'destroy'])->middleware('perm:reservations.manage')->name('admin.invoices.destroy');
     Route::get('/admin/reservations/{id}', [ReservationAdminController::class, 'show'])->middleware('perm:reservations.view')->name('admin.reservations.show');
     Route::get('/admin/reservations/{id}/event', [ReservationAdminController::class, 'event'])->middleware('perm:reservations.view')->name('admin.reservations.event');
     Route::post('/admin/reservations/{id}', [ReservationAdminController::class, 'update'])->middleware('perm:reservations.manage')->name('admin.reservations.update');

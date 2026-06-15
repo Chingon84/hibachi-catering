@@ -172,6 +172,15 @@ class InvoiceAdminController extends Controller
         return redirect()->route('admin.invoices')->with('ok', 'Invoice voided.');
     }
 
+    public function destroy(Invoice $invoice)
+    {
+        abort_if($invoice->status === 'paid', 403, 'Paid invoices cannot be deleted.');
+        $invoice->items()->delete();
+        $invoice->delete();
+
+        return redirect()->route('admin.invoices')->with('ok', 'Invoice deleted.');
+    }
+
     private function invoiceRowsQuery(string $q)
     {
         $queries = [];
@@ -264,6 +273,9 @@ class InvoiceAdminController extends Controller
                     : route('admin.reservations.show', ['id' => $row->reservation_id]),
                 'void_url' => $kind === 'standalone' && !in_array($status, ['paid', 'void'], true)
                     ? route('admin.invoices.void', ['invoice' => $row->id])
+                    : null,
+                'delete_url' => $kind === 'standalone' && $status !== 'paid'
+                    ? route('admin.invoices.destroy', ['invoice' => $row->id])
                     : null,
             ];
         })->values();
